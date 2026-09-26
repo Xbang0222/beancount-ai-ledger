@@ -1,0 +1,4 @@
+# 记账运行依赖（Python >= 3.9）
+beancount==3.2.3
+tomli>=1.1; python_version < "3.11"    # 读取 ledger.toml（3.11+ 自带 tomllib）
+tzdata; sys_platform == "win32"         # Windows 没有系统时区库，zoneinfo 需要它

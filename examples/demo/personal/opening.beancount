@@ -1,0 +1,19 @@
+; ============================================================
+; 个人账本（示例） · 期初余额
+; 示例从 2026-09-01 开始记账：8 月 31 日 pad，9 月 1 日 balance（断言当天开始时的余额）。
+; ============================================================
+
+2026-08-31 pad Assets:Bank:Main Equity:OpeningBalances
+2026-09-01 balance Assets:Bank:Main          15000.00 CNY
+2026-08-31 pad Assets:Alipay Equity:OpeningBalances
+2026-09-01 balance Assets:Alipay              1200.00 CNY
+2026-08-31 pad Assets:Wechat Equity:OpeningBalances
+2026-09-01 balance Assets:Wechat               800.00 CNY
+2026-08-31 pad Assets:Cash Equity:OpeningBalances
+2026-09-01 balance Assets:Cash                 300.00 CNY
+2026-08-31 pad Assets:Bank:USD Equity:OpeningBalances
+2026-09-01 balance Assets:Bank:USD             200.00 USD
+2026-08-31 pad Liabilities:CreditCard Equity:OpeningBalances
+2026-09-01 balance Liabilities:CreditCard    -1500.00 CNY
+2026-08-31 pad Liabilities:Huabei Equity:OpeningBalances
+2026-09-01 balance Liabilities:Huabei         -420.00 CNY

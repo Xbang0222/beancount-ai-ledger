@@ -1,0 +1,77 @@
+; ============================================================
+; 个人账本 · 会计科目表（Chart of Accounts）
+; 用法：按自己的情况增删——用不到的科目删掉，缺的照格式补上；银行卡建议按银行细分，
+;       如 Assets:Bank:CMB（招商）、Assets:Bank:ICBC（工商），改完跑一次 check。
+; 规则：科目名用英文（beancount 要求每段首字母大写），行尾中文注释写清核算范围；
+;       层级为「一级大类 : 二级明细」，报表按前两级汇总。
+; 开户日期统一写 1970-01-01，只是为了任何日期的分录都能记；期初余额在 opening.beancount 登记。
+; ============================================================
+
+; ===== 资产 Assets =====
+; —— 货币资金 ——
+1970-01-01 open Assets:Cash CNY                   ; 库存现金
+1970-01-01 open Assets:Bank:Main CNY              ; 银行存款－主力银行卡（建议改成具体银行，如 Assets:Bank:CMB）
+1970-01-01 open Assets:Alipay CNY                 ; 其他货币资金－支付宝余额
+1970-01-01 open Assets:Alipay:Yuebao CNY          ; 其他货币资金－余额宝
+1970-01-01 open Assets:Wechat CNY                 ; 其他货币资金－微信零钱
+; —— 应收与预付（债权；对象多了按 Assets:Receivable:<对象> 细分，如 Assets:Receivable:Xiaoming）——
+1970-01-01 open Assets:Receivable:Other CNY       ; 其他应收款－借给别人、替别人垫付、待退款
+1970-01-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
+; —— 投资 ——
+1970-01-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 CATEGORIES 第 5 节）
+1970-01-01 open Assets:Invest:Stock               ; 金融资产－股票
+
+; ===== 负债 Liabilities（余额为负数表示欠款）=====
+1970-01-01 open Liabilities:CreditCard CNY        ; 信用卡应还款（多张卡可细分，如 Liabilities:CreditCard:CMB）
+1970-01-01 open Liabilities:Huabei CNY            ; 消费信贷－蚂蚁花呗
+1970-01-01 open Liabilities:Baitiao CNY           ; 消费信贷－京东白条
+1970-01-01 open Liabilities:Loan CNY              ; 借款－房贷、车贷、助学贷款等（可细分）
+1970-01-01 open Liabilities:Payable:Other CNY     ; 其他应付款－向个人借的钱、别人替你垫付的钱
+
+; ===== 收入 Income（复式记账里收入记在贷方，余额显示为负数是正常的）=====
+1970-01-01 open Income:Salary CNY                 ; 工资薪金（按实发到账金额）
+1970-01-01 open Income:Bonus CNY                  ; 奖金、绩效
+1970-01-01 open Income:SideJob CNY                ; 兼职、劳务报酬
+1970-01-01 open Income:Redpacket CNY              ; 红包、礼金
+1970-01-01 open Income:Invest:Interest CNY        ; 投资收益－利息（余额宝、存款）
+1970-01-01 open Income:Invest:Dividend CNY        ; 投资收益－分红
+1970-01-01 open Income:Invest:PnL CNY             ; 投资收益－买卖价差
+1970-01-01 open Income:Other CNY                  ; 其他收入（返现、奖励等；退款不算收入，冲减原支出）
+
+; ===== 支出 Expenses（一级大类 : 二级明细，与 CATEGORIES.md 第 1 节一一对应）=====
+; —— 餐饮 ——
+1970-01-01 open Expenses:Food:Dining CNY          ; 餐饮－正餐、外卖、堂食
+1970-01-01 open Expenses:Food:Snack CNY           ; 餐饮－饮品、咖啡、零食
+1970-01-01 open Expenses:Food:Grocery CNY         ; 餐饮－买菜、水果、食材
+; —— 居住 ——
+1970-01-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不是费用，记 Assets:Prepaid:Deposit）
+1970-01-01 open Expenses:Housing:Utilities CNY    ; 居住－水电燃气、话费宽带、物业
+1970-01-01 open Expenses:Housing:Daily CNY        ; 居住－日用品、清洁用品、家居小物
+; —— 交通 ——
+1970-01-01 open Expenses:Transport:Local CNY      ; 交通－地铁公交、打车、共享单车、加油停车
+1970-01-01 open Expenses:Transport:LongDistance CNY ; 交通－非旅行的长途车票（回家、出差自付）
+; —— 购物 ——
+1970-01-01 open Expenses:Shopping:Clothes CNY     ; 购物－服饰鞋包
+1970-01-01 open Expenses:Shopping:Digital CNY     ; 购物－数码电子及配件
+1970-01-01 open Expenses:Shopping:Other CNY       ; 购物－其他实物
+; —— 文娱 ——
+1970-01-01 open Expenses:Entertainment:Subscription CNY ; 文娱－会员、订阅
+1970-01-01 open Expenses:Entertainment:Game CNY   ; 文娱－游戏充值
+1970-01-01 open Expenses:Entertainment:Other CNY  ; 文娱－电影、演出、KTV 等
+; —— 旅行（出游专项；旅行期间吃饭仍记 Food，整趟花费靠 #trip 标签归集，见 CATEGORIES 第 2 节）——
+1970-01-01 open Expenses:Travel:Transport CNY     ; 旅行－城际交通（机票、火车票）
+1970-01-01 open Expenses:Travel:Lodging CNY       ; 旅行－酒店民宿
+1970-01-01 open Expenses:Travel:Ticket CNY        ; 旅行－门票、游玩项目
+1970-01-01 open Expenses:Travel:Other CNY         ; 旅行－其他
+; —— 其他一级大类 ——
+1970-01-01 open Expenses:Learning CNY             ; 学习－学费、课程、书籍、考试
+1970-01-01 open Expenses:Medical CNY              ; 医疗－看病、买药、体检
+1970-01-01 open Expenses:Social CNY               ; 人情－红包、礼物、请客
+1970-01-01 open Expenses:Insurance CNY            ; 保险－自付保费
+1970-01-01 open Expenses:Finance:Interest CNY     ; 财务费用－借款利息
+1970-01-01 open Expenses:Finance:Fee CNY          ; 财务费用－手续费、分期服务费
+1970-01-01 open Expenses:Other CNY                ; 其他（暂时不知道归哪类，确认后结转）
+
+; ===== 权益 Equity =====
+1970-01-01 open Equity:OpeningBalances            ; 期初净资产（开账平衡科目，配合 opening.beancount 的 pad 使用）
+1970-01-01 open Equity:Adjustment                 ; 余额差异调整（账实不符时临时找平，查明原因后冲回）

@@ -1,0 +1,106 @@
+; 个人账本（示例） · 2026-09 流水
+
+2026-09-01 * "房东" "居住-9月房租"
+  time: "09:30"
+  Expenses:Housing:Rent  2500.00 CNY
+  Assets:Bank:Main
+
+2026-09-02 * "早餐店" "餐饮-早餐"
+  time: "08:10"
+  Expenses:Food:Dining  8.00 CNY
+  Assets:Wechat
+
+2026-09-03 * "地铁" "交通-交通卡充值"
+  time: "08:40"
+  Expenses:Transport:Local  100.00 CNY
+  Assets:Alipay
+
+2026-09-05 * "超市" "餐饮-买菜"
+  time: "19:20"
+  Expenses:Food:Grocery  86.50 CNY
+  Assets:Wechat
+
+2026-09-06 * "视频平台" "文娱-视频会员"
+  time: "21:05"
+  Expenses:Entertainment:Subscription  25.00 CNY
+  Assets:Alipay
+
+2026-09-08 * "招商银行" "偿还信用卡账单"
+  time: "10:00"
+  Liabilities:CreditCard  1500.00 CNY
+  Assets:Bank:Main
+
+2026-09-10 * "公司" "工资-8月"
+  time: "09:00"
+  Assets:Bank:Main  12000.00 CNY
+  Income:Salary
+
+2026-09-10 * "基金公司" "指数基金定投"
+  time: "14:50"
+  Assets:Invest:Fund  312.5 IDXFUND {1.6000 CNY}
+  Assets:Bank:Main  -500.00 CNY
+
+2026-09-12 * "朋友小王" "借给朋友小王"
+  time: "20:30"
+  Assets:Receivable:Other  500.00 CNY
+  Assets:Wechat
+
+2026-09-13 * "餐厅" "人情-请同事吃饭"
+  time: "12:40"
+  Expenses:Social  120.00 CNY
+  Liabilities:Huabei
+
+2026-09-14 * "商店" "代垫商店包装材料款（股东往来）"
+  time: "15:00"
+  Assets:Receivable:Shop  45.00 CNY
+  Assets:Wechat
+
+2026-09-15 * "12306" "旅行-高铁票（去程）" #trip #chengdu
+  time: "07:30"
+  Expenses:Travel:Transport  354.00 CNY
+  Assets:Alipay
+
+2026-09-15 * "酒店" "旅行-住宿两晚" #trip #chengdu
+  time: "15:10"
+  Expenses:Travel:Lodging  560.00 CNY
+  Liabilities:CreditCard
+
+2026-09-15 * "火锅店" "餐饮-晚餐" #trip #chengdu
+  time: "19:00"
+  Expenses:Food:Dining  186.00 CNY
+  Assets:Wechat
+
+2026-09-16 * "景区" "旅行-门票" #trip #chengdu
+  time: "10:20"
+  Expenses:Travel:Ticket  90.00 CNY
+  Assets:Alipay
+
+2026-09-17 * "12306" "旅行-高铁票（返程）" #trip #chengdu
+  time: "16:45"
+  Expenses:Travel:Transport  354.00 CNY
+  Assets:Alipay
+
+2026-09-18 * "朋友小王" "收回借款"
+  time: "21:00"
+  Assets:Wechat  500.00 CNY
+  Assets:Receivable:Other
+
+2026-09-19 * "商店" "代收商店营业款-支付宝（股东往来）"
+  time: "11:25"
+  Assets:Alipay  300.00 CNY
+  Liabilities:Shop
+
+2026-09-20 * "电力公司" "居住-电费"
+  time: "18:00"
+  Expenses:Housing:Utilities  150.00 CNY
+  Assets:Alipay
+
+2026-09-21 * "数码店" "购物-蓝牙耳机"
+  time: "13:15"
+  Expenses:Shopping:Digital  399.00 CNY
+  Liabilities:Huabei
+
+2026-09-23 * "商店" "收回代垫商店款（股东往来）"
+  time: "10:05"
+  Assets:Bank:Main  45.00 CNY
+  Assets:Receivable:Shop

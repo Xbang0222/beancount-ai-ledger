@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+.fava/
+*.backup
+
+# Python 虚拟环境与测试缓存
+.venv/
+venv/
+.pytest_cache/
+
+# ledger.py add 的并发互斥锁
+.ledger.lock
+
+# 系统 / 编辑器临时文件
+.DS_Store
+Thumbs.db
+*.tmp
+*~
+*.swp
+.idea/
+.vscode/
+
+# 银行/支付平台导出的原始账单（含敏感信息，不入库）
+exports/
+账单导出/
+*.csv
+*.xlsx
+*.zip

@@ -1,0 +1,77 @@
+; ============================================================
+; {{TITLE}} · 会计科目表（Chart of Accounts）
+; 用法：按自己的情况增删——用不到的科目删掉，缺的照格式补上；银行卡建议按银行细分，
+;       如 Assets:Bank:CMB（招商）、Assets:Bank:ICBC（工商），改完跑一次 check。
+; 规则：科目名用英文（beancount 要求每段首字母大写），行尾中文注释写清核算范围；
+;       层级为「一级大类 : 二级明细」，报表按前两级汇总。
+; 开户日期统一写 {{OPEN_DATE}}，只是为了任何日期的分录都能记；期初余额在 opening.beancount 登记。
+; ============================================================
+
+; ===== 资产 Assets =====
+; —— 货币资金 ——
+{{OPEN_DATE}} open Assets:Cash {{CURRENCY}} ; 库存现金
+{{OPEN_DATE}} open Assets:Bank:Main {{CURRENCY}} ; 银行存款－主力银行卡（建议改成具体银行，如 Assets:Bank:CMB）
+{{OPEN_DATE}} open Assets:Alipay {{CURRENCY}} ; 其他货币资金－支付宝余额
+{{OPEN_DATE}} open Assets:Alipay:Yuebao {{CURRENCY}} ; 其他货币资金－余额宝
+{{OPEN_DATE}} open Assets:Wechat {{CURRENCY}} ; 其他货币资金－微信零钱
+; —— 应收与预付（债权；对象多了按 Assets:Receivable:<对象> 细分，如 Assets:Receivable:Xiaoming）——
+{{OPEN_DATE}} open Assets:Receivable:Other {{CURRENCY}} ; 其他应收款－借给别人、替别人垫付、待退款
+{{OPEN_DATE}} open Assets:Prepaid:Deposit {{CURRENCY}} ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
+; —— 投资 ——
+{{OPEN_DATE}} open Assets:Invest:Fund ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 CATEGORIES 第 5 节）
+{{OPEN_DATE}} open Assets:Invest:Stock ; 金融资产－股票
+
+; ===== 负债 Liabilities（余额为负数表示欠款）=====
+{{OPEN_DATE}} open Liabilities:CreditCard {{CURRENCY}} ; 信用卡应还款（多张卡可细分，如 Liabilities:CreditCard:CMB）
+{{OPEN_DATE}} open Liabilities:Huabei {{CURRENCY}} ; 消费信贷－蚂蚁花呗
+{{OPEN_DATE}} open Liabilities:Baitiao {{CURRENCY}} ; 消费信贷－京东白条
+{{OPEN_DATE}} open Liabilities:Loan {{CURRENCY}} ; 借款－房贷、车贷、助学贷款等（可细分）
+{{OPEN_DATE}} open Liabilities:Payable:Other {{CURRENCY}} ; 其他应付款－向个人借的钱、别人替你垫付的钱
+
+; ===== 收入 Income（复式记账里收入记在贷方，余额显示为负数是正常的）=====
+{{OPEN_DATE}} open Income:Salary {{CURRENCY}} ; 工资薪金（按实发到账金额）
+{{OPEN_DATE}} open Income:Bonus {{CURRENCY}} ; 奖金、绩效
+{{OPEN_DATE}} open Income:SideJob {{CURRENCY}} ; 兼职、劳务报酬
+{{OPEN_DATE}} open Income:Redpacket {{CURRENCY}} ; 红包、礼金
+{{OPEN_DATE}} open Income:Invest:Interest {{CURRENCY}} ; 投资收益－利息（余额宝、存款）
+{{OPEN_DATE}} open Income:Invest:Dividend {{CURRENCY}} ; 投资收益－分红
+{{OPEN_DATE}} open Income:Invest:PnL {{CURRENCY}} ; 投资收益－买卖价差
+{{OPEN_DATE}} open Income:Other {{CURRENCY}} ; 其他收入（返现、奖励等；退款不算收入，冲减原支出）
+
+; ===== 支出 Expenses（一级大类 : 二级明细，与 CATEGORIES.md 第 1 节一一对应）=====
+; —— 餐饮 ——
+{{OPEN_DATE}} open Expenses:Food:Dining {{CURRENCY}} ; 餐饮－正餐、外卖、堂食
+{{OPEN_DATE}} open Expenses:Food:Snack {{CURRENCY}} ; 餐饮－饮品、咖啡、零食
+{{OPEN_DATE}} open Expenses:Food:Grocery {{CURRENCY}} ; 餐饮－买菜、水果、食材
+; —— 居住 ——
+{{OPEN_DATE}} open Expenses:Housing:Rent {{CURRENCY}} ; 居住－房租（可退押金不是费用，记 Assets:Prepaid:Deposit）
+{{OPEN_DATE}} open Expenses:Housing:Utilities {{CURRENCY}} ; 居住－水电燃气、话费宽带、物业
+{{OPEN_DATE}} open Expenses:Housing:Daily {{CURRENCY}} ; 居住－日用品、清洁用品、家居小物
+; —— 交通 ——
+{{OPEN_DATE}} open Expenses:Transport:Local {{CURRENCY}} ; 交通－地铁公交、打车、共享单车、加油停车
+{{OPEN_DATE}} open Expenses:Transport:LongDistance {{CURRENCY}} ; 交通－非旅行的长途车票（回家、出差自付）
+; —— 购物 ——
+{{OPEN_DATE}} open Expenses:Shopping:Clothes {{CURRENCY}} ; 购物－服饰鞋包
+{{OPEN_DATE}} open Expenses:Shopping:Digital {{CURRENCY}} ; 购物－数码电子及配件
+{{OPEN_DATE}} open Expenses:Shopping:Other {{CURRENCY}} ; 购物－其他实物
+; —— 文娱 ——
+{{OPEN_DATE}} open Expenses:Entertainment:Subscription {{CURRENCY}} ; 文娱－会员、订阅
+{{OPEN_DATE}} open Expenses:Entertainment:Game {{CURRENCY}} ; 文娱－游戏充值
+{{OPEN_DATE}} open Expenses:Entertainment:Other {{CURRENCY}} ; 文娱－电影、演出、KTV 等
+; —— 旅行（出游专项；旅行期间吃饭仍记 Food，整趟花费靠 #trip 标签归集，见 CATEGORIES 第 2 节）——
+{{OPEN_DATE}} open Expenses:Travel:Transport {{CURRENCY}} ; 旅行－城际交通（机票、火车票）
+{{OPEN_DATE}} open Expenses:Travel:Lodging {{CURRENCY}} ; 旅行－酒店民宿
+{{OPEN_DATE}} open Expenses:Travel:Ticket {{CURRENCY}} ; 旅行－门票、游玩项目
+{{OPEN_DATE}} open Expenses:Travel:Other {{CURRENCY}} ; 旅行－其他
+; —— 其他一级大类 ——
+{{OPEN_DATE}} open Expenses:Learning {{CURRENCY}} ; 学习－学费、课程、书籍、考试
+{{OPEN_DATE}} open Expenses:Medical {{CURRENCY}} ; 医疗－看病、买药、体检
+{{OPEN_DATE}} open Expenses:Social {{CURRENCY}} ; 人情－红包、礼物、请客
+{{OPEN_DATE}} open Expenses:Insurance {{CURRENCY}} ; 保险－自付保费
+{{OPEN_DATE}} open Expenses:Finance:Interest {{CURRENCY}} ; 财务费用－借款利息
+{{OPEN_DATE}} open Expenses:Finance:Fee {{CURRENCY}} ; 财务费用－手续费、分期服务费
+{{OPEN_DATE}} open Expenses:Other {{CURRENCY}} ; 其他（暂时不知道归哪类，确认后结转）
+
+; ===== 权益 Equity =====
+{{OPEN_DATE}} open Equity:OpeningBalances ; 期初净资产（开账平衡科目，配合 opening.beancount 的 pad 使用）
+{{OPEN_DATE}} open Equity:Adjustment ; 余额差异调整（账实不符时临时找平，查明原因后冲回）

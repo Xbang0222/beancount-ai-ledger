@@ -1,0 +1,134 @@
+; ============================================================
+; 分录范例（自包含沙盒，不属于任何账本）
+; 校验：bean-check examples/cookbook.beancount
+; 约定：第一个引号是对方（payee），第二个引号是摘要（narration），都用书面表述；
+;       标签写在引号之后；金额只写一边时，另一边留空由 beancount 自动找平。
+; 真实记账请用 ledger.py add，它会自动注入 time 并校验，这里为了简洁省略了 time。
+; ============================================================
+option "title" "分录范例"
+option "operating_currency" "CNY"
+
+1970-01-01 commodity CNY
+1970-01-01 commodity IDXFUND
+  name: "指数基金（示例标的）"
+
+2026-01-01 open Assets:Bank:Main CNY
+2026-01-01 open Assets:Alipay CNY
+2026-01-01 open Assets:Wechat CNY
+2026-01-01 open Assets:Receivable:Xiaowang CNY
+2026-01-01 open Assets:Receivable:Shop CNY
+2026-01-01 open Assets:Prepaid:Deposit CNY
+2026-01-01 open Assets:Invest:Fund
+2026-01-01 open Liabilities:CreditCard CNY
+2026-01-01 open Liabilities:Huabei CNY
+2026-01-01 open Liabilities:Loan:Student CNY
+2026-01-01 open Income:Salary CNY
+2026-01-01 open Income:Redpacket CNY
+2026-01-01 open Income:Invest:Dividend CNY
+2026-01-01 open Income:Invest:PnL CNY
+2026-01-01 open Expenses:Food:Dining CNY
+2026-01-01 open Expenses:Shopping:Clothes CNY
+2026-01-01 open Expenses:Housing:Rent CNY
+2026-01-01 open Expenses:Travel:Transport CNY
+2026-01-01 open Expenses:Travel:Other CNY
+2026-01-01 open Expenses:Finance:Interest CNY
+2026-01-01 open Expenses:Finance:Fee CNY
+2026-01-01 open Equity:OpeningBalances
+
+; ---------- 期初余额：开账日前一天 pad，开账日 balance ----------
+2026-01-31 pad Assets:Bank:Main Equity:OpeningBalances
+2026-02-01 balance Assets:Bank:Main  20000.00 CNY
+
+; ---------- 1. 日常消费：费用记金额，付款账户留空自动找平 ----------
+2026-02-02 * "面馆" "餐饮-午餐"
+  Expenses:Food:Dining  18.50 CNY
+  Assets:Wechat
+
+; ---------- 2. 工资、红包：收入在贷方 ----------
+2026-02-05 * "公司" "工资-1月"
+  Assets:Bank:Main  9000.00 CNY
+  Income:Salary
+2026-02-10 * "家人" "春节红包"
+  Assets:Wechat  600.00 CNY
+  Income:Redpacket
+
+; ---------- 3. AA 代垫：本人全付 240，朋友小王应还一半 ----------
+2026-02-12 * "火锅店" "餐饮-聚餐（代垫小王一半）"
+  Expenses:Food:Dining          120.00 CNY
+  Assets:Receivable:Xiaowang    120.00 CNY
+  Assets:Alipay                -240.00 CNY
+; 小王还钱：冲减债权，不是收入
+2026-02-13 * "小王" "收回聚餐代垫款"
+  Assets:Wechat                 120.00 CNY
+  Assets:Receivable:Xiaowang
+
+; ---------- 4. 花呗/信用卡：消费时确认负债，还款只冲负债、不重复记费用 ----------
+2026-02-14 * "服饰店" "购物-外套"
+  Expenses:Shopping:Clothes  300.00 CNY
+  Liabilities:Huabei
+2026-03-09 * "蚂蚁花呗" "偿还花呗账单"
+  Liabilities:Huabei  300.00 CNY
+  Assets:Bank:Main
+
+; ---------- 5. 退款：冲减原支出，不记收入 ----------
+2026-02-16 * "服饰店" "购物-外套退款"
+  Assets:Alipay  300.00 CNY
+  Expenses:Shopping:Clothes
+
+; ---------- 6. 旅行：科目管“是什么钱”，标签管“哪趟行程”（#trip + 目的地可同时打）----------
+2026-02-20 * "12306" "旅行-高铁票" #trip #chengdu
+  Expenses:Travel:Transport  354.00 CNY
+  Assets:Alipay
+; 境外刷卡：按信用卡账单上的人民币金额入账，外币原价记在元数据里备查
+2026-02-22 * "免税店" "旅行-境外购物" #trip #japan
+  foreign_amount: "20.00 USD"
+  Expenses:Travel:Other   142.00 CNY
+  Liabilities:CreditCard
+
+; ---------- 7. 押金：可退部分是资产，不是费用 ----------
+2026-03-01 * "房东" "居住-3月房租及押金"
+  Expenses:Housing:Rent     2500.00 CNY
+  Assets:Prepaid:Deposit    2500.00 CNY
+  Assets:Bank:Main
+
+; ---------- 8. 贷款：放款是负债（不是收入），还款拆本金与利息 ----------
+2026-03-02 * "国家开发银行" "助学贷款放款"
+  Assets:Bank:Main  8000.00 CNY
+  Liabilities:Loan:Student
+2026-03-20 * "国家开发银行" "偿还助学贷款（本息）"
+  Liabilities:Loan:Student   500.00 CNY
+  Expenses:Finance:Interest   30.00 CNY
+  Assets:Bank:Main
+
+; ---------- 9. 信用卡分期手续费 ----------
+2026-03-21 * "招商银行" "信用卡分期手续费"
+  Expenses:Finance:Fee  12.60 CNY
+  Liabilities:CreditCard
+
+; ---------- 10. 基金：买入按份额与单位成本，期末用 price 更新市值 ----------
+2026-03-10 * "基金公司" "指数基金定投"
+  Assets:Invest:Fund  312.5 IDXFUND {1.6000 CNY}
+  Assets:Bank:Main   -500.00 CNY
+2026-03-31 price IDXFUND 1.6500 CNY
+2026-04-15 * "基金公司" "指数基金现金分红"
+  Assets:Bank:Main  8.00 CNY
+  Income:Invest:Dividend
+; 赎回 100 份，单位售价 1.70：成本 160，到账 170，价差 10 记投资收益
+2026-05-06 * "基金公司" "赎回指数基金100份"
+  Assets:Bank:Main                         170.00 CNY
+  Assets:Invest:Fund  -100 IDXFUND {1.6000 CNY} @ 1.7000 CNY
+  Income:Invest:PnL
+
+; ---------- 11. 两本账之间的往来（个人垫付店铺货款）----------
+; 个人账：形成对店铺的应收，不是个人支出
+2026-05-08 * "商店" "代垫商店采购款-某供应商（股东往来）"
+  Assets:Receivable:Shop  800.00 CNY
+  Assets:Bank:Main
+; 店铺账同时记（写在 shop 账本里，这里仅作示意）：
+;   2026-05-08 * "某供应商" "主营业务成本-进货（股东垫付）"
+;     Expenses:COGS          800.00 CNY
+;     Liabilities:OwnerLoan
+; 记完两边跑 ledger.py reconcile，两侧余额相加必须为 0。
+
+; ---------- 12. 余额断言：对账时写一条，对不上 check 会报差额 ----------
+2026-05-10 balance Assets:Receivable:Xiaowang  0.00 CNY

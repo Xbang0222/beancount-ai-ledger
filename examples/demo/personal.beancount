@@ -1,0 +1,13 @@
+; ============================================================
+; 个人账本（示例） · 账本入口
+; 校验：python3 scripts/ledger.py check      网页报表（可选）：fava personal.beancount
+; 记账请用 python3 scripts/ledger.py add personal，它会在文件末尾自动追加每月序时簿的 include。
+; ============================================================
+option "title" "个人账本（示例）"
+option "operating_currency" "CNY"
+
+include "common/commodities.beancount"
+include "common/prices.beancount"
+include "personal/accounts.beancount"
+include "personal/opening.beancount"
+include "personal/journal/2026-09.beancount"

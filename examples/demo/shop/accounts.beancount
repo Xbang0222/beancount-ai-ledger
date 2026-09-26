@@ -1,0 +1,45 @@
+; ============================================================
+; 网店（示例） · 会计科目表（经营账：店铺、工作室、公司）
+; 独立会计主体：与个人账分开记，经营收支与利润单独核算。
+; 与个人账之间的资金往来（你替店里垫付、店里的钱进了你的个人账户）按双边镜像登记，
+; 科目用 new-book --link 生成的 Liabilities:OwnerLoan / Assets:Receivable:Owner。
+; 注意：这是内部管理账，不能替代税法要求的正式账簿与纳税申报。
+; ============================================================
+
+; ===== 资产 =====
+2026-08-01 open Assets:Bank:Main CNY              ; 银行存款－基本户（对公账户）
+2026-08-01 open Assets:Alipay CNY                 ; 其他货币资金－企业支付宝
+2026-08-01 open Assets:Wechat CNY                 ; 其他货币资金－微信商户号
+2026-08-01 open Assets:Cash CNY                   ; 库存现金－备用金
+2026-08-01 open Assets:Inventory CNY              ; 存货－库存商品（按进货成本）
+2026-08-01 open Assets:Receivable:Customer CNY    ; 应收账款－客户欠款、平台待结算货款
+2026-08-01 open Assets:Prepaid CNY                ; 预付账款－预付货款、押金
+
+; ===== 负债 =====
+2026-08-01 open Liabilities:Payable:Supplier CNY  ; 应付账款－欠供应商的货款
+2026-08-01 open Liabilities:Payable:Other CNY     ; 其他应付款
+2026-08-01 open Liabilities:Tax CNY               ; 应交税费
+
+; ===== 权益 =====
+2026-08-01 open Equity:OwnerCapital CNY           ; 实收资本－出资人投入
+2026-08-01 open Equity:OpeningBalances            ; 期初平衡科目
+
+; ===== 收入 =====
+2026-08-01 open Income:Revenue CNY                ; 主营业务收入－商品/服务销售
+2026-08-01 open Income:Other CNY                  ; 其他业务收入
+
+; ===== 成本费用 =====
+2026-08-01 open Expenses:COGS CNY                 ; 主营业务成本－进货成本
+2026-08-01 open Expenses:Shipping CNY             ; 销售费用－物流快递
+2026-08-01 open Expenses:Packaging CNY            ; 销售费用－包装耗材
+2026-08-01 open Expenses:Ads CNY                  ; 销售费用－推广投流
+2026-08-01 open Expenses:PlatformFee CNY          ; 销售费用－平台佣金、支付手续费
+2026-08-01 open Expenses:Rent CNY                 ; 管理费用－房租、场地
+2026-08-01 open Expenses:Salary CNY               ; 管理费用－工资薪金
+2026-08-01 open Expenses:Tools CNY                ; 管理费用－软件、工具、服务订阅
+2026-08-01 open Expenses:Tax CNY                  ; 税金及附加
+2026-08-01 open Expenses:Other CNY                ; 其他经营支出
+
+; —— 与个人账本（示例）（personal 账本）的往来：双边镜像登记，见 ledger.toml [[mirrors]] ——
+2026-08-01 open Liabilities:OwnerLoan CNY         ; 其他应付款－个人账本（示例）（其垫付/投入、本账本尚未归还的款项）
+2026-08-01 open Assets:Receivable:Owner CNY       ; 其他应收款－个人账本（示例）（本账本资金由其代收/占用）

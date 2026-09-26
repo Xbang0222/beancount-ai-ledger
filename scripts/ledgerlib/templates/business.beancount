@@ -1,0 +1,41 @@
+; ============================================================
+; {{TITLE}} · 会计科目表（经营账：店铺、工作室、公司）
+; 独立会计主体：与个人账分开记，经营收支与利润单独核算。
+; 与个人账之间的资金往来（你替店里垫付、店里的钱进了你的个人账户）按双边镜像登记，
+; 科目用 new-book --link 生成的 Liabilities:OwnerLoan / Assets:Receivable:Owner。
+; 注意：这是内部管理账，不能替代税法要求的正式账簿与纳税申报。
+; ============================================================
+
+; ===== 资产 =====
+{{OPEN_DATE}} open Assets:Bank:Main {{CURRENCY}} ; 银行存款－基本户（对公账户）
+{{OPEN_DATE}} open Assets:Alipay {{CURRENCY}} ; 其他货币资金－企业支付宝
+{{OPEN_DATE}} open Assets:Wechat {{CURRENCY}} ; 其他货币资金－微信商户号
+{{OPEN_DATE}} open Assets:Cash {{CURRENCY}} ; 库存现金－备用金
+{{OPEN_DATE}} open Assets:Inventory {{CURRENCY}} ; 存货－库存商品（按进货成本）
+{{OPEN_DATE}} open Assets:Receivable:Customer {{CURRENCY}} ; 应收账款－客户欠款、平台待结算货款
+{{OPEN_DATE}} open Assets:Prepaid {{CURRENCY}} ; 预付账款－预付货款、押金
+
+; ===== 负债 =====
+{{OPEN_DATE}} open Liabilities:Payable:Supplier {{CURRENCY}} ; 应付账款－欠供应商的货款
+{{OPEN_DATE}} open Liabilities:Payable:Other {{CURRENCY}} ; 其他应付款
+{{OPEN_DATE}} open Liabilities:Tax {{CURRENCY}} ; 应交税费
+
+; ===== 权益 =====
+{{OPEN_DATE}} open Equity:OwnerCapital {{CURRENCY}} ; 实收资本－出资人投入
+{{OPEN_DATE}} open Equity:OpeningBalances ; 期初平衡科目
+
+; ===== 收入 =====
+{{OPEN_DATE}} open Income:Revenue {{CURRENCY}} ; 主营业务收入－商品/服务销售
+{{OPEN_DATE}} open Income:Other {{CURRENCY}} ; 其他业务收入
+
+; ===== 成本费用 =====
+{{OPEN_DATE}} open Expenses:COGS {{CURRENCY}} ; 主营业务成本－进货成本
+{{OPEN_DATE}} open Expenses:Shipping {{CURRENCY}} ; 销售费用－物流快递
+{{OPEN_DATE}} open Expenses:Packaging {{CURRENCY}} ; 销售费用－包装耗材
+{{OPEN_DATE}} open Expenses:Ads {{CURRENCY}} ; 销售费用－推广投流
+{{OPEN_DATE}} open Expenses:PlatformFee {{CURRENCY}} ; 销售费用－平台佣金、支付手续费
+{{OPEN_DATE}} open Expenses:Rent {{CURRENCY}} ; 管理费用－房租、场地
+{{OPEN_DATE}} open Expenses:Salary {{CURRENCY}} ; 管理费用－工资薪金
+{{OPEN_DATE}} open Expenses:Tools {{CURRENCY}} ; 管理费用－软件、工具、服务订阅
+{{OPEN_DATE}} open Expenses:Tax {{CURRENCY}} ; 税金及附加
+{{OPEN_DATE}} open Expenses:Other {{CURRENCY}} ; 其他经营支出

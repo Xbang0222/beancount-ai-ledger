@@ -1,0 +1,14 @@
+; ============================================================
+; {{TITLE}} · 期初余额
+; 开始记账的那一天，把各账户的真实余额登记在这里，只登记一次。
+;
+; 写法：开账日前一天写 pad，开账日写 balance。balance 断言的是“那天开始时”的余额，
+; pad 会自动用 Equity:OpeningBalances 补齐差额。负债写负数（欠 300 元 → -300.00）。
+; 以后发现某个账户余额对不上，也可以追加一条 balance 断言，check 会告诉你差多少。
+; ============================================================
+
+; 例：2026-10-01 开始记账，当天开始时银行卡有 5000 元、信用卡欠 300 元
+; 2026-09-30 pad Assets:Bank:Main Equity:OpeningBalances
+; 2026-10-01 balance Assets:Bank:Main           5000.00 {{CURRENCY}}
+; 2026-09-30 pad Liabilities:CreditCard Equity:OpeningBalances
+; 2026-10-01 balance Liabilities:CreditCard     -300.00 {{CURRENCY}}

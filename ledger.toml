@@ -1,0 +1,31 @@
+# ============================================================
+# 账套配置：有哪些账本、账本之间的往来怎么对账
+# 说明见 README「配置 ledger.toml」。新增账本请用：
+#   python3 scripts/ledger.py new-book <名称> [--template personal|business|minimal] [--link <已有账本>]
+# ============================================================
+
+[ledger]
+timezone = "Asia/Shanghai"      # 记账时区：自动注入的 time、未来日期/时间校验都按它
+base_currency = "CNY"           # 本位币：networth 折算合计的目标币种
+
+[books.personal]
+title = "个人账本"
+kind = "personal"
+
+# ------------------------------------------------------------
+# 还有别的会计主体？比如店铺/工作室、家庭共同账、多人 AA 的活动经费——用命令新建最省事：
+#   python3 scripts/ledger.py new-book shop --template business --title "我的小店" --link personal
+# 它会追加类似下面的配置（手写也可以）：
+#
+# [books.shop]
+# title = "我的小店"
+# kind = "business"          # business：月报看经营结余；personal：月报算储蓄率
+# consolidate = true         # 是否并入 networth 合并资产负债（默认 true；与别人共有的账本可设 false）
+#
+# [[mirrors]]                # 一对往来镜像科目：同一笔钱两本账各记一边，两侧余额相加必须为 0
+# name = "personal 垫付 shop"
+# currency = "CNY"
+# accounts = { personal = "Assets:Receivable:Shop", shop = "Liabilities:OwnerLoan" }
+#
+# 只是想单独看某件事（一次旅行、装修、婚礼）花了多少钱？不用新建账本，打标签就行（CATEGORIES.md 4.5）。
+# ------------------------------------------------------------
