@@ -176,7 +176,7 @@
 ## 6. AI 入账操作流程
 
 1. 先读 `CATEGORIES.md`（规则）和 `STATE.md`（当前临时状态），再把口语转成规范分录：书面摘要、写明对方、必填要素齐全、标签按需，STATE 里生效的标签一并带上。
-2. 执行 `printf '%s' '<分录>' | python3 scripts/ledger.py add <账本>`。脚本自动校验，不平衡或科目不存在就自动回滚。
+2. 用 `python3 scripts/ledger.py add <账本>` 入账，分录用 heredoc 传入（写法见 `AGENTS.md`「入账」）。脚本自动校验，不平衡或科目不存在就自动回滚。
 3. 回报用户：大类、金额、结算账户、标签。
 4. 如果这笔涉及两本账之间的往来，**两本账都要记**，记完跑 `python3 scripts/ledger.py reconcile`，确认每对镜像科目仍然相加为 0。
 5. 提交前跑 `python3 scripts/ledger.py check` 确认通过，用 `git status` 过一遍变更，然后 `git add -A && git commit && git push`（提交信息规范见 `AGENTS.md`）。

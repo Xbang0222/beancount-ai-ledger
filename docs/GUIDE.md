@@ -18,11 +18,11 @@
 
 ## 一、第一次用：让 AI 帮你建账
 
-在仓库目录打开 Claude Code（或 Codex），把你的账户和余额一次说清楚：
+在仓库目录打开 Claude Code（或 Codex 等），把你的账户和余额一次说清楚：
 
 > 帮我初始化账本，从今天开始记。我有：招商银行卡 5000，支付宝 1200，微信 800，现金 300；信用卡欠 1500，花呗欠 420。平时没说怎么付的就算微信。
 
-AI 会做这些：
+AI 会先运行 `doctor` 检查环境：缺依赖会自己装好；仓库如果是公开的，会先提醒你改成私有。然后：
 
 1. 改科目表 `personal/accounts.beancount`：把「主力银行卡」改成招商银行，删掉你用不到的账户；
 2. 在 `personal/opening.beancount` 登记这些余额作为期初；
@@ -143,6 +143,14 @@ AI 会把行程记在 `STATE.md` 里，这几天记的支出都会自动打上 `
 
 > 在日本刷信用卡买东西，账单显示 142 块，原价 20 美元。
 
+### 导入支付宝、微信账单
+
+把导出的账单文件放进仓库目录（`.csv`、`.xlsx` 不会被提交），然后说：
+
+> 这是我 9 月的支付宝账单，帮我把还没记的都记进去。
+
+AI 会先跟你确认时间范围和账户对应关系，跳过已经记过的，再一笔一笔入账，最后告诉你导入了几笔、跳过了几笔。
+
 ### 说不清是什么钱的时候
 
 > 转给小李 300。
@@ -225,13 +233,20 @@ AI 会逐个核对：
 
 ## 九、在其他 AI 工具里用
 
-Claude Code 和 Codex 会自动读取 `AGENTS.md`，打开就能用。其他 AI 工具（Cursor、Gemini CLI 等）第一句先发这段：
+给 AI 的规则写在 `AGENTS.md`，下面这些工具打开仓库就会读到，不用额外设置：
+
+- Claude Code 读 `CLAUDE.md`，Gemini CLI 读 `GEMINI.md`，这两个文件会把 `AGENTS.md` 和记账规则一起载入；
+- Codex、Cursor、GitHub Copilot 等直接读 `AGENTS.md`。
+
+用的工具不读这些文件时，第一句先发这段：
 
 ```text
-你是我的记账员。请先阅读仓库里的 AGENTS.md、CATEGORIES.md、STATE.md，严格按其中的规矩记账：
-只能通过 python3 scripts/ledger.py add 入账，一次一笔，不许估时间；
+你是我的记账员。先运行 python3 scripts/ledger.py doctor 检查环境，再阅读仓库里的 AGENTS.md、CATEGORIES.md、STATE.md，
+严格按其中的规矩记账：只能通过 scripts/ledger.py add 入账，一次一笔，不许估时间；
 记完回报大类、金额、付款账户和标签，check 通过后提交 git。
 ```
+
+在 Claude Code 里，仓库自带的 `.claude/settings.json` 已经允许 AI 直接运行记账脚本和 `git add / commit / push`，不用每一步都点确认。
 
 ## 十、小技巧与常见问题
 

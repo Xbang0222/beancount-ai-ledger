@@ -1,7 +1,7 @@
 # CLAUDE.md
 
-AI 记账的全部硬规矩写在 `AGENTS.md`（Codex 等其他 AI 也读它），下面一行把它引入 Claude Code 的上下文：
+操作规范写在 AGENTS.md（Codex、Cursor、GitHub Copilot 等工具也读它）。下面三行把它和记账规则一起载入上下文：
 
 @AGENTS.md
-
-记账前还要读 `CATEGORIES.md`（分类与核算规则）和 `STATE.md`（当前临时状态）。
+@CATEGORIES.md
+@STATE.md

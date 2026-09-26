@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/ledger.py *)",
+      "Bash(python scripts/ledger.py *)",
+      "Bash(py scripts/ledger.py *)",
+      "Bash(python3 scripts/bootstrap.py *)",
+      "Bash(python scripts/bootstrap.py *)",
+      "Bash(py scripts/bootstrap.py *)",
+      "Bash(python3 -m pytest *)",
+      "Bash(python -m pytest *)",
+      "Bash(git pull --ff-only)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push)"
+    ]
+  }
+}
