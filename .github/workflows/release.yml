@@ -1,8 +1,10 @@
 name: Release
 
+# 两种触发方式：推送 v* 标签；或在 Actions 页面手动运行，按 ledgerlib.__version__ 在当前提交上打标签。
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -23,18 +25,24 @@ jobs:
           python -m pytest tests/ -q
           python scripts/ledger.py check
           python scripts/ledger.py --root examples/demo check
-      - name: 核对版本号
+      - name: 确定版本号
+        id: ver
         run: |
           version="$(python scripts/ledger.py --version | awk '{print $2}')"
-          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+          tag="v${version}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "${tag}" ]; then
             echo "标签 ${GITHUB_REF_NAME} 与 ledgerlib.__version__（${version}）不一致"
             exit 1
           fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
       - name: 从 CHANGELOG.md 提取发布说明
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           python - <<'PY'
           import os, re
-          version = os.environ["GITHUB_REF_NAME"].lstrip("v")
+          version = os.environ["VERSION"]
           text = open("CHANGELOG.md", encoding="utf-8").read()
           m = re.search(r"^## \[" + re.escape(version) + r"\][^\n]*\n(.*?)(?=^## \[|^\[[^\]]+\]: |\Z)", text, re.S | re.M)
           notes = m.group(1).strip() if m else ""
@@ -45,4 +53,10 @@ jobs:
       - name: 创建 GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md --verify-tag
+          TAG: ${{ steps.ver.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG 已经发布过了，先在 ledgerlib/__init__.py 和 CHANGELOG.md 里升版本号"
+            exit 1
+          fi
+          gh release create "$TAG" --title "$TAG" --notes-file release-notes.md --target "$GITHUB_SHA"

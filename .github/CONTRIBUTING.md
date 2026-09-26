@@ -44,3 +44,9 @@ python3 -m pytest tests/ -q
 - 用户和 AI 都依赖现有命令的用法与输出格式，要改的话请先开 Issue 讨论。
 - 只用标准库和 `requirements.txt` 里的依赖。新增依赖请先讨论。
 - 面向用户的输出、文档和注释用中文。
+
+## 发布新版本（维护者）
+
+1. 更新 `scripts/ledgerlib/__init__.py` 里的 `__version__`，把 `CHANGELOG.md` 的 `[Unreleased]` 整理成新版本的条目。
+2. 合并到 `main` 后，推送 `v<版本号>` 标签，或者在 Actions 页面手动运行 Release 工作流。
+3. 工作流会先跑测试，再按 `CHANGELOG.md` 创建 GitHub Release。
