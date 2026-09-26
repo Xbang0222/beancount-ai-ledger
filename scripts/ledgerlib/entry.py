@@ -59,10 +59,10 @@ def count_transactions(block):
 
 
 def inject_time(block, now=None):
-    """分录未含 time 元数据时注入当前时间（配置时区）。
+    """交易未含 time 元数据时注入当前时间（配置时区）。
 
     无论交易日期是否为今天都注入：补记历史账同样带 time（即录入时刻），口径见 CATEGORIES.md 第 7 节。
-    用户已手写 time 的不覆盖。
+    用户已手写 time 的不覆盖；余额断言、价格等非交易指令不注入（balance 断言的是当天开始时，time 无意义）。
     """
     if TIME_RE.search(block):
         return block
@@ -70,7 +70,7 @@ def inject_time(block, now=None):
     # 定位交易首行（而非固定第 2 行）：块首可能有注释行，插错位置会导致语法错误
     header = None
     for i, line in enumerate(lines):
-        if TXN_RE.match(line) or DATE_RE.match(line):
+        if TXN_RE.match(line):
             header = i
             break
     if header is None:

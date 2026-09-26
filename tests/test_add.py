@@ -139,3 +139,19 @@ def test_入口文件不在根目录时_include_按入口文件相对路径写(l
     assert _add(GOOD) == 0
     main_text = (ledger / "books" / "personal.beancount").read_text(encoding="utf-8")
     assert 'include "../personal/journal/2026-09.beancount"' in main_text
+
+
+def test_余额断言对得上时写入且不注入_time(ledger, capsys):
+    """用户报“支付宝现在还剩多少”时，用 balance 断言核对；断言日期写明天才包含今天的交易。"""
+    assert _add("2026-09-24 balance Assets:Alipay  -20.00 CNY") == 0
+    text = _journal(ledger).read_text(encoding="utf-8")
+    assert text.rstrip().endswith("2026-09-24 balance Assets:Alipay  -20.00 CNY")
+    assert "通过校验" in capsys.readouterr().out
+
+
+def test_余额断言对不上时回滚并报出差额(ledger, capsys):
+    before = _journal(ledger).read_bytes()
+    assert _add("2026-09-24 balance Assets:Alipay  0.00 CNY") == 1
+    assert _journal(ledger).read_bytes() == before
+    out = capsys.readouterr().out
+    assert "已回滚" in out and "20.00" in out

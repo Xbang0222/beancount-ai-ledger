@@ -115,6 +115,8 @@ def build_parser():
                     help="账本性质：personal 算储蓄率 / business 看经营结余；默认随模板")
     nb.add_argument("--link", metavar="BOOK", help="与已有账本建立往来（生成双边往来科目与 [[mirrors]]）")
     nb.add_argument("--open-date", metavar="YYYY-MM-DD", help="科目开户日期，默认 1970-01-01")
+    nb.add_argument("--no-consolidate", action="store_true",
+                    help="不并入 networth 合并资产负债（与他人共有的账本，如家庭共同账）")
 
     return p
 
@@ -174,7 +176,8 @@ def _dispatch(args):
         from .newbook import cmd_new_book
 
         return cmd_new_book(args.name, template=args.template, title=args.title, kind=args.kind,
-                            link=args.link, open_date=args.open_date)
+                            link=args.link, open_date=args.open_date,
+                            consolidate=not args.no_consolidate)
     if getattr(args, "book", None) is not None:
         config.get_book(args.book)  # 未声明的账本名在这里统一报错并列出可选项
 

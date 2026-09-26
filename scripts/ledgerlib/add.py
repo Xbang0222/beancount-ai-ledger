@@ -137,6 +137,10 @@ def _write(book, ym, block):
             print(f"   ...另有 {len(errors) - MAX_SHOWN_ERRORS} 个错误未显示")
         return 1
 
+    if count_transactions(block) == 0:
+        # 余额断言、价格等非交易指令：能走到这里说明校验通过（断言不符会在上面回滚并报出差额）
+        print(f"[OK] 已写入并通过校验：{book} -> {jrel}")
+        return 0
     print(f"[OK] 已入账：{book} -> {jrel}")
     # 复用校验时已加载的 entries，不再为出汇总重新解析一遍账本
     print_summary(book, ym, entries=entries)

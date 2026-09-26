@@ -9,6 +9,8 @@
 
 这套账套最初是作者自己每天用 AI 记账、一条条踩坑打磨出来的，现在把代码和规则整理成通用模板开源出来。
 
+📖 **不知道该怎么跟 AI 说？看 [使用指南](docs/GUIDE.md)**：建账、日常记账、AA、借钱、退款、旅行、改错、查账、对账，每种情况都有可以照着说的例句。
+
 ## 能做什么
 
 - **口语记账**：说人话就行，AI 按 [`CATEGORIES.md`](CATEGORIES.md) 里的规则选科目、写摘要、打标签，然后一句话回报「大类、金额、付款账户、标签」，错了你一句话纠正。
@@ -102,6 +104,8 @@ pip install -r requirements.txt     # 或 bash scripts/setup.sh（装依赖并�
 **用 AI 记**（推荐）：在仓库目录打开 Claude Code 或 Codex，直接说「昨晚和朋友吃烧烤 AA，我先付了 240，微信」。
 AI 会先读 [`AGENTS.md`](AGENTS.md)（硬规矩）、[`CATEGORIES.md`](CATEGORIES.md)（分类规则）、[`STATE.md`](STATE.md)（临时状态），再通过脚本入账、校验、提交。
 
+第 3 步也可以直接交给 AI：「帮我初始化账本，从今天开始记。我有招商银行卡 5000、支付宝 1200、微信 800，信用卡欠 1500。」更多说法见 [使用指南](docs/GUIDE.md)。
+
 **手动记**：分录从 stdin 传给 `add`，一次一笔：
 
 ```bash
@@ -144,6 +148,7 @@ python3 scripts/ledger.py --root examples/demo networth               # 合并�
 ├── CLAUDE.md                   # Claude Code 入口
 ├── CATEGORIES.md               # 分类与核算规则（改成你自己的）
 ├── STATE.md                    # 临时状态：进行中的行程、临时默认账户等
+├── docs/GUIDE.md               # 使用指南：各种情况怎么跟 AI 说
 ├── examples/
 │   ├── cookbook.beancount      # 各类分录写法范例
 │   └── demo/                   # 虚构的两本账示例
@@ -165,8 +170,8 @@ python3 scripts/ledger.py --root examples/demo networth               # 合并�
 # 店铺账（经营科目模板），并和个人账建立往来
 python3 scripts/ledger.py new-book shop --template business --title "我的小店" --link personal
 
-# 家庭共同账（最小模板），不并入你个人的净资产
-python3 scripts/ledger.py new-book family --template minimal --title "家庭共同账"
+# 家庭共同账（最小模板），与他人共有、不并入你个人的净资产
+python3 scripts/ledger.py new-book family --template minimal --title "家庭共同账" --no-consolidate
 ```
 
 `--link personal` 会在两本账各开一对往来科目，并登记两对「镜像」：
@@ -227,7 +232,7 @@ accounts = { personal = "Assets:Receivable:Shop", shop = "Liabilities:OwnerLoan"
 | `reconcile` | 跨账本往来对账 |
 | `fmt [--check] [账本]` | 序时簿排版：按日期时间重排、分录间空一行；前后比对余额，不动账 |
 | `books` | 列出账本与往来镜像 |
-| `new-book <名称> [--template personal\|business\|minimal] [--title T] [--link 账本] [--open-date D]` | 新建账本 |
+| `new-book <名称> [--template personal\|business\|minimal] [--title T] [--link 账本] [--no-consolidate]` | 新建账本 |
 
 ## 为什么这样设计
 

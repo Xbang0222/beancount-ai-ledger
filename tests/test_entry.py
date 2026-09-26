@@ -92,3 +92,8 @@ def test_非法月份被拒(bad):
 def test_合法月份通过():
     assert entry.parse_ym("2026-09") == "2026-09"
     assert entry.parse_ym("2026-12") == "2026-12"
+
+
+def test_非交易指令不注入_time():
+    block = "2026-09-24 balance Assets:Alipay  100.00 CNY"
+    assert entry.inject_time(block, now=FIXED) == block

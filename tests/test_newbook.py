@@ -105,3 +105,10 @@ def test_校验失败时整体还原(ledger, monkeypatch, capsys):
     assert _snapshot(ledger) == before
     assert not (ledger / "studio").exists()
     assert "已还原全部改动" in capsys.readouterr().out
+
+
+def test_与他人共有的账本可不并入净资产(ledger, capsys):
+    assert newbook.cmd_new_book("family", template="minimal", title="家庭共同账", consolidate=False) == 0
+    assert config.load().books["family"].consolidate is False
+    assert cli.main(["networth"]) == 0
+    assert "【未合并的账本】family" in capsys.readouterr().out

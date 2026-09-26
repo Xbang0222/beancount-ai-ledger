@@ -2,7 +2,7 @@
 
   python3 scripts/ledger.py new-book personal                                  # 个人账
   python3 scripts/ledger.py new-book shop --template business --link personal   # 店铺账，与个人账建立往来
-  python3 scripts/ledger.py new-book family --template minimal --title "家庭共同账"
+  python3 scripts/ledger.py new-book family --template minimal --title "家庭共同账" --no-consolidate
 
 --link 会在两本账各开一对往来科目，并在 ledger.toml 里登记两对 [[mirrors]]；此后两本账之间的
 垫付/代收按双边镜像登记，reconcile 自动核对两侧是否相加为 0。
@@ -131,7 +131,8 @@ def _fail(msg):
     return 1
 
 
-def cmd_new_book(name, template="personal", title=None, kind=None, link=None, open_date=None):
+def cmd_new_book(name, template="personal", title=None, kind=None, link=None, open_date=None,
+                 consolidate=True):
     root = config.ROOT
     if not config.BOOK_NAME_RE.match(name):
         return _fail(f"账本名 {name!r} 不合法：只能用小写字母开头的小写字母、数字、- 和 _（如 personal、shop、family）")
@@ -186,6 +187,8 @@ def cmd_new_book(name, template="personal", title=None, kind=None, link=None, op
         notes += [f"新建  {main_rel}", f"新建  {name}/accounts.beancount", f"新建  {name}/opening.beancount"]
 
         toml_text = f"\n[books.{name}]\ntitle = {_toml_str(title)}\nkind = \"{kind}\"\n"
+        if not consolidate:
+            toml_text += "consolidate = false            # 与他人共有：不并入 networth 合并资产负债\n"
         if link:
             toml_text += _link(ch, cfg, name, title, link, base, open_date, owner_accounts, notes)
         if cfg is None:
@@ -205,7 +208,8 @@ def cmd_new_book(name, template="personal", title=None, kind=None, link=None, op
         ch.rollback()
         return _fail(f"新建账本失败，已还原全部改动：{ex}")
 
-    print(f"[OK] 已新建账本 {name}（{title}，kind = {kind}，模板 {template}）")
+    merged = "" if consolidate else "，不并入 networth"
+    print(f"[OK] 已新建账本 {name}（{title}，kind = {kind}，模板 {template}{merged}）")
     for n in notes:
         print(f"  {n}")
     print("\n下一步：")
