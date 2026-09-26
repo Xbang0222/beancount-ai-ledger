@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用指南
+    url: https://github.com/Xbang0222/beancount-ai-ledger/blob/main/docs/GUIDE.md
+    about: 各种情况怎么跟 AI 说，提问前可以先看这里
+  - name: 报告安全问题
+    url: https://github.com/Xbang0222/beancount-ai-ledger/security/advisories/new
+    about: 安全问题请私下报告，不要公开提交

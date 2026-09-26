@@ -1,0 +1,51 @@
+name: 报告问题
+description: 脚本出错、结果不对或文档有误
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **请不要贴真实的账本内容。** 复现问题请用 `examples/demo` 示例账本，或者造几笔假数据。
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 发生了什么，和你预期的有什么不同。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 运行的命令，以及用到的分录（用假数据）。
+      placeholder: |
+        python3 scripts/ledger.py --root examples/demo report personal 2026-09
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: 命令输出
+      description: 完整的报错或输出。
+      render: text
+  - type: textarea
+    id: doctor
+    attributes:
+      label: doctor 输出
+      description: 运行 `python3 scripts/ledger.py doctor`，删掉仓库地址等个人信息后贴在这里。
+      render: text
+  - type: input
+    id: environment
+    attributes:
+      label: 操作系统与 AI 工具
+      placeholder: 例如 macOS 15 + Claude Code，Windows 11 + Codex
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我搜索过已有的 Issue，没有重复
+          required: true
+        - label: 上面的内容里没有我的真实账本数据
+          required: true
