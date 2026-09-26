@@ -141,6 +141,31 @@ def test_入口文件不在根目录时_include_按入口文件相对路径写(l
     assert 'include "../personal/journal/2026-09.beancount"' in main_text
 
 
+def test_从文件读取分录_兼容_BOM_与_CRLF(ledger, tmp_path):
+    """PowerShell 管道会把中文变成问号，所以 add 也能从 UTF-8 文件读。"""
+    f = tmp_path / "entry.tmp"
+    f.write_bytes(b"\xef\xbb\xbf" + GOOD.replace("\n", "\r\n").encode("utf-8"))
+    assert add.cmd_add("personal", path=str(f)) == 0
+    text = _journal(ledger).read_text(encoding="utf-8")
+    assert "餐饮-晚餐" in text and "\r" not in text
+
+
+def test_分录文件不存在时报错且不写入(ledger, tmp_path, capsys):
+    before = _journal(ledger).read_bytes()
+    assert add.cmd_add("personal", path=str(tmp_path / "nope.tmp")) == 1
+    assert _journal(ledger).read_bytes() == before
+    assert "读不了分录文件" in capsys.readouterr().out
+
+
+def test_命令行_add_支持_file_参数(ledger, tmp_path):
+    from ledgerlib import cli
+
+    f = tmp_path / "entry.tmp"
+    f.write_text(GOOD, encoding="utf-8")
+    assert cli.main(["add", "personal", "--file", str(f)]) == 0
+    assert "餐饮-晚餐" in _journal(ledger).read_text(encoding="utf-8")
+
+
 def test_余额断言对得上时写入且不注入_time(ledger, capsys):
     """用户报“支付宝现在还剩多少”时，用 balance 断言核对；断言日期写明天才包含今天的交易。"""
     assert _add("2026-09-24 balance Assets:Alipay  -20.00 CNY") == 0

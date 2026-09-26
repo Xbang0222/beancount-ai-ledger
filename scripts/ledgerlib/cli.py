@@ -5,15 +5,17 @@ import re
 import sys
 from decimal import Decimal, InvalidOperation
 
-from . import config
+from . import __version__, config
 from .books import load_book, print_errors
 from .display import pad
 from .entry import parse_ym
 
 EPILOG = """\
 示例：
+  python3 scripts/ledger.py doctor                       检查环境与账套状态（第一次用先跑它）
   python3 scripts/ledger.py check                        校验全部账本（有往来镜像时连带对账）
-  printf '%s' '<分录>' | python3 scripts/ledger.py add personal
+  python3 scripts/ledger.py add personal <<'EOF'         从 stdin 录一笔，分录写在 heredoc 里，以 EOF 结束
+  python3 scripts/ledger.py add personal --file entry.tmp   从 UTF-8 文件录一笔（PowerShell 等没有 heredoc 时用）
   python3 scripts/ledger.py recent personal              最近 10 笔（核对刚才记上没有）
   python3 scripts/ledger.py summary personal 2026-09     按一级大类汇总
   python3 scripts/ledger.py balances personal            科目余额表
@@ -66,13 +68,18 @@ def build_parser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("--root", metavar="DIR", help="账套根目录（ledger.toml 所在目录），默认为本仓库根目录")
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = p.add_subparsers(dest="cmd", metavar="命令")
+
+    sub.add_parser("doctor", help="检查运行环境、各账本状态和 Git 远程仓库是否安全")
 
     c = sub.add_parser("check", help="校验全部账本（有往来镜像时默认连带对账）")
     c.add_argument("--no-reconcile", action="store_true", help="跳过跨账本往来对账")
 
-    a = sub.add_parser("add", help="从 stdin 追加一笔分录（自动校验，失败自动回滚）")
+    a = sub.add_parser("add", help="追加一笔分录（从 stdin 或 --file 读取；自动校验，失败自动回滚）")
     a.add_argument("book")
+    a.add_argument("-f", "--file", metavar="PATH",
+                   help="从 UTF-8 文本文件读取分录，不读 stdin（Windows PowerShell 管道会弄坏中文时用）")
 
     rc = sub.add_parser("recent", help="按发生时间列出最近几笔交易")
     rc.add_argument("book")
@@ -172,6 +179,10 @@ def main(argv=None):
 
 
 def _dispatch(args):
+    if args.cmd == "doctor":
+        from .doctor import cmd_doctor
+
+        return cmd_doctor()
     if args.cmd == "new-book":
         from .newbook import cmd_new_book
 
@@ -188,7 +199,7 @@ def _dispatch(args):
     if args.cmd == "add":
         from .add import cmd_add
 
-        return cmd_add(args.book)
+        return cmd_add(args.book, path=args.file)
     if args.cmd == "reconcile":
         from .reconcile import cmd_reconcile
 

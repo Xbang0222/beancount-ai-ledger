@@ -2,8 +2,9 @@
 """统一记账入口（由 AI 调用，也可手动运行）。
 
 用法：
-  python3 scripts/ledger.py check                               校验全部账本（有往来镜像时含跨账本对账）
-  printf '%s' '<分录>' | python3 scripts/ledger.py add <账本>     追加【一笔】（自动校验，失败自动回滚）
+  python3 scripts/ledger.py doctor                               检查环境与账套状态（第一次用先跑它）
+  python3 scripts/ledger.py check                                校验全部账本（有往来镜像时含跨账本对账）
+  python3 scripts/ledger.py add <账本> [--file 文件]  < 分录       追加【一笔】（自动校验，失败自动回滚）
   python3 scripts/ledger.py recent <账本> [-n N]                 最近 N 笔交易
   python3 scripts/ledger.py summary <账本> [YYYY-MM]             按大类汇总支出/收入
   python3 scripts/ledger.py balances <账本>                      各账户余额
@@ -16,29 +17,23 @@
   python3 scripts/ledger.py new-book <名称> [--template ...] [--link ...]   新建账本
 
 账本名来自账套根目录的 ledger.toml。实现拆分在 scripts/ledgerlib/ 下，本文件只做入口转发。
+缺依赖时，如果仓库里有 .venv（scripts/bootstrap.py 建的），会自动改用 .venv 的解释器运行。
 """
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from ledgerlib.cli import main  # noqa: E402
-
-
-def _utf8_output():
-    """输出编码表示不了中文时（如英文版 Windows 把输出重定向到管道）改用 UTF-8，避免打印报错。"""
-    for stream in (sys.stdout, sys.stderr):
-        try:
-            "账".encode(stream.encoding or "ascii")
-        except (UnicodeEncodeError, LookupError):
-            try:
-                stream.reconfigure(encoding="utf-8", errors="replace")
-            except (AttributeError, ValueError):
-                pass
+from ledgerlib import env  # noqa: E402  只用标准库，依赖没装时也能导入
 
 
 def _run():
-    _utf8_output()
+    env.utf8_output()
+    rc = env.ensure(__file__, sys.argv[1:])
+    if rc is not None:
+        return rc
+    from ledgerlib.cli import main
+
     try:
         return main()
     except BrokenPipeError:

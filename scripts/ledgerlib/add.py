@@ -38,9 +38,8 @@ def _book_lock():
         os.close(fd)
 
 
-def _read_stdin():
-    """按 UTF-8 读 stdin（兼容 Windows 管道带 BOM 或走本地编码的情况）。"""
-    raw = sys.stdin.buffer.read()
+def _decode(raw):
+    """按 UTF-8 解码（兼容带 BOM 或走本地编码的 Windows 管道与文件）。"""
     try:
         return raw.decode("utf-8-sig")
     except UnicodeDecodeError:
@@ -49,11 +48,19 @@ def _read_stdin():
         return raw.decode(locale.getpreferredencoding(False))
 
 
-def cmd_add(book, stream=None):
-    block = (stream.read() if stream is not None else _read_stdin())
+def cmd_add(book, stream=None, path=None):
+    if path is not None:
+        try:
+            with open(path, "rb") as f:
+                block = _decode(f.read())
+        except OSError as ex:
+            print(f"[FAIL] 读不了分录文件 {path}：{ex.strerror or ex}（本次未写入）。")
+            return 1
+    else:
+        block = stream.read() if stream is not None else _decode(sys.stdin.buffer.read())
     block = block.replace("\r\n", "\n").strip("\n")
     if not block.strip():
-        print("[FAIL] 没有读到分录：请通过 stdin 传入一笔分录（本次未写入）。")
+        print("[FAIL] 没有读到分录：请从 stdin 或 --file 传入一笔分录（本次未写入）。")
         return 1
     err = future_error(block)
     if err:

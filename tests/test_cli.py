@@ -49,6 +49,13 @@ def test_recent_笔数必须为正整数(ledger, n):
     assert _exit_code(["recent", "personal", "-n", n]) != 0
 
 
+def test_version_输出版本号(capsys):
+    from ledgerlib import __version__
+
+    assert _exit_code(["--version"]) == 0
+    assert __version__ in capsys.readouterr().out
+
+
 def test_无命令时打印帮助并返回非零(capsys):
     assert cli.main([]) == 1
     out = capsys.readouterr().out
