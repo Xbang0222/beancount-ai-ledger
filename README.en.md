@@ -91,7 +91,7 @@ The detailed documentation is in Chinese.
 | Document | Contents |
 |---|---|
 | [Quick start with Git](docs/QUICKSTART.md) | Private repository, dependencies, first session |
-| [Without Git](docs/NO-GIT.md) | For chat assistants with a cloud computer and a cloud drive, such as Doubao: the ledger is kept as a zip in your own drive |
+| [Without Git](docs/NO-GIT.md) | For chat assistants with a cloud computer and a cloud drive, such as Doubao: the ledger lives on the cloud computer, with a daily zip backup in your own drive |
 | [User guide](docs/GUIDE.md) | What to say to the agent for recording, fixing, querying and reconciling |
 | [Commands and configuration](docs/REFERENCE.md) | All `ledger.py` commands, multiple books, `ledger.toml`, project layout |
 | [FAQ](docs/FAQ.md) | Supported tools, Windows, cloud agents, upgrading the template |

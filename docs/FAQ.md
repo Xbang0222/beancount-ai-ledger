@@ -10,7 +10,7 @@
 每次会话都是新环境，AI 会按 `AGENTS.md` 先运行 `bootstrap.py` 安装依赖，然后照常记账。
 
 **不会用 Git 能用吗？账本存在哪？**
-能。账本以压缩包的形式存在你自己的云盘里，做法见[不用 Git：账本存云盘](NO-GIT.md)。
+能。账本放在豆包这类 AI 的云电脑里，每天往你自己的云盘备份一份，做法见[不用 Git：只用豆包记账](NO-GIT.md)。
 
 **多台设备同时记账会冲突吗？**
 AI 每次开始前会先 `git pull --ff-only`。同一台机器上 `add` 带文件锁，并发写入不会互相覆盖。
@@ -35,4 +35,4 @@ python3 -m pytest tests/ -q && python3 scripts/ledger.py check
 git commit -m "chore(script): 同步上游脚本"
 ```
 
-`AGENTS.md`、`CATEGORIES.md` 里可能有你自己改过的规则，请对照[更新日志](../CHANGELOG.md)手动合并。
+`AGENTS.md`、`CATEGORIES.md` 里可能有你自己改过的规则，请对照[更新日志](../CHANGELOG.md)手动合并。让 AI 来做的话，说一句"帮我升级记账项目"。

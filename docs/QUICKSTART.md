@@ -1,7 +1,7 @@
 # 快速开始：用 Git 保存账本
 
 适合在自己电脑上用 Claude Code、Codex 这类 AI 编程助手的人。账本放在你自己的私有 Git 仓库里。
-不会用 Git、只用豆包的，看[不用 Git：账本存云盘](NO-GIT.md)。
+不会用 Git、只用豆包的，看[不用 Git：只用豆包记账](NO-GIT.md)。
 
 需要 Python 3.9 或更高版本，以及 Git。
 

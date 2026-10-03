@@ -1,11 +1,15 @@
 """backup：把整个账套打成一个压缩包。
 
-给没有远程仓库的环境用：豆包这类云电脑每次会话都会重置，账本得存到用户的云盘或网盘里。
+给没有远程仓库的环境用：账本存到用户的云盘或网盘里，不需要 GitHub 账号。
 一个压缩包就是一份完整的账套（账本、规则、脚本）；账套目录是 Git 仓库时连提交历史一起带上，
-解压出来仍然是一个能接着提交的仓库，用户不需要 GitHub 账号。
+解压出来仍然是一个能接着提交的仓库。
+
+账套目录能长期保留的环境（如豆包云电脑的个人目录），压缩包只是保险，用 --daily 每天打一份；
+留不住的环境，每批改动后都打一份。
 
 先校验再打包：有错误的账本不生成压缩包，免得拿坏的那份盖掉云盘里好的那份。
 """
+import glob
 import os
 import shutil
 import subprocess
@@ -18,6 +22,9 @@ from .query import last_summary
 # 压缩包里的顶层目录名：解压出来就是一个叫 ledger 的账套目录
 ARCHIVE_ROOT = "ledger"
 DEFAULT_DIR = "backups"
+PREFIX = "ledger-backup-"
+# 默认目录里只留最近几份：历史已经在压缩包里，多留只是防某一份坏掉
+KEEP = 3
 
 # 环境与缓存可以重建，原始账单含敏感信息，旧备份不必套娃
 SKIP_DIRS = {".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", ".fava",
@@ -75,8 +82,24 @@ def _history(root):
     return commits, len([line for line in status.splitlines() if line.strip()])
 
 
-def cmd_backup(out_dir=None, now=None):
+def _existing(folder, day=""):
+    """目录里已有的备份，按文件名（也就是时间）从旧到新；day 是 YYYYMMDD 时只要那一天的。"""
+    return sorted(glob.glob(os.path.join(glob.escape(folder), f"{PREFIX}{day}*.zip")))
+
+
+def cmd_backup(out_dir=None, now=None, daily=False):
     cfg = config.load()
+    if now is None:
+        from .entry import now_local
+
+        now = now_local()
+    default_dir = os.path.join(config.ROOT, DEFAULT_DIR)
+    if daily:
+        today = _existing(os.path.abspath(out_dir or default_dir), f"{now:%Y%m%d}")
+        if today:
+            print(f"[OK] 今天已经备份过（{os.path.basename(today[-1])}），这次不用再存。"
+                  "要立刻再存一份，去掉 --daily。")
+            return 0
     ok, lines = True, []
     for book in cfg.books:
         entries, errors, _ = load_book(book)
@@ -89,15 +112,12 @@ def cmd_backup(out_dir=None, now=None):
         print("[FAIL] 账本有错误，没有生成压缩包。先运行 check 修好再备份。")
         return 1
 
-    if now is None:
-        from .entry import now_local
-
-        now = now_local()
-    out_dir = os.path.abspath(out_dir or os.path.join(config.ROOT, DEFAULT_DIR))
+    prune = out_dir is None  # 只清理自己的默认目录，用户指定的目录里的文件不碰
+    out_dir = os.path.abspath(out_dir or default_dir)
     history = _history(config.ROOT)
     files = _files(config.ROOT, out_dir)
     os.makedirs(out_dir, exist_ok=True)
-    path = os.path.join(out_dir, f"ledger-backup-{now:%Y%m%d-%H%M%S}.zip")
+    path = os.path.join(out_dir, f"{PREFIX}{now:%Y%m%d-%H%M%S}.zip")
     tmp = path + ".part"
     try:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
@@ -123,6 +143,9 @@ def cmd_backup(out_dir=None, now=None):
         if dirty:
             print(f"[WARN] 有 {dirty} 个文件的改动还没提交：压缩包里有这些改动，但提交历史里没有。"
                   "先 git add -A && git commit 再备份更稳妥。")
-    print(f"把这个压缩包存到账本所有者的云盘或网盘。下次开始时取最新的一份解压，得到 {ARCHIVE_ROOT}/ 目录，"
+    if prune:
+        for old in _existing(out_dir)[:-KEEP]:
+            os.remove(old)
+    print(f"把这个压缩包存到账本所有者的云盘或网盘。要用它恢复时取最新的一份解压，得到 {ARCHIVE_ROOT}/ 目录，"
           "先核对上面的最后一笔，再接着记。")
     return 0

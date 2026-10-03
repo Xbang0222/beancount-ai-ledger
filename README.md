@@ -64,7 +64,7 @@ $ python3 scripts/ledger.py report personal 2026-09
 | 你的情况 | 看这篇 |
 |---|---|
 | 在自己电脑上用 Claude Code、Codex 等 AI 编程助手，会用 Git | [快速开始：用 Git 保存账本](docs/QUICKSTART.md) |
-| 只用豆包这类 AI，不会用 Git | [不用 Git：账本存云盘](docs/NO-GIT.md) |
+| 只用豆包这类 AI，不会用 Git | [不用 Git：只用豆包记账](docs/NO-GIT.md) |
 
 ## 文档
 

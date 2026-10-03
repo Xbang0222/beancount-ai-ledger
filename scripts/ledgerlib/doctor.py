@@ -22,10 +22,10 @@ TEMPLATE_MARK = "这是模板，请改成你自己的"
 # 没有 Git 时的两条路：会用 Git 的建私有仓库；只用豆包这类云电脑的改用压缩包加云盘
 NO_GIT_TODO = ("在账套目录 git init 并提交，改动才有记录可查。"
                "用户没有远程仓库（如豆包云电脑）：按 AGENTS.md「没有远程仓库时」，"
-               "每批改动后运行 python3 scripts/ledger.py backup，把压缩包存进用户的云盘")
+               "用 python3 scripts/ledger.py backup 把压缩包存进用户的云盘")
 NO_REMOTE_TODO = ("用户会用 GitHub：建一个私有远程仓库，git remote add origin <地址> 后推送；"
                   "用户不会用（如豆包云电脑）：按 AGENTS.md「没有远程仓库时」，"
-                  "每批改动提交后运行 python3 scripts/ledger.py backup，把压缩包存进用户的云盘")
+                  "用 python3 scripts/ledger.py backup 把压缩包存进用户的云盘")
 
 
 class _Report:

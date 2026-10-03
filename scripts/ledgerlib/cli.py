@@ -28,6 +28,7 @@ EPILOG = """\
   python3 scripts/ledger.py networth --rate USD=7.1      临时指定汇率试算
   python3 scripts/ledger.py new-book shop --template business --link personal
   python3 scripts/ledger.py backup                       把整个账套连同 Git 历史打成压缩包（没有远程仓库时存云盘、网盘）
+  python3 scripts/ledger.py backup --daily               同上，今天已经备份过就跳过
   python3 scripts/ledger.py --root examples/demo check   对另一个目录里的账套操作
 
 约定：
@@ -151,7 +152,9 @@ def build_parser():
                     help="不并入 networth 合并资产负债（与他人共有的账本，如家庭共同账）")
 
     bk = sub.add_parser("backup", help="把整个账套连同 Git 历史打成一个压缩包（没有远程仓库时存到云盘、网盘）")
-    bk.add_argument("-o", "--out", metavar="DIR", help="压缩包放到哪个目录，默认账套根目录下的 backups/")
+    bk.add_argument("-o", "--out", metavar="DIR",
+                    help="压缩包放到哪个目录，默认账套根目录下的 backups/（只留最近 3 份）")
+    bk.add_argument("--daily", action="store_true", help="今天已经备份过就跳过，用于每天存一份")
 
     return p
 
@@ -227,7 +230,7 @@ def _dispatch(args):
     if args.cmd == "backup":
         from .backup import cmd_backup
 
-        return cmd_backup(args.out)
+        return cmd_backup(args.out, daily=args.daily)
     if args.cmd == "add":
         from .add import cmd_add
 

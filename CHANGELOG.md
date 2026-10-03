@@ -4,6 +4,26 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-04
+
+在豆包里实测后调整：云电脑的个人目录换对话、重启都还在，账本不必每次从云盘取回。
+
+### 新增
+
+- `backup --daily`：今天已经备份过就跳过，用于每天存一份。
+- `AGENTS.md` 新增「升级工具」：一句"帮我升级记账项目"，只换脚本和文档，账本数据不动。
+
+### 变更
+
+- `AGENTS.md`「没有远程仓库时」分成两种做法：目录能跨对话保留的（如豆包云电脑的个人目录），账本常驻固定目录，云盘每天备份一份，目录丢了自动从云盘恢复；留不住的，仍然每批打包存云盘。
+- `backup` 的默认目录 `backups/` 只留最近 3 份。用 `-o` 指定的目录不清理。
+- `docs/NO-GIT.md` 按新做法重写：更短的开场白、云盘授权说明、升级和从旧做法搬家的提示词。
+- 存云盘一律用带日期的文件名，不覆盖同名文件。
+
+### 修复
+
+- 测试在提交钩子里运行时不再受 `GIT_DIR`、`GIT_INDEX_FILE` 影响。
+
 ## [0.3.0] - 2026-10-04
 
 ### 新增
@@ -62,7 +82,8 @@
 - 中英文 README、使用指南、分录范例和示例账本。
 - CI：Ubuntu（Python 3.9、3.13）和 Windows（Python 3.12）；用模板建的账本仓库只跑账本校验。
 
-[Unreleased]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.1.0...v0.2.0
