@@ -1,6 +1,6 @@
 """账套配置：从账套根目录的 ledger.toml 读取账本清单、跨账本往来镜像、时区与本位币。
 
-ledger.toml 的写法见 README「配置 ledger.toml」。每次调用 load() 都重新读取文件
+ledger.toml 的写法见 docs/REFERENCE.md「多本账」。每次调用 load() 都重新读取文件
 （文件很小），这样测试把 ROOT 指向临时账套、或 new-book 追加了账本后都能立即生效。
 """
 import os
