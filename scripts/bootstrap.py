@@ -6,6 +6,8 @@
   python3 scripts/bootstrap.py --no-check         只装依赖
   python3 scripts/bootstrap.py -i <镜像地址>       指定 PyPI 镜像，如 https://pypi.tuna.tsinghua.edu.cn/simple
 
+没指定镜像而官方源装不上时，会自动换清华镜像再试一次。
+
 当前 Python 已经装好依赖就不再安装；否则在仓库根目录建 .venv（已有就复用），把
 requirements.txt 装进去。之后照常运行 python3 scripts/ledger.py，入口会自动改用 .venv。
 不往系统 Python 里装包，不碰账本数据，不改 Git 配置。只用标准库，Windows / macOS / Linux 通用。
@@ -21,6 +23,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ledgerlib import env  # noqa: E402
 
 LEDGER = os.path.join(env.REPO_ROOT, "scripts", "ledger.py")
+# 官方源装不上时自动换它重试一次：国内网络、云电脑里很常见，省得再让人（或 AI）手动加 -i
+FALLBACK_INDEX = "https://pypi.tuna.tsinghua.edu.cn/simple"
 
 
 def _has_pip(python):
@@ -80,11 +84,13 @@ def main(argv=None):
             return 3
         print("[..] 安装 requirements.txt")
         cmd = [python, "-m", "pip", "install", "--disable-pip-version-check", "-r", env.REQUIREMENTS]
-        if args.index_url:
-            cmd += ["--index-url", args.index_url]
-        if subprocess.call(cmd) != 0:
-            print("[FAIL] 安装失败，原因见上面 pip 的输出。连不上 PyPI 时可以换镜像重试：")
-            print("       python3 scripts/bootstrap.py -i https://pypi.tuna.tsinghua.edu.cn/simple")
+        rc = subprocess.call(cmd + (["--index-url", args.index_url] if args.index_url else []))
+        if rc != 0 and not args.index_url:
+            print(f"[..] 官方源安装失败，换镜像 {FALLBACK_INDEX} 再试一次")
+            rc = subprocess.call(cmd + ["--index-url", FALLBACK_INDEX])
+        if rc != 0:
+            print("[FAIL] 安装失败，原因见上面 pip 的输出。可以换别的镜像重试：")
+            print("       python3 scripts/bootstrap.py -i <镜像地址>")
             return 3
 
     if args.no_check:

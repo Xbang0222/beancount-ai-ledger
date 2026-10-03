@@ -2,7 +2,7 @@
 
 改账和入账走同一套保护：写盘后整本校验，不通过就原样还原。分录用编号定位
 （find / recent 会显示），编号取自分录内容，不随行号漂移。
-作废是把这一笔从序时簿里删掉，原文留在 Git 历史里可查。
+作废是把这一笔从序时簿里删掉，原文会打印出来；之后要找回，查 Git 历史或更早的备份压缩包。
 """
 import os
 
@@ -74,7 +74,7 @@ def cmd_void(book, ident):
         entries, _ = commit(book, {block.path: _without(block)})
         if entries is None:
             return 1
-    print(f"[OK] 已作废：{book} -> {_rel(block.path)}（原文仍在 Git 历史中）")
+    print(f"[OK] 已作废：{book} -> {_rel(block.path)}（原文如下；之后要找回，查 Git 历史或更早的备份）")
     _show(block)
     print_summary(book, block.date[:7], entries=entries)
     mirror_hint(book, block.text, action="同步作废或更正")

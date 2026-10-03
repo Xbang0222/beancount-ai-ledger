@@ -4,8 +4,13 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-04
+
 ### 变更
 
+- `bootstrap.py` 在官方源装不上依赖、又没指定镜像时，自动换清华镜像再试一次。
+- `void` 的提示不再只说"原文在 Git 历史中"，不用 Git 时改查更早的备份。
+- 发布流程增加代码规范检查。
 - 豆包用户第一次使用不用再下载压缩包：`docs/NO-GIT.md` 的开场白改为让 AI 自己下载项目，并一条一条问用户建账需要的信息。
 - `AGENTS.md` 新增「引导新手」：一次只问一件事、不说术语、建好后带用户记第一笔，再教他以后怎么开始、怎么改错、能问什么。
 
@@ -45,6 +50,7 @@
 - 中英文 README、使用指南、分录范例和示例账本。
 - CI：Ubuntu（Python 3.9、3.13）和 Windows（Python 3.12）；用模板建的账本仓库只跑账本校验。
 
-[Unreleased]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Xbang0222/beancount-ai-ledger/releases/tag/v0.1.0

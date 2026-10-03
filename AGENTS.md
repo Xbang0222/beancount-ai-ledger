@@ -8,7 +8,7 @@ Windows 上把命令里的 `python3` 换成 `python` 或 `py`。
 ## 第一次接手
 
 1. 运行 `python3 scripts/ledger.py doctor`。它会报告依赖是否齐全、有哪些账本、账本有没有初始化、Git 远程仓库是否安全，最后列出下一步。
-2. 缺依赖时（任何命令退出码为 3）运行 `python3 scripts/bootstrap.py`，连不上 PyPI 就加 `-i https://pypi.tuna.tsinghua.edu.cn/simple`。
+2. 缺依赖时（任何命令退出码为 3）运行 `python3 scripts/bootstrap.py`。官方源装不上时它会自动换清华镜像再试一次，还不行再用 `-i <镜像地址>` 指定别的镜像。
    依赖装在仓库的 `.venv` 里，之后照常运行 `python3 scripts/ledger.py`，入口会自动改用 `.venv`。
    不要加 `--break-system-packages` 往系统 Python 里装包。
 3. doctor 提示 origin 是公开的模板仓库，或远程仓库是公开的：**先停下来告诉用户**，等用户有了自己的私有仓库再提交账目。
@@ -85,7 +85,7 @@ python3 scripts/ledger.py fmt --check    # 序时簿排版，不过就运行 led
 
 1. 到云盘的「AI记账」文件夹取**文件名里日期最新**的 `ledger-backup-*.zip`，解压得到 `ledger/` 目录，在这个目录里干活。
 2. 云盘里找不到压缩包时，**不要凭空新建账本**：先问用户是第一次用，还是这次忘了给账本。确认是第一次用，才从模板开始（用户没给压缩包就下载 `https://github.com/Xbang0222/beancount-ai-ledger/archive/refs/heads/main.zip` 并解压），按「首次使用」建账。用户说不清自己有哪些账户时，一条一条问：有哪些账户、各有多少钱、有没有欠款、默认用哪个付。
-3. 云电脑重置后依赖要重装：`python3 scripts/bootstrap.py`，国内网络加 `-i https://pypi.tuna.tsinghua.edu.cn/simple`。
+3. 云电脑重置后依赖要重装：`python3 scripts/bootstrap.py`（官方源装不上会自动换国内镜像）。
 4. 运行 `python3 scripts/ledger.py recent <账本> -n 1`，把最后一笔的日期、事由、金额告诉用户，比如"账本里最后一笔是 10 月 3 日买菜 35 元"。用户说不对，说明取到的是旧备份，停下来找最新的那份。用户这句话里已经带了要记的账，报完可以直接记，不用等回复。
 
 每次改动后（记账、更正、改规则都算）：
