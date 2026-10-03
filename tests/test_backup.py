@@ -142,7 +142,7 @@ def test_daily_只有前几天的备份时照常打包(ledger, capsys):
     (ledger / "backups" / "ledger-backup-20260922-080000.zip").write_bytes(b"old")
     assert cli.main(["backup", "--daily"]) == 0
     assert "[OK] 已备份" in capsys.readouterr().out
-    assert len(list((ledger / "backups").glob("*.zip"))) == 2
+    assert [p.name for p in (ledger / "backups").glob("*.zip")] == ["ledger-backup-20260923-213000.zip"]
 
 
 def test_不带daily时同一天可以再存(ledger, monkeypatch):
@@ -154,18 +154,17 @@ def test_不带daily时同一天可以再存(ledger, monkeypatch):
     assert cli.main(["backup"]) == 0
     monkeypatch.setattr(entry, "now_local", lambda: FIXED_NOW + timedelta(minutes=5))
     assert cli.main(["backup"]) == 0
-    assert len(list((ledger / "backups").glob("*.zip"))) == 2
+    assert [p.name for p in (ledger / "backups").glob("*.zip")] == ["ledger-backup-20260923-213500.zip"]
 
 
-def test_默认目录只留最近三份(ledger):
+def test_默认目录只留最新一份(ledger):
     (ledger / "backups").mkdir()
     for day in ("19", "20", "21", "22"):
         (ledger / "backups" / f"ledger-backup-202609{day}-080000.zip").write_bytes(b"old")
     (ledger / "backups" / "别的文件.txt").write_text("留着", encoding="utf-8")
     assert cli.main(["backup"]) == 0
     names = sorted(p.name for p in (ledger / "backups").iterdir())
-    assert names == ["ledger-backup-20260921-080000.zip", "ledger-backup-20260922-080000.zip",
-                     "ledger-backup-20260923-213000.zip", "别的文件.txt"]
+    assert names == ["ledger-backup-20260923-213000.zip", "别的文件.txt"]
 
 
 def test_指定目录时不清理旧备份(ledger):

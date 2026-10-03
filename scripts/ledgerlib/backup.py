@@ -23,8 +23,8 @@ from .query import last_summary
 ARCHIVE_ROOT = "ledger"
 DEFAULT_DIR = "backups"
 PREFIX = "ledger-backup-"
-# 默认目录里只留最近几份：历史已经在压缩包里，多留只是防某一份坏掉
-KEEP = 3
+# 默认目录里只留最新的一份：改动历史已经在压缩包里，旧的没有额外价值
+KEEP = 1
 
 # 环境与缓存可以重建，原始账单含敏感信息，旧备份不必套娃
 SKIP_DIRS = {".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", ".fava",

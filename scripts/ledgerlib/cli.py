@@ -153,7 +153,7 @@ def build_parser():
 
     bk = sub.add_parser("backup", help="把整个账套连同 Git 历史打成一个压缩包（没有远程仓库时存到云盘、网盘）")
     bk.add_argument("-o", "--out", metavar="DIR",
-                    help="压缩包放到哪个目录，默认账套根目录下的 backups/（只留最近 3 份）")
+                    help="压缩包放到哪个目录，默认账套根目录下的 backups/（只留最新一份）")
     bk.add_argument("--daily", action="store_true", help="今天已经备份过就跳过，用于每天存一份")
 
     return p
