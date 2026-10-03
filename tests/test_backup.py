@@ -90,6 +90,7 @@ def _init_repo(ledger):
     _git(ledger, "config", "user.name", "记账助手")
     _git(ledger, "config", "user.email", "ledger@localhost")
     _git(ledger, "config", "commit.gpgsign", "false")
+    _git(ledger, "config", "core.autocrlf", "false")
     _git(ledger, "add", "-A")
     _git(ledger, "commit", "-q", "-m", "chore: 初始化")
     _git(ledger, "gc", "-q")  # 整理后引用被打包，refs/heads 变成空目录
@@ -107,10 +108,10 @@ def test_账套是Git仓库时连提交历史一起打包(ledger, capsys, tmp_pa
     dest = tmp_path_factory.mktemp("restore")
     with zipfile.ZipFile(z) as f:
         f.extractall(dest)
-    log = subprocess.run(["git", "log", "--oneline"], cwd=dest / "ledger", capture_output=True, text=True)
-    assert log.returncode == 0 and len(log.stdout.splitlines()) == 1
-    status = subprocess.run(["git", "status", "--porcelain"], cwd=dest / "ledger", capture_output=True, text=True)
-    assert status.stdout.strip() == ""
+    log = subprocess.run(["git", "rev-list", "--count", "HEAD"], cwd=dest / "ledger", capture_output=True)
+    assert log.returncode == 0 and log.stdout.strip() == b"1"
+    status = subprocess.run(["git", "status", "--porcelain"], cwd=dest / "ledger", capture_output=True)
+    assert status.stdout.strip() == b""
 
 
 def test_有未提交改动时提醒先提交(ledger, capsys):
