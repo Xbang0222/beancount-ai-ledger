@@ -105,6 +105,16 @@ def _write_book(root, name, title, accounts, journal):
         encoding="utf-8")
 
 
+@pytest.fixture(autouse=True)
+def _clean_git_env(monkeypatch):
+    """在提交钩子里跑测试时，Git 会带上 GIT_DIR、GIT_INDEX_FILE 这类变量指向正在提交的真仓库。
+
+    清掉它们，测试里的 git 命令才只作用于 tmp_path 里的临时仓库，不碰真账本。
+    """
+    for key in [k for k in os.environ if k.startswith("GIT_")]:
+        monkeypatch.delenv(key)
+
+
 @pytest.fixture
 def fixed_now(monkeypatch):
     from ledgerlib import entry
