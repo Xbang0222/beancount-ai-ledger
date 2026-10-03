@@ -4,6 +4,19 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-04
+
+### 新增
+
+- `backup` 命令：把整个账套打成一个压缩包，输出各账本的交易笔数和最后一笔。账本有错误时不生成压缩包。
+- 不用 Git 也能用：`AGENTS.md` 新增「不用 Git 时」一节，账本以压缩包形式存在用户的云盘里，适合豆包这类自带云电脑和云盘的 AI。README 和使用指南给出了可以照着说的开场白。
+
+### 变更
+
+- 汇率改为现查现用，不再写进账本：算总资产前查当天汇率，用 `networth --rate` 传入；`CATEGORIES.md` 第 5 节给出了云端环境也能访问的取数命令。基金、股票净值仍然用 `price` 记账。
+- 有多本账时，回答"我有多少钱"按合并口径列示，不列账本之间的往来。
+- `doctor` 发现账套目录不是 Git 仓库时，同时给出建私有仓库和改用云盘两条路。
+
 ## [0.1.0] - 2026-09-27
 
 首个公开版本。
@@ -19,5 +32,6 @@
 - 中英文 README、使用指南、分录范例和示例账本。
 - CI：Ubuntu（Python 3.9、3.13）和 Windows（Python 3.12）；用模板建的账本仓库只跑账本校验。
 
-[Unreleased]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Xbang0222/beancount-ai-ledger/releases/tag/v0.1.0

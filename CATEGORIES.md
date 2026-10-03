@@ -170,8 +170,20 @@
 - 现金分红记 `Income:Invest:Dividend`；卖出的价差记 `Income:Invest:PnL`；期末用 `price` 更新净值（写在 `common/prices.beancount`）。
 
 ### 外币与汇率（算总资产时）
-- 外币账户折算成本位币，一律用**当天汇率**。每次算总资产、净资产（`networth`）前，先查当天汇率或净值，在 `common/prices.beancount` 追加一条 `YYYY-MM-DD price <币种> <汇率> <本位币>   ; <来源>`（同一天已有就更新那一条），提交后再跑 `networth`；回报时写明所用汇率、日期和来源。
-- 查不到当天价格（比如网络受限）时，**不得拿旧价格冒充当天价格**。`networth` 会标出"非当日价格"。先向用户要当天报价；用户没给时，可以用 `networth --rate <币种>=<汇率>` 临时试算，但要说明这不是当日实价，而且不写入账本。
+- 外币账户折算成本位币，一律用**当天汇率**。**汇率现查现用，不写进账本**：每次算总资产、净资产前查一次当天汇率，用 `--rate` 传给 `networth`，可以重复传多个币种。回报时写明所用汇率、数据日期和来源。
+
+  ```bash
+  python3 scripts/ledger.py networth --rate USD=7.12 --rate HKD=0.91
+  ```
+
+- 汇率可以用开源数据集 [fawazahmed0/exchange-api](https://github.com/fawazahmed0/exchange-api) 查，它每天更新，通过 npm 发布，多数云端环境都能访问。下面的命令输出"数据日期 汇率"，把两处 `usd` 换成外币代码的小写、`cny` 换成本位币的小写：
+
+  ```bash
+  curl -s "$(curl -s https://registry.npmjs.org/@fawazahmed0/currency-api/latest | python3 -c 'import sys,json;print(json.load(sys.stdin)["dist"]["tarball"])')" | tar -xzOf - package/v1/currencies/usd.min.json | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["date"], round(d["usd"]["cny"], 4))'
+  ```
+
+- 基金、股票的净值查不到公开汇率数据，仍然用 `price` 记在 `common/prices.beancount`：`YYYY-MM-DD price <标的代码> <净值> <本位币>   ; <来源>`。
+- 查不到当天价格（比如网络受限）时，**不得拿旧价格或凭记忆的数字冒充当天价格**。先向用户要当天报价；用户没给时，可以用最近一次已知的汇率试算，但要说明这不是当日实价。账内的旧价格 `networth` 会标出"非当日价格"。
 
 ## 6. AI 入账操作流程
 
@@ -179,7 +191,7 @@
 2. 用 `python3 scripts/ledger.py add <账本>` 入账，分录用 heredoc 传入（写法见 `AGENTS.md`「入账」）。脚本自动校验，不平衡或科目不存在就自动回滚。
 3. 回报用户：大类、金额、结算账户、标签。
 4. 如果这笔涉及两本账之间的往来，**两本账都要记**，记完跑 `python3 scripts/ledger.py reconcile`，确认每对镜像科目仍然相加为 0。
-5. 提交前跑 `python3 scripts/ledger.py check` 确认通过，用 `git status` 过一遍变更，然后 `git add -A && git commit && git push`（提交信息规范见 `AGENTS.md`）。
+5. 提交前跑 `python3 scripts/ledger.py check` 确认通过，用 `git status` 过一遍变更，然后 `git add -A && git commit && git push`（提交信息规范见 `AGENTS.md`）。不用 Git 的环境改为运行 `python3 scripts/ledger.py backup`，把压缩包存进用户的云盘（见 `AGENTS.md`「不用 Git 时」）。
 6. **一次只录一笔**：多笔交易分多次提交。
 7. 不确定上一笔是否成功时，先 `ledger.py recent <账本>` 看最近记录，再决定是否重录，避免重复入账。
 

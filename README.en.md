@@ -84,6 +84,16 @@ The agent runs `doctor`, adjusts the chart of accounts and opening balances, val
 > python3 scripts/ledger.py --root examples/demo networth
 > ```
 
+## No Git? A chat assistant with cloud storage works too
+
+If you only use an assistant that comes with a cloud computer and a cloud drive (such as Doubao), you can skip GitHub and Git entirely. The ledger lives as a zip file in your own cloud drive.
+
+1. Download the [template zip](https://github.com/Xbang0222/beancount-ai-ledger/archive/refs/heads/main.zip).
+2. Send the zip to the assistant and tell it to unzip it, read `AGENTS.md` (the "不用 Git 时" section) and `CATEGORIES.md`, set up your accounts, and save the ledger to a folder in your cloud drive after every change.
+3. In later sessions, tell it where the ledger is: "take the newest `ledger-backup` zip from my cloud drive folder and follow its `AGENTS.md`".
+
+The assistant reports the last recorded transaction at the start of each session so you can spot a stale copy, and runs `ledger.py backup` after every change to write a fresh zip back to your drive.
+
 ## Commands
 
 Run `python3 scripts/ledger.py <command>`. Add `--root <dir>` to operate on a ledger in another directory.
@@ -103,6 +113,7 @@ Run `python3 scripts/ledger.py <command>`. Add `--root <dir>` to operate on a le
 | `fmt [--check] [book]` | Normalize journal layout and ordering without changing amounts |
 | `books` | List books and mirror accounts |
 | `new-book <name> [options]` | Create a book, see [Multiple books](#multiple-books) |
+| `backup [-o DIR]` | Pack the whole ledger into one zip, for cloud-drive storage when you do not use Git |
 
 Adding an entry by hand:
 
