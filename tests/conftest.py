@@ -131,7 +131,7 @@ def solo(tmp_path, monkeypatch, fixed_now):
     from ledgerlib import config
 
     (tmp_path / "ledger.toml").write_text(CONFIG_SOLO, encoding="utf-8")
-    accounts = "\n".join(l for l in PERSONAL_ACCOUNTS.splitlines() if "Shop" not in l) + "\n"
+    accounts = "\n".join(line for line in PERSONAL_ACCOUNTS.splitlines() if "Shop" not in line) + "\n"
     journal = PERSONAL_JOURNAL.split("2026-09-01")[0].rstrip() + "\n"
     _write_book(tmp_path, "personal", "测试个人账", accounts, journal)
     monkeypatch.setattr(config, "ROOT", str(tmp_path))

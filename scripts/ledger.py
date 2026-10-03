@@ -5,7 +5,10 @@
   python3 scripts/ledger.py doctor                               检查环境与账套状态（第一次用先跑它）
   python3 scripts/ledger.py check                                校验全部账本（有往来镜像时含跨账本对账）
   python3 scripts/ledger.py add <账本> [--file 文件]  < 分录       追加【一笔】（自动校验，失败自动回滚）
-  python3 scripts/ledger.py recent <账本> [-n N]                 最近 N 笔交易
+  python3 scripts/ledger.py recent <账本> [-n N]                 最近 N 笔交易（行首显示分录编号）
+  python3 scripts/ledger.py find <账本> <关键词...>              按关键词找分录并显示编号
+  python3 scripts/ledger.py amend <账本> <编号> [--file 文件] < 新分录   更正一笔（自动校验，失败自动回滚）
+  python3 scripts/ledger.py void <账本> <编号>                   作废一笔
   python3 scripts/ledger.py summary <账本> [YYYY-MM]             按大类汇总支出/收入
   python3 scripts/ledger.py balances <账本>                      各账户余额
   python3 scripts/ledger.py tag <账本> <单个标签> [YYYY-MM]      按标签查账（一次只支持一个标签）

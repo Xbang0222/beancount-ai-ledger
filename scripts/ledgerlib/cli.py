@@ -16,7 +16,10 @@ EPILOG = """\
   python3 scripts/ledger.py check                        校验全部账本（有往来镜像时连带对账）
   python3 scripts/ledger.py add personal <<'EOF'         从 stdin 录一笔，分录写在 heredoc 里，以 EOF 结束
   python3 scripts/ledger.py add personal --file entry.tmp   从 UTF-8 文件录一笔（PowerShell 等没有 heredoc 时用）
-  python3 scripts/ledger.py recent personal              最近 10 笔（核对刚才记上没有）
+  python3 scripts/ledger.py recent personal              最近 10 笔（核对刚才记上没有；行首 [编号] 供更正/作废用）
+  python3 scripts/ledger.py find personal 午餐 39.02     按关键词找分录并显示编号
+  python3 scripts/ledger.py amend personal <编号> <<'EOF'   用新分录替换这一笔（自动校验，失败自动回滚）
+  python3 scripts/ledger.py void personal <编号>         作废（删除）这一笔
   python3 scripts/ledger.py summary personal 2026-09     按一级大类汇总
   python3 scripts/ledger.py balances personal            科目余额表
   python3 scripts/ledger.py tag personal trip 2026-09    按标签查明细（一次一个标签）
@@ -29,6 +32,7 @@ EPILOG = """\
 
 约定：
   - 一次 add 只录一笔交易，多笔请分多次；
+  - 改账一律用 amend / void，不要手动编辑序时簿；
   - 查询类命令在账本存在加载错误时直接报错、不出报告，请先 check 修复。
 """
 
@@ -37,7 +41,7 @@ def _ym(value):
     try:
         return parse_ym(value)
     except ValueError as ex:
-        raise argparse.ArgumentTypeError(str(ex))
+        raise argparse.ArgumentTypeError(str(ex)) from None
 
 
 def _rate(value):
@@ -81,6 +85,26 @@ def build_parser():
     a.add_argument("book")
     a.add_argument("-f", "--file", metavar="PATH",
                    help="从 UTF-8 文本文件读取分录，不读 stdin（Windows PowerShell 管道会弄坏中文时用）")
+
+    a.add_argument("--allow-duplicate", action="store_true",
+                   help="账上已有内容相同的一笔时仍然入账（确实是两笔才用）")
+
+    fd = sub.add_parser("find", help="按关键词找分录并显示编号（对方、摘要、科目、金额、标签都能搜）")
+    fd.add_argument("book")
+    fd.add_argument("keyword", nargs="+", help="关键词，多个要同时出现")
+    fd.add_argument("--month", type=_ym, metavar="YYYY-MM", help="只在这个月里找")
+    fd.add_argument("-n", type=_positive_int, default=20, metavar="N", help="最多显示最近 N 笔，默认 20")
+
+    vd = sub.add_parser("void", help="作废一笔分录（从序时簿删除，自动校验，失败自动回滚）")
+    vd.add_argument("book")
+    vd.add_argument("id", help="分录编号，见 find / recent 输出行首的 [编号]")
+
+    am = sub.add_parser("amend", help="更正一笔分录：用 stdin 或 --file 传入的新分录替换它")
+    am.add_argument("book")
+    am.add_argument("id", help="分录编号，见 find / recent 输出行首的 [编号]")
+    am.add_argument("-f", "--file", metavar="PATH", help="从 UTF-8 文本文件读取新分录，不读 stdin")
+    am.add_argument("--allow-duplicate", action="store_true",
+                    help="更正后与账上另一笔内容相同时仍然写入")
 
     rc = sub.add_parser("recent", help="按发生时间列出最近几笔交易")
     rc.add_argument("book")
@@ -207,7 +231,15 @@ def _dispatch(args):
     if args.cmd == "add":
         from .add import cmd_add
 
-        return cmd_add(args.book, path=args.file)
+        return cmd_add(args.book, path=args.file, allow_duplicate=args.allow_duplicate)
+    if args.cmd in ("find", "void", "amend"):
+        from . import edit
+
+        if args.cmd == "find":
+            return edit.cmd_find(args.book, args.keyword, args.month, args.n)
+        if args.cmd == "void":
+            return edit.cmd_void(args.book, args.id)
+        return edit.cmd_amend(args.book, args.id, path=args.file, allow_duplicate=args.allow_duplicate)
     if args.cmd == "reconcile":
         from .reconcile import cmd_reconcile
 

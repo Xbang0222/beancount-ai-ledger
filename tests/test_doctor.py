@@ -120,3 +120,40 @@ def test_下一步先建私有仓库再初始化(empty_root, capsys):
     cli.main(["doctor"])
     todo = capsys.readouterr().out.split("下一步：")[1]
     assert todo.index("私有仓库") < todo.index("第一次使用")
+
+
+def _git_init(root):
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="需要 git")
+def test_带了提交前检查脚本却没启用时提醒(ledger, capsys):
+    _git_init(ledger)
+    (ledger / "scripts" / "hooks").mkdir(parents=True)
+    (ledger / "scripts" / "hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
+    doctor.cmd_doctor()
+    assert "git config core.hooksPath scripts/hooks" in capsys.readouterr().out
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="需要 git")
+def test_提交前检查已启用时不提醒(ledger, capsys):
+    _git_init(ledger)
+    (ledger / "scripts" / "hooks").mkdir(parents=True)
+    (ledger / "scripts" / "hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(ledger), "config", "core.hooksPath", "scripts/hooks"], check=True)
+    doctor.cmd_doctor()
+    out = capsys.readouterr().out
+    assert "提交前自动检查已启用" in out and "core.hooksPath" not in out
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="需要 git")
+@pytest.mark.parametrize("style", ["absolute", "dot", "slash"])
+def test_提交前检查路径的各种写法都算启用(ledger, capsys, style):
+    _git_init(ledger)
+    hooks = ledger / "scripts" / "hooks"
+    hooks.mkdir(parents=True)
+    (hooks / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
+    value = {"absolute": str(hooks), "dot": "./scripts/hooks", "slash": "scripts/hooks/"}[style]
+    subprocess.run(["git", "-C", str(ledger), "config", "core.hooksPath", value], check=True)
+    doctor.cmd_doctor()
+    assert "提交前自动检查已启用" in capsys.readouterr().out

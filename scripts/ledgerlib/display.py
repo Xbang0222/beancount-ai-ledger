@@ -18,14 +18,18 @@ def rpad(text, w):
     return " " * max(0, w - width(text)) + text
 
 
-def print_txn(txn, indent="  "):
-    """打印一笔交易：首行日期、时间、对方、摘要、标签，下面逐行列出科目与金额。"""
+def print_txn(txn, indent="  ", ident=None):
+    """打印一笔交易：首行日期、时间、对方、摘要、标签，下面逐行列出科目与金额。
+
+    给了 ident 就在行首标出分录编号（void / amend 用它定位这一笔）。
+    """
     payee = txn.payee or ""
     narr = txn.narration or ""
     tags_str = " ".join(f"#{t}" for t in sorted(txn.tags or []))
     time_str = (txn.meta or {}).get("time", "")
     time_display = f" {time_str}" if time_str else ""
-    print(f"\n{txn.date}{time_display}  {payee}  {narr}  {tags_str}".rstrip())
+    mark = f"[{ident}] " if ident else ""
+    print(f"\n{mark}{txn.date}{time_display}  {payee}  {narr}  {tags_str}".rstrip())
     for p in txn.postings:
         if p.units is None:
             continue

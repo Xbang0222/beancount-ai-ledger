@@ -228,9 +228,12 @@ def cmd_recent(book, n=10):
         key=lambda it: (it[1].date, _time_key(it[1]), it[0]),
     )
     shown = [t for _, t in ordered[-n:]] if n > 0 else []
+    from . import journal
+
+    index = journal.ident_index(book)
     print(f"\n===== {book} · 最近 {len(shown)} 笔（按发生日期与时间，共 {len(txns)} 笔） =====")
     if not shown:
         print("  （暂无交易）")
     for txn in shown:
-        print_txn(txn)
+        print_txn(txn, ident=journal.ident_of(index, txn))
     return 0

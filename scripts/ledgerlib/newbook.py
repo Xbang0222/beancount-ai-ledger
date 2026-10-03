@@ -196,7 +196,8 @@ def cmd_new_book(name, template="personal", title=None, kind=None, link=None, op
             notes.append(f"新建  {config.CONFIG_NAME}")
         else:
             ch.append(cfg_path, toml_text)
-            notes.append(f"修改  {config.CONFIG_NAME}（登记 [books.{name}]" + (" 与 2 对 [[mirrors]]）" if link else "）"))
+            tail = " 与 2 对 [[mirrors]]）" if link else "）"
+            notes.append(f"修改  {config.CONFIG_NAME}（登记 [books.{name}]" + tail)
 
         config.load()
         for book in (name, link) if link else (name,):
@@ -269,7 +270,8 @@ def _link(ch, cfg, name, title, link, base, open_date, owner_accounts, notes):
     # 新账本一侧
     ch.append(os.path.join(root, name, "accounts.beancount"),
               f"\n; —— 与{owner.title}（{link} 账本）的往来：双边镜像登记，见 ledger.toml [[mirrors]] ——\n"
-              + open_line("Liabilities:OwnerLoan", f"其他应付款－{owner.title}（其垫付/投入、本账本尚未归还的款项）") + "\n"
+              + open_line("Liabilities:OwnerLoan",
+                          f"其他应付款－{owner.title}（其垫付/投入、本账本尚未归还的款项）") + "\n"
               + open_line("Assets:Receivable:Owner", f"其他应收款－{owner.title}（本账本资金由其代收/占用）") + "\n")
 
     return (

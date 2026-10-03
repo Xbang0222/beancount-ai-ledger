@@ -57,17 +57,17 @@ def cmd_reconcile():
         print(f"      {pad(lb, width)}{la:<34}{lv:>12.2f}")
         print(f"      {pad(rb, width)}{ra:<34}{rv:>12.2f}   差额 {diff:.2f}  {'OK' if ok else '!!'}")
         if not ok:
-            bad.append((m, lv, rv, diff))
+            bad.append((m, diff))
 
     if not bad:
         print(f"\n[OK] {len(cfg.mirrors)} 对往来科目全部镜像一致。")
         return 0
 
     print(f"\n[FAIL] {len(bad)} 对往来科目不一致：")
-    for m, lv, rv, diff in bad:
+    for m, diff in bad:
         (lb, la), (rb, ra) = m.sides()
         print(f"\n  ▸ {m.name}（{m.currency}）差额 {diff:.2f}")
-        print(f"      两侧相加应为 0，很可能有一笔只记了单边。最近触及的分录：")
+        print("      两侧相加应为 0，很可能有一笔只记了单边。最近触及的分录：")
         for book, acc in ((lb, la), (rb, ra)):
             for t in _recent_touching(books[book], acc):
                 time_str = (t.meta or {}).get("time", "")

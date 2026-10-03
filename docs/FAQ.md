@@ -30,7 +30,7 @@ AI 每次开始前会先 `git pull --ff-only`。同一台机器上 `add` 带文�
 ```bash
 git remote add upstream https://github.com/Xbang0222/beancount-ai-ledger.git   # 只需一次
 git fetch upstream
-git checkout upstream/main -- scripts tests requirements.txt requirements-dev.txt
+git checkout upstream/main -- scripts tests requirements.txt requirements-dev.txt pyproject.toml
 python3 -m pytest tests/ -q && python3 scripts/ledger.py check
 git commit -m "chore(script): 同步上游脚本"
 ```

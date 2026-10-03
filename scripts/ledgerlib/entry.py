@@ -45,6 +45,61 @@ def future_error(block, now=None):
     return None
 
 
+TIME_OK_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+# 可以经 add 写进序时簿的非交易指令；开户、币种声明等属于科目表，不进序时簿
+JOURNAL_DIRECTIVES = ("Balance", "Pad", "Price", "Note")
+
+
+def validate(block):
+    """入账前的内容检查，返回错误说明或 None。
+
+    借贷平衡、科目是否开户由 beancount 整本校验把关；这里补它不管的几条口径：
+    对方和摘要必须写、time 必须是合法的 HH:MM、序时簿只收交易和余额断言等少数指令。
+    语法错误不在这里报，留给整本校验（它会带上文件与行号）。
+    """
+    from beancount.core import data
+    from beancount.parser import parser
+
+    entries, errors, _ = parser.parse_string(block)
+    if errors:
+        return None
+    for e in entries:
+        kind = type(e).__name__
+        if not isinstance(e, data.Transaction):
+            if kind not in JOURNAL_DIRECTIVES:
+                return (f"序时簿不收 {kind.lower()} 指令（本次未写入）。"
+                        "开户、币种声明请写进对应的 accounts.beancount / commodities.beancount。")
+            continue
+        if not (e.payee or "").strip() or not (e.narration or "").strip():
+            return ('交易首行要同时写对方和摘要两段："对方" "摘要"，都不能为空（本次未写入）。'
+                    "写法见 CATEGORIES.md 0.1。")
+        t = e.meta.get("time")
+        if t is not None and not (isinstance(t, str) and TIME_OK_RE.match(t)):
+            return (f'time 应为 24 小时制的 "HH:MM"（如 "09:05"），收到：{t!r}（本次未写入）。'
+                    "用户没报具体时间就删掉 time 行，由脚本注入录入时刻。")
+    return None
+
+
+def time_line(block):
+    """块中的 time 元数据行（原样返回，含缩进）；没有则返回 None。"""
+    for line in block.split("\n"):
+        if TIME_RE.match(line):
+            return line
+    return None
+
+
+def with_time_line(block, line):
+    """把一行现成的 time 元数据插到交易首行之后；块里已有 time 或不是交易时原样返回。"""
+    if TIME_RE.search(block):
+        return block
+    lines = block.split("\n")
+    for i, text in enumerate(lines):
+        if TXN_RE.match(text):
+            lines.insert(i + 1, line)
+            return "\n".join(lines)
+    return block
+
+
 def first_date(block):
     """分录中出现的第一个日期，返回 (年, 月) 字符串元组；没有则返回 None。"""
     m = DATE_RE.search(block)

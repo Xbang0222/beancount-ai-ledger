@@ -1,9 +1,8 @@
 """分录文本预处理：time 注入、未来时间守卫、include 识别、多笔守卫、月份校验。"""
 import pytest
 
-from ledgerlib import entry
-
 from conftest import FIXED_NOW as FIXED
+from ledgerlib import entry
 
 
 def test_注入_time_到交易首行之后():

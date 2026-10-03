@@ -1,4 +1,4 @@
-"""序时簿格式化：分录间空一行、按日期与时间重排。
+"""序时簿格式化：分录间空一行、按日期与时间重排（紧贴分录上方的注释跟着分录走）。
 
 序时簿是顺序追加的，补记历史账会造成日期逆序，且分录之间没有空行，
 几百行连成一片，diff 和肉眼翻账都很费劲。
@@ -6,39 +6,12 @@
 本模块只动排版，不动任何金额、日期与文字。写入前后各加载一次账本比对
 交易笔数与全部科目余额，任一不符立即还原——否则不敢对历史账跑。
 """
-import glob
 import os
-import re
 from collections import Counter
 
-from . import config
+from . import config, journal
 from .books import balances, load_book, print_errors, transactions
-from .entry import DATE_RE
-
-TIME_META_RE = re.compile(r'^[ \t]+time:[ \t]*"(\d{1,2}):(\d{2})')
-
-
-def split_blocks(text):
-    """拆成 (文件头, [分录块])。文件头是第一条指令之前的注释与空行。"""
-    lines = text.split("\n")
-    start = len(lines)
-    for i, line in enumerate(lines):
-        if DATE_RE.match(line):
-            start = i
-            break
-    header = lines[:start]
-    blocks, cur = [], []
-    for line in lines[start:]:
-        if DATE_RE.match(line):
-            if cur:
-                blocks.append(cur)
-            cur = [line]
-        elif cur:
-            cur.append(line)
-    if cur:
-        blocks.append(cur)
-    # 去掉每块尾部的空行，排版由本模块统一决定
-    return header, [_rstrip_blank(b) for b in blocks]
+from .journal import journal_files
 
 
 def _rstrip_blank(block):
@@ -47,22 +20,10 @@ def _rstrip_blank(block):
     return block
 
 
-def _sort_key(indexed):
-    i, block = indexed
-    date = block[0][:10]
-    time = ""
-    for line in block[1:]:
-        m = TIME_META_RE.match(line)
-        if m:
-            time = f"{int(m.group(1)):02d}:{m.group(2)}"
-            break
-    # 无 time 的分录排在同日有 time 的之前；i 保证同键稳定
-    return (date, time, i)
-
-
 def format_text(text):
-    header, blocks = split_blocks(text)
-    ordered = [b for _, b in sorted(enumerate(blocks), key=_sort_key)]
+    header, blocks = journal.split(text)
+    # sorted 是稳定排序：同日同时间的分录保持原有先后
+    ordered = [b.lines for b in sorted(blocks, key=lambda b: b.sort_key)]
     head = "\n".join(_rstrip_blank(list(header)))
     body = "\n\n".join("\n".join(b) for b in ordered)
     if not body:
@@ -85,11 +46,6 @@ def _book_state(book):
     bals = balances(entries)
     state = (len(transactions(entries)), {a: dict(c) for a, c in bals.items()})
     return state, None
-
-
-def journal_files(book):
-    _, jdir, _ = config.book_paths(book)
-    return sorted(glob.glob(os.path.join(jdir, "*.beancount")))
 
 
 def cmd_fmt(books=None, check_only=False):

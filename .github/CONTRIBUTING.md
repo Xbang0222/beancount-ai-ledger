@@ -27,6 +27,7 @@ python3 -m pytest tests/ -q
 3. 在本地跑一遍 CI 会跑的检查：
 
    ```bash
+   python3 -m ruff check scripts tests
    python3 -m pytest tests/ -q
    python3 scripts/ledger.py check
    python3 scripts/ledger.py fmt --check

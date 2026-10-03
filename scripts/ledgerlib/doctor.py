@@ -105,7 +105,8 @@ def _books(r):
             r.fail(str(ex))
             continue
         if errors:
-            r.fail(f"{name}：{len(errors)} 个校验错误", f"运行 python3 scripts/ledger.py check 查看并修复 {name} 的错误")
+            r.fail(f"{name}：{len(errors)} 个校验错误",
+                   f"运行 python3 scripts/ledger.py check 查看并修复 {name} 的错误")
             continue
         # pad 会生成标志为 P 的补差交易，不算用户记的账
         txns = sum(isinstance(e, data.Transaction) and e.flag != "P" for e in entries)
@@ -141,6 +142,8 @@ def _git(r):
     dirty = len([line for line in status.splitlines() if line.strip()])
     r.ok(f"分支 {branch or '（未知）'}，" + (f"{dirty} 个文件有未提交的改动" if dirty else "工作区干净"))
 
+    _hooks(r)
+
     rc, url = _run(["git", "remote", "get-url", "origin"])
     if rc != 0 or not url:
         r.warn("没有配置远程仓库 origin：账本只存在这台电脑上",
@@ -159,6 +162,22 @@ def _git(r):
     else:
         note = f"（{visibility}）" if visibility else "（可见性未知：没有可用的 gh 命令，请确认是私有仓库）"
         r.ok(f"origin {url}{note}")
+
+
+HOOKS_DIR = "scripts/hooks"
+
+
+def _hooks(r):
+    """仓库带了提交前检查脚本却没启用时提醒：不启用的话，校验全靠记得手动跑。"""
+    if not os.path.isfile(os.path.join(config.ROOT, HOOKS_DIR, "pre-commit")):
+        return
+    _, path = _run(["git", "config", "--get", "core.hooksPath"])
+    # 相对路径按仓库根目录解析；写成绝对路径或 ./scripts/hooks 同样算启用
+    want = os.path.realpath(os.path.join(config.ROOT, HOOKS_DIR))
+    if path and os.path.realpath(os.path.join(config.ROOT, path)) == want:
+        r.ok("提交前自动检查已启用（check + fmt --check，改脚本时加跑测试）")
+    else:
+        r.warn("提交前自动检查没有启用", f"运行 git config core.hooksPath {HOOKS_DIR} 启用提交前自动检查")
 
 
 def cmd_doctor():

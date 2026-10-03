@@ -15,8 +15,9 @@ Windows 上把命令里的 `python3` 换成 `python` 或 `py`。
    - 做法：在 GitHub 打开模板仓库，点 Use this template，可见性选 Private。不要 Fork，公开仓库的 Fork 也是公开的。
    - 装了 `gh` 且用户同意时，可以代为执行 `gh repo create <仓库名> --private --template Xbang0222/beancount-ai-ledger --clone`。
    - 已经在模板的克隆里改了东西：`git remote rename origin upstream`，再 `git remote add origin <私有仓库地址>` 并推送。
-4. doctor 提示账套目录不是 Git 仓库：先弄清用户用不用 Git。在自己电脑上用 Claude Code、Codex 的，建议 `git init` 并建一个私有远程仓库；只用豆包这类云电脑、不会用 Git 的，按下文「不用 Git 时」把账本存在用户的云盘里，**不要让用户去学 Git**。
-5. doctor 提示账本还没初始化：按下文「首次使用」引导用户。
+4. doctor 提示提交前自动检查没有启用：运行 `git config core.hooksPath scripts/hooks`。之后每次提交会自动跑账本校验和排版检查，不通过就提交不了。
+5. doctor 提示账套目录不是 Git 仓库：先弄清用户用不用 Git。在自己电脑上用 Claude Code、Codex 的，建议 `git init` 并建一个私有远程仓库；只用豆包这类云电脑、不会用 Git 的，按下文「不用 Git 时」把账本存在用户的云盘里，**不要让用户去学 Git**。
+6. doctor 提示账本还没初始化：按下文「首次使用」引导用户。
 
 ## 每次开始前
 
@@ -46,11 +47,13 @@ EOF
 
 硬规矩：
 
-- **不要手动编辑序时簿**（`<账本>/journal/*.beancount`）。手改会绕过时间注入、校验和回滚。唯一的例外是更正已入账的分录，见「更正与删除」。
+- **不要手动编辑序时簿**（`<账本>/journal/*.beancount`）。入账只用 `add`，改账只用 `amend` / `void`（见「更正与删除」）。这三条命令写盘后都会校验整本账，不通过就原样还原；手改会绕过这些保护。
+- **对方和摘要都要写。** 首行缺任何一段，`add` 会拒绝。
 - **不许估时间。** 用户没报具体时间就不写 `time` 行，由脚本注入录入时刻。"7 点半"这类分不清上下午的先问。手写的 `time` 晚于此刻、交易日期晚于今天，`add` 都会拒绝。
 - **一次只录一笔。** 多笔分多次调用，脚本检测到多笔会直接拒绝。
 - **账本之间的往来两边都记。** beancount 只校验单本账内部平衡，只记一边它发现不了。`add` 碰到往来科目会打印 `[提示]`，告诉你另一边该记到哪本账的哪个科目。两边记完运行 `python3 scripts/ledger.py reconcile`，确认每对镜像科目相加为 0。
-- **不确定上一笔记没记上**时，先 `python3 scripts/ledger.py recent <账本>` 看最近几笔，再决定是否重录，避免重复入账。
+- **不确定上一笔记没记上**时，先 `python3 scripts/ledger.py recent <账本>` 看最近几笔，再决定是否重录。日期、对方、摘要、各科目金额都相同的分录第二次入账会被 `add` 拒绝；确实是两笔（同一天在同一家店买了两次一样的东西）才加 `--allow-duplicate`。
+- **序时簿只收交易和余额断言。** `open` 这类科目表指令 `add` 会拒绝，新科目写进 `<账本>/accounts.beancount`，这个文件可以直接编辑。
 - **科目未开立**时 `add` 会失败回滚。不要自造科目名硬记：先对照 `<账本>/accounts.beancount` 选已有科目；确实需要新科目，就按原格式在 accounts 里 `open`，带上中文注释，和这笔分录一起提交，并告诉用户新开了什么科目。
 - **分类拿不准不要硬猜。** 只有"确定是消费、只是不知道归哪类"才暂记 `Expenses:Other`，并在回复里说明；连是消费、借款还是代垫都分不清时，先问用户，**不得直接记成费用**。
 
@@ -60,8 +63,11 @@ EOF
 
 ```bash
 python3 scripts/ledger.py check          # 全部账本校验（有往来镜像时连带对账），必须通过
-python3 -m pytest tests/ -q              # 改了 scripts/ 才需要
+python3 scripts/ledger.py fmt --check    # 序时簿排版，不过就运行 ledger.py fmt
+.venv/bin/python -m ruff check scripts tests && .venv/bin/python -m pytest   # 改了 scripts/ 或 tests/ 才需要
 ```
+
+启用了提交前自动检查（`scripts/hooks/pre-commit`）的仓库，提交时会自动跑上面这些。改脚本要用的 pytest、ruff 用 `.venv/bin/python -m pip install -r requirements-dev.txt` 安装。
 
 然后 `git status` 过一遍变更清单再提交。提交信息用 Conventional Commits（`type(scope): 摘要`）：
 
@@ -112,8 +118,21 @@ python3 -m pytest tests/ -q              # 改了 scripts/ 才需要
 
 ### 更正与删除（"刚才那笔不是花呗，是微信"）
 
-- 这是唯一允许直接编辑序时簿的情形。先用 `recent` 或搜索定位到那一笔，只改需要改的字段，`time` 等元数据保留；删除重复的就删掉整个分录块。
-- 改完必须 `check` 通过。往来分录要两本账一起改，改完跑 `reconcile`。
+先用 `find` 或 `recent` 找到那一笔，行首方括号里是它的编号：
+
+```bash
+python3 scripts/ledger.py find personal 打车 32        # 对方、摘要、科目、金额、标签都能搜
+python3 scripts/ledger.py amend personal <编号> <<'EOF'
+2026-09-26 * "网约车" "交通-打车"
+  Expenses:Transport:Local  32.00 CNY
+  Assets:Wechat
+EOF
+python3 scripts/ledger.py void personal <编号>          # 作废：删除这一笔，比如记重了
+```
+
+- `amend` 用新分录整笔替换原来那笔，新分录没写 `time` 就沿用原来的。没有 heredoc 的终端用 `--file`，同 `add`。
+- 编号取自分录内容，改过一次就变了，接着再改要重新 `find`。
+- 往来分录要两本账一起改，改完跑 `reconcile`。
 - 提交用 `fix(<账本>): …`，写清改了什么。不要用"再记一笔反向分录"修正录错的账；反向分录只用于真实发生的冲回，比如退款。
 
 ### 余额核对（"对一下账：支付宝现在还剩 427"）
@@ -157,6 +176,7 @@ EOF
 | 想知道 | 命令 |
 |---|---|
 | 最近记了什么 | `ledger.py recent personal [-n 20]` |
+| 某一笔记在哪、记成了什么 | `ledger.py find personal 超市 128` |
 | 这个月花了多少、花在哪 | `ledger.py summary personal 2026-09` |
 | 月度报告（收入、支出占比、储蓄率） | `ledger.py report personal 2026-09` |
 | 每个账户还剩多少 | `ledger.py balances personal` |
@@ -172,7 +192,15 @@ EOF
 
 ## 改脚本时
 
-- 实现在 `scripts/ledgerlib/`，`scripts/ledger.py` 只是入口。已有命令的用法不要随意改，用户和规则文档都依赖它们。
+- 实现在 `scripts/ledgerlib/`，`scripts/ledger.py` 只是入口。已有命令的用法不要随意改，用户和规则文档都依赖它们。命令清单以 `python3 scripts/ledger.py --help` 为准。
+- 各模块只管一件事，新逻辑放进对应模块，不要跨模块借用下划线开头的内部函数：
+  - `config`：读 `ledger.toml`。
+  - `entry`：分录文本的检查与预处理，不碰磁盘。
+  - `journal`：序时簿分块、行号与分录编号。
+  - `store`：加锁、写盘、整本校验、失败还原。**所有改动序时簿的命令都必须经 `store.commit`**。
+  - `add` / `edit` / `fmt`：入账、更正与作废、排版。
+  - `books` / `query` / `reconcile` / `networth` / `display`：加载账本、查询、对账、合并资产、输出对齐。
+  - `doctor` / `env` / `backup` / `newbook`：环境自检、依赖与 `.venv`、打包备份、新建账本。
 - 代码里不写死任何账本名。账本、往来镜像、时区、本位币一律从 `ledger.toml` 读取（`ledgerlib/config.py`）。
 - 新增或修改逻辑要配套 `tests/` 用例。测试用 `conftest.py` 的 `ledger`（两本账）、`solo`（只有个人账）、`empty_root`（空目录）fixture 在临时目录搭账套，**不要让测试碰真实账本**。
 - 改了查询类命令，要拿改动前的 `balances` / `report` 输出比对，确认口径没有意外变化。

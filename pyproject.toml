@@ -1,0 +1,22 @@
+# 开发工具配置（记账本身不依赖本文件；依赖清单见 requirements*.txt）
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -p no:cacheprovider"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+src = ["scripts", "tests"]
+
+[tool.ruff.lint]
+# E/W 代码风格，F 未用到的导入与变量等真实缺陷，I 导入排序，B 常见易错写法
+select = ["E", "W", "F", "I", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ledgerlib"]
+
+[tool.ruff.lint.per-file-ignores]
+# 入口脚本要先把 scripts/ 加进 sys.path 才能导入 ledgerlib
+"scripts/ledger.py" = ["E402"]
+"scripts/bootstrap.py" = ["E402"]

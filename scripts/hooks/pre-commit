@@ -1,0 +1,35 @@
+#!/bin/sh
+# 提交前自动把关：账本校验 + 跨账套对账 + 序时簿排版；改了脚本或测试再跑代码规范检查与单元测试。
+# 任何一项不过就拒绝提交。启用（每个克隆做一次）：git config core.hooksPath scripts/hooks
+#
+# 检查的是“即将提交的内容”（暂存区），不是工作区：把暂存区导出到临时目录再跑，
+# 这样 add 之后又改过、或只暂存了一部分时，把关的和提交的是同一份。
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+
+py=python3
+command -v python3 >/dev/null 2>&1 || py=python
+[ -x "$root/.venv/bin/python" ] && py="$root/.venv/bin/python"
+[ -x "$root/.venv/Scripts/python.exe" ] && py="$root/.venv/Scripts/python.exe"
+
+tmp=$(mktemp -d) || exit 1
+trap 'rm -rf "$tmp"' EXIT
+git checkout-index --all --prefix="$tmp/" || exit 1
+cd "$tmp" || exit 1
+
+"$py" scripts/ledger.py check || {
+  echo "[pre-commit] 账本校验或往来对账未通过，已拒绝提交。（缺依赖就先运行 python3 scripts/bootstrap.py）" >&2
+  exit 1
+}
+"$py" scripts/ledger.py fmt --check || {
+  echo "[pre-commit] 序时簿未格式化，先运行 python3 scripts/ledger.py fmt 并 git add 再提交。" >&2
+  exit 1
+}
+
+if git -C "$root" diff --cached --name-only | grep -qE '^(scripts|tests)/|^pyproject\.toml$|^requirements'; then
+  "$py" -m ruff check scripts tests && "$py" -m pytest tests/ || {
+    echo "[pre-commit] 代码规范检查或单元测试未通过，已拒绝提交。" >&2
+    echo "             （没装 ruff / pytest 就先 $py -m pip install -r requirements-dev.txt）" >&2
+    exit 1
+  }
+fi

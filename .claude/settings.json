@@ -10,6 +10,8 @@
       "Bash(py scripts/bootstrap.py *)",
       "Bash(python3 -m pytest *)",
       "Bash(python -m pytest *)",
+      "Bash(.venv/bin/python -m pytest *)",
+      "Bash(.venv/bin/python -m ruff check *)",
       "Bash(git pull --ff-only)",
       "Bash(git add *)",
       "Bash(git commit *)",
