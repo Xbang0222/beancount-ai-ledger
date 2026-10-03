@@ -217,6 +217,19 @@ def _time_key(txn):
     return f"{int(m.group(1)):02d}:{m.group(2)}" if m else ""
 
 
+def last_summary(entries):
+    """一本账的交易笔数与最后一笔的说明，用来核对手上的账本是不是最新的那份。
+
+    pad 生成的补差交易（标志 P）不算用户记的账。
+    """
+    txns = [t for t in transactions(entries) if t.flag != "P"]
+    if not txns:
+        return "还没有交易"
+    _, last = max(enumerate(txns), key=lambda it: (it[1].date, _time_key(it[1]), it[0]))
+    parts = [str(last.date), _time_key(last), last.payee or "", last.narration or ""]
+    return f"交易 {len(txns)} 笔，最后一笔 " + " ".join(p for p in parts if p)
+
+
 def cmd_recent(book, n=10):
     """按发生日期与时间列出最近 n 笔交易（核对刚才是否记上、有没有重复时用）。"""
     entries = load_entries(book)

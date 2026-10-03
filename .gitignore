@@ -31,5 +31,5 @@ exports/
 *.xlsx
 *.zip
 
-# ledger.py backup 生成的压缩包（不用 Git 时存到云盘、网盘）
+# ledger.py backup 生成的压缩包（没有远程仓库时存到云盘、网盘）
 backups/

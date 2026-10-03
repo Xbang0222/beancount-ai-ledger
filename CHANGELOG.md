@@ -4,9 +4,17 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-04
+
+### 新增
+
+- `backup` 把 `.git` 一起打包：账套是 Git 仓库时，压缩包带着完整的提交历史，解压出来能接着提交。有未提交的改动会提醒。
+- `doctor` 列出每本账的最后一笔，开始记账前用来核对手上的是不是最新的账本。
+
 ### 变更
 
-- 不用 Git 时，云盘里只留最近 5 份备份，更早的由 AI 自动删除。`docs/NO-GIT.md` 说明了压缩包大小和嫌慢时的做法。
+- `AGENTS.md`「不用 Git 时」改为「没有远程仓库时」：豆包这类云电脑里照常用本地 Git 提交（不需要账号，不联网），推送改为 `backup` 存云盘。开始只需解压加一条命令，每批改动一条命令提交并打包。
+- 云盘里只留最近 3 份备份，更早的由 AI 自动删除。`docs/NO-GIT.md` 说明了压缩包大小和嫌慢时的做法。
 
 ## [0.2.1] - 2026-10-04
 
@@ -54,7 +62,8 @@
 - 中英文 README、使用指南、分录范例和示例账本。
 - CI：Ubuntu（Python 3.9、3.13）和 Windows（Python 3.12）；用模板建的账本仓库只跑账本校验。
 
-[Unreleased]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Xbang0222/beancount-ai-ledger/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Xbang0222/beancount-ai-ledger/releases/tag/v0.1.0

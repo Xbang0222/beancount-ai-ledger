@@ -27,9 +27,14 @@ cd "$tmp" || exit 1
 }
 
 if git -C "$root" diff --cached --name-only | grep -qE '^(scripts|tests)/|^pyproject\.toml$|^requirements'; then
-  "$py" -m ruff check scripts tests && "$py" -m pytest tests/ || {
-    echo "[pre-commit] 代码规范检查或单元测试未通过，已拒绝提交。" >&2
-    echo "             （没装 ruff / pytest 就先 $py -m pip install -r requirements-dev.txt）" >&2
-    exit 1
-  }
+  # 只记账的环境（如云电脑）不装开发依赖：脚本是原样带进来的，跳过代码检查，不拦提交
+  if "$py" -m ruff --version >/dev/null 2>&1 && "$py" -m pytest --version >/dev/null 2>&1; then
+    "$py" -m ruff check scripts tests && "$py" -m pytest tests/ || {
+      echo "[pre-commit] 代码规范检查或单元测试未通过，已拒绝提交。" >&2
+      exit 1
+    }
+  else
+    echo "[pre-commit] 没装 ruff / pytest，跳过代码规范检查和单元测试。" >&2
+    echo "             改了脚本的话，先 $py -m pip install -r requirements-dev.txt 再提交。" >&2
+  fi
 fi

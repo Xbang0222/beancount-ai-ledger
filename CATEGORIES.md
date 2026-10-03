@@ -191,7 +191,7 @@
 2. 用 `python3 scripts/ledger.py add <账本>` 入账，分录用 heredoc 传入（写法见 `AGENTS.md`「入账」）。脚本自动校验，不平衡或科目不存在就自动回滚。
 3. 回报用户：大类、金额、结算账户、标签。
 4. 如果这笔涉及两本账之间的往来，**两本账都要记**，记完跑 `python3 scripts/ledger.py reconcile`，确认每对镜像科目仍然相加为 0。
-5. 提交前跑 `python3 scripts/ledger.py check` 确认通过，用 `git status` 过一遍变更，然后 `git add -A && git commit && git push`（提交信息规范见 `AGENTS.md`）。不用 Git 的环境改为运行 `python3 scripts/ledger.py backup`，把压缩包存进用户的云盘（见 `AGENTS.md`「不用 Git 时」）。
+5. 提交前跑 `python3 scripts/ledger.py check` 确认通过，用 `git status` 过一遍变更，然后 `git add -A && git commit && git push`（提交信息规范见 `AGENTS.md`）。没有远程仓库的环境照常提交，推送改为运行 `python3 scripts/ledger.py backup`，把压缩包存进用户的云盘（见 `AGENTS.md`「没有远程仓库时」）。
 6. **一次只录一笔**：多笔交易分多次提交。
 7. 不确定上一笔是否成功时，先 `ledger.py recent <账本>` 看最近记录，再决定是否重录，避免重复入账。
 

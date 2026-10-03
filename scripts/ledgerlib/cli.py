@@ -27,7 +27,7 @@ EPILOG = """\
   python3 scripts/ledger.py networth                     资产负债汇总（多本账时抵销账本间往来）
   python3 scripts/ledger.py networth --rate USD=7.1      临时指定汇率试算
   python3 scripts/ledger.py new-book shop --template business --link personal
-  python3 scripts/ledger.py backup                       把整个账套打成压缩包（不用 Git 时存云盘、网盘）
+  python3 scripts/ledger.py backup                       把整个账套连同 Git 历史打成压缩包（没有远程仓库时存云盘、网盘）
   python3 scripts/ledger.py --root examples/demo check   对另一个目录里的账套操作
 
 约定：
@@ -150,7 +150,7 @@ def build_parser():
     nb.add_argument("--no-consolidate", action="store_true",
                     help="不并入 networth 合并资产负债（与他人共有的账本，如家庭共同账）")
 
-    bk = sub.add_parser("backup", help="把整个账套打成一个压缩包（不用 Git 时存到云盘、网盘）")
+    bk = sub.add_parser("backup", help="把整个账套连同 Git 历史打成一个压缩包（没有远程仓库时存到云盘、网盘）")
     bk.add_argument("-o", "--out", metavar="DIR", help="压缩包放到哪个目录，默认账套根目录下的 backups/")
 
     return p

@@ -12,6 +12,7 @@ import sys
 
 from . import __version__, config, env
 from .books import load_book
+from .query import last_summary
 
 # 公开的模板仓库。用户的真实账目只能放在自己的私有仓库，不能推到这里。
 UPSTREAM = "Xbang0222/beancount-ai-ledger"
@@ -19,9 +20,12 @@ GITHUB_URL_RE = re.compile(r"github\.com[:/]+([^/\s]+)/([^/\s]+?)(?:\.git)?/?$",
 # CATEGORIES.md 开头的模板提示；初始化时连同第 0 节一起改掉
 TEMPLATE_MARK = "这是模板，请改成你自己的"
 # 没有 Git 时的两条路：会用 Git 的建私有仓库；只用豆包这类云电脑的改用压缩包加云盘
-NO_GIT_TODO = ("用户会用 Git：在账套目录 git init，再建一个私有远程仓库备份；"
-               "用户不用 Git（如豆包云电脑）：按 AGENTS.md「不用 Git 时」，"
-               "每次改动后运行 python3 scripts/ledger.py backup，把压缩包存进用户的云盘")
+NO_GIT_TODO = ("在账套目录 git init 并提交，改动才有记录可查。"
+               "用户没有远程仓库（如豆包云电脑）：按 AGENTS.md「没有远程仓库时」，"
+               "每批改动后运行 python3 scripts/ledger.py backup，把压缩包存进用户的云盘")
+NO_REMOTE_TODO = ("用户会用 GitHub：建一个私有远程仓库，git remote add origin <地址> 后推送；"
+                  "用户不会用（如豆包云电脑）：按 AGENTS.md「没有远程仓库时」，"
+                  "每批改动提交后运行 python3 scripts/ledger.py backup，把压缩包存进用户的云盘")
 
 
 class _Report:
@@ -112,7 +116,7 @@ def _books(r):
         txns = sum(isinstance(e, data.Transaction) and e.flag != "P" for e in entries)
         checks = sum(isinstance(e, data.Balance) for e in entries)
         pads = sum(isinstance(e, data.Pad) for e in entries)
-        r.ok(f"{name}（{book.title}）：校验通过，交易 {txns} 笔，余额断言 {checks} 条")
+        r.ok(f"{name}（{book.title}）：校验通过，{last_summary(entries)}，余额断言 {checks} 条")
         if txns == 0 and checks == 0 and pads == 0:
             r.warn(f"{name} 还没有期初余额，也没有任何交易",
                    f"第一次使用：按 AGENTS.md「首次使用」问清用户的账户和余额，初始化 {name}")
@@ -146,8 +150,7 @@ def _git(r):
 
     rc, url = _run(["git", "remote", "get-url", "origin"])
     if rc != 0 or not url:
-        r.warn("没有配置远程仓库 origin：账本只存在这台电脑上",
-               "建一个私有远程仓库（如 GitHub Private），git remote add origin <地址> 后推送备份")
+        r.warn("没有配置远程仓库 origin：账本只存在这台电脑上", NO_REMOTE_TODO)
         return
     repo = github_repo(url)
     if repo and repo.lower() == UPSTREAM.lower():
