@@ -30,3 +30,6 @@ exports/
 *.csv
 *.xlsx
 *.zip
+
+# ledger.py backup 生成的压缩包（不用 Git 时存到云盘、网盘）
+backups/

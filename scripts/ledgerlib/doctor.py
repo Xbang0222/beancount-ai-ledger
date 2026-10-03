@@ -18,6 +18,10 @@ UPSTREAM = "Xbang0222/beancount-ai-ledger"
 GITHUB_URL_RE = re.compile(r"github\.com[:/]+([^/\s]+)/([^/\s]+?)(?:\.git)?/?$", re.I)
 # CATEGORIES.md 开头的模板提示；初始化时连同第 0 节一起改掉
 TEMPLATE_MARK = "这是模板，请改成你自己的"
+# 没有 Git 时的两条路：会用 Git 的建私有仓库；只用豆包这类云电脑的改用压缩包加云盘
+NO_GIT_TODO = ("用户会用 Git：在账套目录 git init，再建一个私有远程仓库备份；"
+               "用户不用 Git（如豆包云电脑）：按 AGENTS.md「不用 Git 时」，"
+               "每次改动后运行 python3 scripts/ledger.py backup，把压缩包存进用户的云盘")
 
 
 class _Report:
@@ -127,10 +131,10 @@ def _git(r):
         return
     rc, inside = _run(["git", "rev-parse", "--is-inside-work-tree"])
     if rc is None:
-        r.warn("没有安装 git：改动无法追溯，也没法同步到远程", "安装 git，并在账套目录 git init")
+        r.warn("没有安装 git：改动无法追溯，也没法同步到远程", NO_GIT_TODO)
         return
     if rc != 0 or inside != "true":
-        r.warn("账套目录不是 Git 仓库：改动无法追溯", "在账套目录运行 git init，再建一个私有远程仓库备份")
+        r.warn("账套目录不是 Git 仓库：改动无法追溯", NO_GIT_TODO)
         return
     _, branch = _run(["git", "branch", "--show-current"])
     _, status = _run(["git", "status", "--porcelain"])
