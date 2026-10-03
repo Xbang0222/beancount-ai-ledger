@@ -297,7 +297,8 @@ def test_序时簿本来就乱序时只追加不替用户重排(ledger):
 
 def test_原文件是_CRLF_时入账后仍是_CRLF(ledger):
     journal = ledger / "personal" / "journal" / "2026-09.beancount"
-    journal.write_bytes(journal.read_bytes().replace(b"\n", b"\r\n"))
+    # 先统一成 LF 再转：Windows 上测试夹具写出来的文件本身就是 CRLF
+    journal.write_bytes(journal.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
     assert _add(GOOD) == 0
     data = journal.read_bytes()
     assert "餐饮-晚餐".encode() in data
@@ -306,5 +307,6 @@ def test_原文件是_CRLF_时入账后仍是_CRLF(ledger):
 
 def test_原文件是_LF_时不引入_CRLF(ledger):
     journal = ledger / "personal" / "journal" / "2026-09.beancount"
+    journal.write_bytes(journal.read_bytes().replace(b"\r\n", b"\n"))
     assert _add(GOOD) == 0
     assert b"\r" not in journal.read_bytes()
