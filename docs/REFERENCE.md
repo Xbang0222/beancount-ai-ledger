@@ -2,6 +2,7 @@
 
 - [命令](#命令)
 - [多本账](#多本账)
+- [利润分配](#利润分配)
 - [目录结构](#目录结构)
 
 ## 命令
@@ -23,6 +24,7 @@
 | `tag <账本> <标签> [YYYY-MM]` | 按标签汇总明细 |
 | `networth [--rate 币种=汇率]` | 合并资产负债：抵销账本之间的往来，外币折合本位币 |
 | `reconcile` | 核对账本之间的往来 |
+| `dividend YYYY-MM [--rate 币种=汇率]` | 按月利润分配：算当月净利润（外币现拉汇率折算），按 `[dividend]` 比例拆分，见[利润分配](#利润分配) |
 | `fmt [--check] [账本]` | 整理序时簿格式、按日期时间排序，不改金额 |
 | `books` | 列出账本与往来镜像 |
 | `new-book <名称> [选项]` | 新建账本，见[多本账](#多本账) |
@@ -86,6 +88,37 @@ accounts = { personal = "Assets:Receivable:Shop", shop = "Liabilities:OwnerLoan"
 ```
 
 键名拼错、引用了不存在的账本、同一个科目出现在多对镜像里，都会直接报错。
+
+## 利润分配
+
+店铺和别人合伙、每月按净利润分钱时，在 `ledger.toml` 里配置 `[dividend]`，每月初跑 `python3 scripts/ledger.py dividend 2026-10`：
+
+```toml
+[ledger]
+fx_alias = { USDT = "USD" }     # 可选：现拉汇率时某币种按另一币种的汇率折算
+
+[dividend]
+book = "shop"                   # 在哪本账上算
+# account = "Equity:Distributions"   # 记已分配利润的科目（默认，经营账模板已开立）
+partners = [
+  { name = "我", payee = "股东", share = 0.6 },
+  { name = "合伙人小王", share = 0.4, offset = "Assets:Receivable:Wang" },
+]
+```
+
+- **净利润**：该月这本账全部收入减全部支出。外币部分默认从开源数据集 fawazahmed0/exchange-api 现拉当天汇率折成本位币（不写入账本），也可以用 `--rate USD=7.1` 指定；拉不到会报错让你指定。
+- **已分配**：分红分录要带 `period: "YYYY-MM"` 元数据标明属于哪个月的利润，脚本按对方名称（`payee`，默认同 `name`）归集各方已分了多少，列出「应得 − 已分配 = 差额」。发完分红后又补记了当月收支，再跑一次就能看出要补多少。
+- **扣抵**：配了 `offset` 的一方，把该科目余额（比如上个月多发、记成对方欠款的部分）从差额里扣掉，得出本次实付。
+- `share` 合计必须为 1。
+
+分红分录这样写：
+
+```beancount
+2026-11-02 * "合伙人小王" "利润分配-10月分红"
+  period: "2026-10"
+  Equity:Distributions  4000.00 CNY
+  Assets:Bank:Main
+```
 
 ## 目录结构
 

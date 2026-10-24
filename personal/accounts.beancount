@@ -70,7 +70,7 @@
 1970-01-01 open Expenses:Insurance CNY            ; 保险－自付保费
 1970-01-01 open Expenses:Finance:Interest CNY     ; 财务费用－借款利息
 1970-01-01 open Expenses:Finance:Fee CNY          ; 财务费用－手续费、分期服务费
-1970-01-01 open Expenses:Other CNY                ; 其他（暂时不知道归哪类，确认后结转）
+1970-01-01 open Expenses:Other CNY                ; 其他（实在判断不了归哪类时的兜底）
 
 ; ===== 权益 Equity =====
 1970-01-01 open Equity:OpeningBalances            ; 期初净资产（开账平衡科目，配合 opening.beancount 的 pad 使用）

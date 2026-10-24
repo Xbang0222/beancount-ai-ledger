@@ -6,6 +6,7 @@ ledger.toml 的写法见 docs/REFERENCE.md「多本账」。每次调用 load() 
 import os
 import re
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 
 try:
     import tomllib  # Python 3.11+
@@ -34,8 +35,10 @@ BOOK_NAME_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 ACCOUNT_RE = re.compile(r"^(Assets|Liabilities|Equity|Income|Expenses)(:[^:\s]+)+$")
 CURRENCY_RE = re.compile(r"^[A-Z][A-Z0-9'._-]{0,22}[A-Z0-9]$")
 
-_TOP_KEYS = {"ledger", "books", "mirrors"}
-_LEDGER_KEYS = {"timezone", "base_currency"}
+_TOP_KEYS = {"ledger", "books", "mirrors", "dividend"}
+_LEDGER_KEYS = {"timezone", "base_currency", "fx_alias"}
+_DIVIDEND_KEYS = {"book", "account", "partners"}
+_PARTNER_KEYS = {"name", "payee", "share", "offset"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
 _MIRROR_KEYS = {"name", "currency", "accounts"}
 
@@ -69,11 +72,29 @@ class Mirror:
 
 
 @dataclass(frozen=True)
+class Partner:
+    """利润分配的一方：分得比例，以及可选的抵扣科目（对方欠账本的钱，从应得里扣）。"""
+    name: str
+    share: Decimal
+    offset: str = ""
+    payee: str = ""    # 分红分录的对方名称，默认同 name
+
+
+@dataclass(frozen=True)
+class Dividend:
+    book: str
+    partners: tuple    # Partner 元组，比例合计为 1
+    account: str = "Equity:Distributions"   # 记已分配利润的科目
+
+
+@dataclass(frozen=True)
 class Config:
     books: dict        # 账本名 -> Book，保持 ledger.toml 中的书写顺序
     mirrors: tuple     # Mirror 元组
     timezone: str
     base_currency: str
+    fx_alias: dict = None       # 折算时视同另一币种取汇率，如 {"USDT": "USD"}
+    dividend: Dividend = None   # 按月利润分配；未配置为 None
 
 
 def config_path():
@@ -167,7 +188,59 @@ def parse(data):
         (lb, la), (rb, ra) = sides
         mirrors.append(Mirror(name, currency, lb, la, rb, ra))
 
-    return Config(books=books, mirrors=tuple(mirrors), timezone=timezone, base_currency=base)
+    fx_alias = ledger.get("fx_alias", {})
+    if not isinstance(fx_alias, dict) or not all(
+            isinstance(k, str) and isinstance(v, str) and CURRENCY_RE.match(k) and CURRENCY_RE.match(v)
+            for k, v in fx_alias.items()):
+        raise ConfigError(f"[ledger] fx_alias 写成 {{ USDT = \"USD\" }}（大写币种代码），收到：{fx_alias!r}")
+
+    dividend = _parse_dividend(data.get("dividend"), books)
+    return Config(books=books, mirrors=tuple(mirrors), timezone=timezone, base_currency=base,
+                  fx_alias=dict(fx_alias), dividend=dividend)
+
+
+def _parse_dividend(raw, books):
+    if raw is None:
+        return None
+    where = "[dividend]"
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{where} 应为一个表（table）")
+    _no_unknown(raw, _DIVIDEND_KEYS, where)
+    book = raw.get("book")
+    if book not in books:
+        raise ConfigError(f"{where} book 应为已声明的账本，收到：{book!r}；已声明：{' / '.join(books)}")
+    raw_partners = raw.get("partners")
+    if not isinstance(raw_partners, list) or not raw_partners:
+        raise ConfigError(f"{where} partners 至少写一方，如 partners = [{{ name = \"本人\", share = 1 }}]")
+    partners = []
+    for i, p in enumerate(raw_partners, 1):
+        pw = f"{where} 第 {i} 个 partner"
+        if not isinstance(p, dict):
+            raise ConfigError(f"{pw} 应为一个表（table）")
+        _no_unknown(p, _PARTNER_KEYS, pw)
+        name = p.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ConfigError(f"{pw} 缺少 name")
+        try:
+            share = Decimal(str(p.get("share")))
+        except InvalidOperation:
+            share = None
+        if share is None or not share.is_finite() or not 0 < share <= 1:
+            raise ConfigError(f"{pw}（{name}）share 应为 0 到 1 之间的比例，如 0.25，收到：{p.get('share')!r}")
+        offset = p.get("offset", "")
+        if offset and (not isinstance(offset, str) or not ACCOUNT_RE.match(offset)):
+            raise ConfigError(f"{pw}（{name}）offset 科目名不合法：{offset!r}")
+        payee = p.get("payee", name)
+        if not isinstance(payee, str) or not payee.strip():
+            raise ConfigError(f"{pw}（{name}）payee 应为分红分录的对方名称")
+        partners.append(Partner(name, share, offset, payee))
+    total = sum(p.share for p in partners)
+    if total != 1:
+        raise ConfigError(f"{where} 各方 share 合计应为 1，现在是 {total}")
+    account = raw.get("account", "Equity:Distributions")
+    if not isinstance(account, str) or not ACCOUNT_RE.match(account):
+        raise ConfigError(f"{where} account 科目名不合法：{account!r}")
+    return Dividend(book=book, partners=tuple(partners), account=account)
 
 
 def _no_unknown(table, allowed, where):

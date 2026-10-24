@@ -41,7 +41,8 @@ What ends up in the journal. The `time` metadata is injected by the script at en
 - The bookkeeping rules live in [`CATEGORIES.md`](CATEGORIES.md): which account each payment method maps to, which expense account to use, how to write payees, narrations and tags. Edit the file to change how the agent books things.
 - New entries never go straight into the journal files. They go through `ledger.py add`: one transaction per call, the time is injected rather than guessed, future dates and times are rejected, and unbalanced entries or unopened accounts are rolled back.
 - Starts with a single personal book. Add a shop, a studio or a shared family book with `new-book`. Transfers between books are recorded on both sides and checked by `reconcile`.
-- Reports: recent entries, monthly summary, monthly report with savings rate, balances, per-tag totals (for example, the cost of a whole trip), and consolidated net worth with currency and fund conversion.
+- Reports: recent entries, monthly summary, monthly report with savings rate, balances, per-tag totals (for example, the cost of a whole trip), consolidated net worth with currency and fund conversion, and a monthly profit split for shops run with partners (`dividend`).
+- The agent picks the category itself instead of asking you where each expense goes. Categories are two levels only (group + subcategory); the reasoning and side-by-side examples are in [`CLASSIFY.md`](CLASSIFY.md) (Chinese).
 - Ships `AGENTS.md`, `CLAUDE.md` and `GEMINI.md`, so common coding agents pick up the rules when they open the repository. The `doctor` command reports missing dependencies, uninitialized books and a public Git remote.
 
 ## Getting started

@@ -56,7 +56,8 @@ $ python3 scripts/ledger.py report personal 2026-09
 - 记账口径写在 [`CATEGORIES.md`](CATEGORIES.md)：付款方式对应哪个账户、支出归哪个科目、摘要和标签怎么写。改这个文件，AI 的记法就跟着变。
 - AI 记新账不直接写账本文件，而是经 `ledger.py add` 写入：一次一笔，自动注入录入时间，拒绝未来的日期和时间，借贷不平衡或科目未开立时整笔回滚。
 - 默认只有一本个人账。店铺、工作室、家庭共同账用 `new-book` 新增，账本之间的往来两边登记，由 `reconcile` 核对。
-- 查询：最近记录、月度汇总、月报（储蓄率）、余额表、按标签汇总（比如一次旅行的总花费）、多账本合并净资产（含外币和基金折算）。
+- 查询：最近记录、月度汇总、月报（储蓄率）、余额表、按标签汇总（比如一次旅行的总花费）、多账本合并净资产（含外币和基金折算）、合伙店铺按月利润分配（`dividend`）。
+- 归类交给 AI 自己定，不反复问你"记在哪"：分类只分大类 + 小类两级，参考依据和「原话 → 怎么记」的对照示例写在 [`CLASSIFY.md`](CLASSIFY.md)。
 - 自带 `AGENTS.md`、`CLAUDE.md`、`GEMINI.md`，主流 AI 编程助手打开仓库就能读到规则；`doctor` 命令帮 AI 检查依赖、账本状态和仓库是否私有。
 
 ## 开始使用
@@ -75,6 +76,7 @@ $ python3 scripts/ledger.py report personal 2026-09
 | [常见问题](docs/FAQ.md) | 支持的 AI 工具、Windows、云环境、升级模板 |
 | [更新日志](CHANGELOG.md) | 每个版本改了什么 |
 | [`AGENTS.md`](AGENTS.md)、[`CATEGORIES.md`](CATEGORIES.md) | 给 AI 的操作规范和记账规则，建账后按你的习惯改 |
+| [`CLASSIFY.md`](CLASSIFY.md) | 分类的参考依据与「用户原话 → 怎么记」对照示例 |
 
 ## 致谢
 

@@ -26,6 +26,7 @@ EPILOG = """\
   python3 scripts/ledger.py report personal 2026-09      月度收支 / 储蓄率分析
   python3 scripts/ledger.py networth                     资产负债汇总（多本账时抵销账本间往来）
   python3 scripts/ledger.py networth --rate USD=7.1      临时指定汇率试算
+  python3 scripts/ledger.py dividend 2026-10             按月利润分配（汇率现拉，按 ledger.toml [dividend] 比例拆分）
   python3 scripts/ledger.py new-book shop --template business --link personal
   python3 scripts/ledger.py backup                       把整个账套连同 Git 历史打成压缩包（没有远程仓库时存云盘、网盘）
   python3 scripts/ledger.py backup --daily               同上，今天已经备份过就跳过
@@ -132,6 +133,11 @@ def build_parser():
     n = sub.add_parser("networth", help="资产负债汇总：合并各账本、抵销账本间往来，外币折合本位币")
     n.add_argument("--rate", type=_rate, action="append", metavar="币种=汇率",
                    help="临时指定汇率（如 USD=7.1，可重复），只用于本次试算、不写入账本")
+
+    dv = sub.add_parser("dividend", help="按月利润分配：算当月净利润（外币现拉汇率折算），按 [dividend] 比例拆分")
+    dv.add_argument("ym", type=_ym, metavar="YYYY-MM")
+    dv.add_argument("--rate", type=_rate, action="append", metavar="币种=汇率",
+                    help="指定汇率（如 USDT=6.69），不指定则现拉当天汇率")
 
     f = sub.add_parser("fmt", help="序时簿排版规范化（分录间空行、按日期时间重排）")
     f.add_argument("--check", action="store_true", help="只检测不写入，未格式化则退出码 1")
@@ -251,6 +257,10 @@ def _dispatch(args):
         from .networth import cmd_networth
 
         return cmd_networth(dict(args.rate or []))
+    if args.cmd == "dividend":
+        from .dividend import cmd_dividend
+
+        return cmd_dividend(args.ym, dict(args.rate or []))
     if args.cmd == "fmt":
         from .fmt import cmd_fmt
 

@@ -22,6 +22,7 @@
 
 ; ===== 权益 =====
 {{OPEN_DATE}} open Equity:OwnerCapital {{CURRENCY}} ; 实收资本－出资人投入
+{{OPEN_DATE}} open Equity:Distributions {{CURRENCY}} ; 利润分配－分给出资人/合伙人的利润（ledger.py dividend）
 {{OPEN_DATE}} open Equity:OpeningBalances ; 期初平衡科目
 
 ; ===== 收入 =====

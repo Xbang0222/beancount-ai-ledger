@@ -4,7 +4,17 @@
 
 ## [Unreleased]
 
+### 新增
+
+- `dividend YYYY-MM`：合伙店铺按月利润分配。算出当月净利润（外币默认从 fawazahmed0/exchange-api 现拉汇率折算，也可 `--rate` 指定），按 `ledger.toml` 新增的 `[dividend]` 比例拆分；分红分录带 `period: "YYYY-MM"` 即可归集已分配，补记当月收支后自动显出差额；`offset` 可把对方欠款从差额里扣掉。写法见 `docs/REFERENCE.md`「利润分配」。
+- `ledger.toml` 的 `[ledger]` 新增可选 `fx_alias`（如 `{ USDT = "USD" }`），现拉汇率时按别名币种折算。
+- 经营账模板新增 `Equity:Distributions`（利润分配）科目。
+- `CLASSIFY.md`：分类的参考依据（统计局八大类、记账 App 通行做法）与「用户原话 → 怎么记」对照示例。
+
 ### 变更
+
+- 归类改由 AI 自己定，不再问用户"记在哪"：分类固定为大类 + 小类两级，拿不准先查 `CLASSIFY.md` 和通行口径，必要时新开科目；只有金额、日期、记哪本账、是不是借出/代垫这类事实缺失才问。`AGENTS.md`、`CATEGORIES.md` 第 0、1 节相应改写。**升级的用户**：`CATEGORIES.md` 不会被覆盖，想要新规则请对照本条手动合并第 0 节第 5 条和第 1 节开头。
+- `CATEGORIES.md` 0.1：摘要要写清具体买了什么（「购物-蓝牙耳机」），不写「购物-日用品」这类笼统词。
 
 - 云盘和本地 `backups/` 都只留最新一份备份（改动历史已经在压缩包里）。新的上传成功后才删旧的。
 - `AGENTS.md`：找不到云盘工具时先看 `~/vm/resource-loader/bin/`；还是没有就把压缩包发在对话里让用户自己保存，并明说没存到云盘。

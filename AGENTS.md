@@ -55,7 +55,8 @@ EOF
 - **不确定上一笔记没记上**时，先 `python3 scripts/ledger.py recent <账本>` 看最近几笔，再决定是否重录。日期、对方、摘要、各科目金额都相同的分录第二次入账会被 `add` 拒绝；确实是两笔（同一天在同一家店买了两次一样的东西）才加 `--allow-duplicate`。
 - **序时簿只收交易和余额断言。** `open` 这类科目表指令 `add` 会拒绝，新科目写进 `<账本>/accounts.beancount`，这个文件可以直接编辑。
 - **科目未开立**时 `add` 会失败回滚。不要自造科目名硬记：先对照 `<账本>/accounts.beancount` 选已有科目；确实需要新科目，就按原格式在 accounts 里 `open`，带上中文注释，和这笔分录一起提交，并告诉用户新开了什么科目。
-- **分类拿不准不要硬猜。** 只有"确定是消费、只是不知道归哪类"才暂记 `Expenses:Other`，并在回复里说明；连是消费、借款还是代垫都分不清时，先问用户，**不得直接记成费用**。
+- **归类是 AI 的事，不问用户。** 用户只说发生了什么、买了什么，记哪个科目由你按 `CATEGORIES.md` 第 1 节自己定（分类只有大类 + 小类两级）。拿不准就翻 `CLASSIFY.md` 的对照示例，或查通行分类口径后直接归类；现有科目都不合适、又是会反复出现的品类，就新开科目并补进分类表。**不要问用户"记在哪""选哪个分类"**，实在判断不了才暂记 `Expenses:Other` 并在回复里说明。
+- **只有事实缺失才问**：金额、日期、花的是谁的钱（哪本账）、是消费还是借给/垫给别人。连是消费、借款还是代垫都分不清时，先问用户，**不得直接记成费用**。
 
 `ledger.py` 的退出码：0 成功；1 校验不通过或输入有误；2 命令参数不对或 `ledger.toml` 有误；3 缺依赖或 Python 版本太低。
 
@@ -242,6 +243,7 @@ EOF
 ```bash
 git remote add upstream https://github.com/Xbang0222/beancount-ai-ledger.git 2>/dev/null; git fetch -q upstream
 git checkout upstream/main -- scripts tests docs AGENTS.md requirements.txt requirements-dev.txt pyproject.toml
+[ -f CLASSIFY.md ] || git checkout upstream/main -- CLASSIFY.md   # 分类指南：没有才取，用户补过判例的不覆盖
 python3 scripts/bootstrap.py && git commit -q -m "chore(script): 同步上游脚本"
 ```
 
