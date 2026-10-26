@@ -15,7 +15,7 @@ A plain-text double-entry ledger template built on [Beancount](https://github.co
 ## Files that drive the agent
 
 - `CATEGORIES.md`: the bookkeeping rules — which account each payment method maps to, how expenses are categorized, how payees and narrations are written, loans, credit and investments. **Edit it to match your habits**; the agent follows whatever it says.
-- `CLASSIFY.md`: why the categories are what they are, plus "what the user said → how it is booked" examples.
+- `CLASSIFY.md`: a lookup table from common items and merchants to accounts, why the categories are what they are, plus "what the user said → how it is booked" examples.
 - `STATE.md`: short-lived context such as an ongoing trip or a temporary default payment account; deleted when it no longer applies.
 - `AGENTS.md` (referenced by `CLAUDE.md` and `GEMINI.md`): operating rules for the agent, picked up automatically by common coding agents.
 
@@ -41,7 +41,7 @@ What ends up in the journal (`time` is injected by the script at entry time, nev
 
 ## Getting started
 
-You need Python 3.9 or later and Git.
+Using a chat assistant with a cloud computer such as Doubao? Send it the prompt from [Cloud AI + private repo](docs/CLOUD-GIT.md) (Chinese) and it runs everything below itself. On your own computer you need Python 3.9 or later and Git.
 
 1. **Create a private repository.** Click **Use this template** → **Create a new repository**, choose **Private**, and clone it. With the [GitHub CLI](https://cli.github.com/):
 
@@ -122,6 +122,7 @@ python3 scripts/ledger.py backup --daily               # zip the whole ledger wi
 - **Consumer credit**: spending on a credit card or Huabei creates a liability; repayments reduce it and are not counted as spending again.
 - **Refunds and advances**: refunds reduce the original expense; money lent or paid on someone's behalf is a receivable, not spending.
 - **Multiple currencies**: base currency CNY by default; other currencies are converted with `price` entries or `--rate`, and `dividend` can fetch the day's rate.
+- **Shop books are for internal management**: if the shop is a registered business, tax filing still follows the applicable accounting standards (an accountant can do it); these journals serve as the source records. Personal-only users can ignore this.
 
 ## Reliability
 

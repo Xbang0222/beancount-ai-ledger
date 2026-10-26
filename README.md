@@ -12,7 +12,7 @@
 ## 文档约定
 
 - `CATEGORIES.md`：记账规则，涵盖付款渠道对应账户、科目归类、摘要写法、往来、信贷与投资，是记账口径的唯一依据。**建账后按你的习惯改**，AI 的记法跟着变。
-- `CLASSIFY.md`：分类的参考依据（统计局八大类、记账 App 通行做法）与「用户原话 → 怎么记」对照示例。
+- `CLASSIFY.md`：分类速查词典（常见东西、商家平台直接对到科目）、分类的参考依据与「用户原话 → 怎么记」对照示例。
 - `STATE.md`：进行中的行程、临时默认付款账户等会过期的临时上下文，事项结束即删除。
 - `AGENTS.md`（`CLAUDE.md`、`GEMINI.md` 引用它）：给 AI 的操作规范，主流 AI 编程助手打开仓库就会读到。
 - 稳定规则只写进 CATEGORIES，易变情况只写进 STATE，两者不混放；冲突时以 CATEGORIES 为准。
@@ -62,7 +62,7 @@ $ python3 scripts/ledger.py report personal 2026-09
 | 用豆包这类 AI，有（或愿意注册）GitHub 账号 | [豆包 + 私有仓库：自动存到 GitHub](docs/CLOUD-GIT.md)（推荐） |
 | 只用豆包这类 AI，不会用 Git | [不用 Git：只用豆包记账](docs/NO-GIT.md) |
 
-前提是本机已有 Python 3.9+（用 Git 的还需要 git）。依赖装在仓库自己的 `.venv` 里，不动系统 Python：
+用豆包的，照对应那篇把话术发给它就行，下面的命令由 AI 自己跑。在自己电脑上用的，前提是本机已有 Python 3.9+ 和 git，依赖装在仓库自己的 `.venv` 里，不动系统 Python：
 
 ```bash
 python3 scripts/bootstrap.py                 # 建 .venv、装依赖、校验账本
@@ -79,7 +79,7 @@ beancount-ai-ledger/
 ├── personal.beancount          # 个人账入口
 ├── ledger.toml                 # 账套配置：账本清单、往来镜像、时区、本位币、利润分配
 ├── CATEGORIES.md               # 记账规则（记账口径依据）
-├── CLASSIFY.md                 # 分类参考依据与对照示例
+├── CLASSIFY.md                 # 分类速查词典、参考依据与对照示例
 ├── STATE.md                    # 当前临时状态（失效即删）
 ├── AGENTS.md                   # AI 操作规范（CLAUDE.md / GEMINI.md 引用它）
 ├── common/
@@ -109,7 +109,7 @@ beancount-ai-ledger/
 2. AI 查看 `CATEGORIES.md` 与 `STATE.md`，把口语转成规范分录：必填日期、金额、科目、付款账户，标签按需；归类由 AI 自己定，**不反复问你"记在哪"**，只有金额、日期、是不是借出/代垫这类事实缺失才问；
 3. 经 `ledger.py add` 入账，一次一笔：借贷不平衡、科目未开立、未来日期、疑似重复时整笔回滚；
 4. AI 回报大类、金额、付款账户与标签，记错了一句话就能改（`amend` / `void`，不手改账本文件）；
-5. 每次改动立即提交并推送（不用 Git 的按 [NO-GIT](docs/NO-GIT.md) 备份到云盘）。
+5. 每次改动立即提交并推送到你的私有仓库（豆包等云电脑 AI 也一样，见 [CLOUD-GIT](docs/CLOUD-GIT.md)；不用 GitHub 的按 [NO-GIT](docs/NO-GIT.md) 备份到云盘）。
 
 ## 常用命令
 
@@ -138,6 +138,7 @@ python3 scripts/ledger.py backup --daily               # 打包整个账套（�
 - **退款与代垫**：退款冲减原支出，不算收入；借出、代垫挂往来，不算消费。
 - **多币种**：默认本位币 CNY，外币按 `price` 或命令行 `--rate` 折算；`dividend` 可现拉当天汇率。
 - **利润分配**：合伙店铺在 `ledger.toml` 配 `[dividend]` 比例，每月初跑 `dividend`，算出各方应得、已分配与本次实付。
+- **店铺账只作内部管理**：店铺是注册主体的，对外纳税申报仍按税法与会计准则设账（可委托代理记账），这里的流水可以交给会计作依据。只记个人账的不用管这条。
 - 完整分录范例见 [`examples/cookbook.beancount`](examples/cookbook.beancount)。
 
 ## 数据可靠性
@@ -159,8 +160,6 @@ python3 scripts/ledger.py backup --daily               # 打包整个账套（�
 | [常见问题](docs/FAQ.md) | 支持的 AI 工具、Windows、云环境、升级模板 |
 | [更新日志](CHANGELOG.md) | 每个版本改了什么 |
 
-## 合规说明与致谢
-
-本账套是个人与小微经营的内部管理账。店铺若为注册主体，对外纳税申报仍须按税法与会计准则设账（可委托代理记账），本账套序时簿可作为提供给会计的流水依据。
+## 致谢
 
 记账引擎是 Martin Blais 开发的 [Beancount](https://github.com/beancount/beancount)（GPL-2.0），通过 pip 单独安装，不随本仓库分发。
