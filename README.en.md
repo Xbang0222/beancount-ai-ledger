@@ -138,6 +138,7 @@ The detailed documentation is in Chinese.
 | Document | Contents |
 |---|---|
 | [Quick start with Git](docs/QUICKSTART.md) | Private repository, dependencies, first session |
+| [Cloud AI + private repo](docs/CLOUD-GIT.md) | For chat assistants with a cloud computer (such as Doubao) that save every entry to your private GitHub repository; you only sign in once with a code (recommended) |
 | [Without Git](docs/NO-GIT.md) | For chat assistants with a cloud computer and a cloud drive, such as Doubao |
 | [User guide](docs/GUIDE.md) | What to say to the agent for recording, fixing, querying and reconciling |
 | [Commands and configuration](docs/REFERENCE.md) | All commands, multiple books, profit split, `ledger.toml`, project layout |

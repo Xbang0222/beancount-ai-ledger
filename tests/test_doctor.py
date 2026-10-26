@@ -24,6 +24,7 @@ def _git(root, *args):
     ("https://github.com/Xbang0222/beancount-ai-ledger.git", "Xbang0222/beancount-ai-ledger"),
     ("https://github.com/someone/my-ledger", "someone/my-ledger"),
     ("git@github.com:someone/my-ledger.git", "someone/my-ledger"),
+    ("ssh://git@ssh.github.com:443/someone/my-ledger.git", "someone/my-ledger"),  # 云电脑走 443 端口
     ("https://gitee.com/someone/my-ledger.git", None),
     ("", None),
 ])

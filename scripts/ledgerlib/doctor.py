@@ -16,7 +16,7 @@ from .query import last_summary
 
 # 公开的模板仓库。用户的真实账目只能放在自己的私有仓库，不能推到这里。
 UPSTREAM = "Xbang0222/beancount-ai-ledger"
-GITHUB_URL_RE = re.compile(r"github\.com[:/]+([^/\s]+)/([^/\s]+?)(?:\.git)?/?$", re.I)
+GITHUB_URL_RE = re.compile(r"github\.com(?::\d+)?[:/]+([^/\s]+)/([^/\s]+?)(?:\.git)?/?$", re.I)
 # CATEGORIES.md 开头的模板提示；初始化时连同第 0 节一起改掉
 TEMPLATE_MARK = "这是模板，请改成你自己的"
 # 没有 Git 时的两条路：会用 Git 的建私有仓库；只用豆包这类云电脑的改用压缩包加云盘

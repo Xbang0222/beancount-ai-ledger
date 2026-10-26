@@ -59,6 +59,7 @@ $ python3 scripts/ledger.py report personal 2026-09
 | 你的情况 | 看这篇 |
 |---|---|
 | 在自己电脑上用 Claude Code、Codex 等 AI 编程助手，会用 Git | [快速开始：用 Git 保存账本](docs/QUICKSTART.md) |
+| 用豆包这类 AI，有（或愿意注册）GitHub 账号 | [豆包 + 私有仓库：自动存到 GitHub](docs/CLOUD-GIT.md)（推荐） |
 | 只用豆包这类 AI，不会用 Git | [不用 Git：只用豆包记账](docs/NO-GIT.md) |
 
 前提是本机已有 Python 3.9+（用 Git 的还需要 git）。依赖装在仓库自己的 `.venv` 里，不动系统 Python：

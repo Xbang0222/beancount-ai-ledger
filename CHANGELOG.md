@@ -6,6 +6,7 @@
 
 ### 新增
 
+- `docs/CLOUD-GIT.md` 与 `AGENTS.md`「云电脑连私有仓库」：豆包这类云电脑 AI 连用户的 GitHub 私有仓库，每记一笔自动推送。默认由 AI 用 GitHub CLI 发起设备登录，用户只输一次验证码，建仓库、克隆、推送都由 AI 完成；也可由别人代配只管一个仓库的部署密钥（走 443 端口）。`doctor` 能识别 `ssh.github.com:443` 形式的远程地址。
 - `dividend YYYY-MM`：合伙店铺按月利润分配。算出当月净利润（外币默认从 fawazahmed0/exchange-api 现拉汇率折算，也可 `--rate` 指定），按 `ledger.toml` 新增的 `[dividend]` 比例拆分；分红分录带 `period: "YYYY-MM"` 即可归集已分配，补记当月收支后自动显出差额；`offset` 可把对方欠款从差额里扣掉。写法见 `docs/REFERENCE.md`「利润分配」。
 - `ledger.toml` 的 `[ledger]` 新增可选 `fx_alias`（如 `{ USDT = "USD" }`），现拉汇率时按别名币种折算。
 - 经营账模板新增 `Equity:Distributions`（利润分配）科目。
