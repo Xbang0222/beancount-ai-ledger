@@ -164,7 +164,7 @@ def test_提交前检查路径的各种写法都算启用(ledger, capsys, style)
 def test_自己的仓库留着模板项目文件时提醒删除(ledger, monkeypatch, capsys):
     monkeypatch.setattr(doctor, "github_visibility", lambda repo: "PRIVATE")
     (ledger / ".github" / "ISSUE_TEMPLATE").mkdir(parents=True)
-    (ledger / ".github" / "CONTRIBUTING.md").write_text("贡献指南\n")
+    (ledger / ".github" / "CONTRIBUTING.md").write_text("贡献指南\n", encoding="utf-8")
     _git(ledger, "init", "-q")
     _git(ledger, "remote", "add", "origin", "git@github.com:someone/my-ledger.git")
     cli.main(["doctor"])
@@ -176,7 +176,7 @@ def test_自己的仓库留着模板项目文件时提醒删除(ledger, monkeypa
 @needs_git
 def test_模板仓库本身不提醒删除模板项目文件(ledger, capsys):
     (ledger / ".github").mkdir()
-    (ledger / ".github" / "CONTRIBUTING.md").write_text("贡献指南\n")
+    (ledger / ".github" / "CONTRIBUTING.md").write_text("贡献指南\n", encoding="utf-8")
     _git(ledger, "init", "-q")
     _git(ledger, "remote", "add", "origin", "https://github.com/Xbang0222/beancount-ai-ledger.git")
     cli.main(["doctor"])
