@@ -53,7 +53,8 @@
 ; —— 居住 ——
 {{OPEN_DATE}} open Expenses:Housing:Rent {{CURRENCY}} ; 居住－房租（可退押金不是费用，记 Assets:Prepaid:Deposit）
 {{OPEN_DATE}} open Expenses:Housing:Utilities {{CURRENCY}} ; 居住－水电燃气、话费宽带、物业
-{{OPEN_DATE}} open Expenses:Housing:Daily {{CURRENCY}} ; 居住－日用品、清洁用品、家居小物、宠物用品
+{{OPEN_DATE}} open Expenses:Housing:Daily {{CURRENCY}} ; 居住－日用品、清洁洗护用品、厨具床品、家具家居
+{{OPEN_DATE}} open Expenses:Housing:Repair {{CURRENCY}} ; 居住－装修、维修、安装
 ; —— 交通 ——
 {{OPEN_DATE}} open Expenses:Transport:Local {{CURRENCY}} ; 交通－地铁公交、打车、共享单车、加油、电瓶车充电
 {{OPEN_DATE}} open Expenses:Transport:LongDistance {{CURRENCY}} ; 交通－非旅行的长途车票（回家、出差自付）
@@ -76,6 +77,8 @@
 {{OPEN_DATE}} open Expenses:Medical {{CURRENCY}} ; 医疗－看病、买药、体检
 {{OPEN_DATE}} open Expenses:Fitness {{CURRENCY}} ; 运动－健身房、球馆、运动课程
 {{OPEN_DATE}} open Expenses:PersonalCare {{CURRENCY}} ; 个护－理发、美容、护肤化妆品
+{{OPEN_DATE}} open Expenses:Pet {{CURRENCY}} ; 宠物－粮食用品、看病疫苗、洗护寄养
+{{OPEN_DATE}} open Expenses:Kids {{CURRENCY}} ; 育儿－奶粉尿布、童装玩具、托育兴趣班
 {{OPEN_DATE}} open Expenses:Social {{CURRENCY}} ; 人情－红包、礼物、请客
 {{OPEN_DATE}} open Expenses:Insurance {{CURRENCY}} ; 保险－自付保费
 {{OPEN_DATE}} open Expenses:Service:Professional {{CURRENCY}} ; 服务－税务法律咨询、证件代办

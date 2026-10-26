@@ -62,36 +62,39 @@
 
 | 一级大类 | 会计科目 | 关键词示例 |
 |---|---|---|
-| 餐饮 | `Expenses:Food:Dining` | 正餐、外卖、堂食、工作餐、食堂饭卡、聚餐（自己吃的部分）、夜宵 |
-| 餐饮 | `Expenses:Food:Snack` | 饮品、咖啡、奶茶、零食、小吃、甜品面包、烟酒、矿泉水 |
-| 餐饮 | `Expenses:Food:Grocery` | 买菜、水果、食材、调料、粮油、超市生鲜 |
-| 居住 | `Expenses:Housing:Rent` | 房租等不可退居住支出。**可退押金不是费用**，记 `Assets:Prepaid:Deposit`（见 4.3） |
-| 居住 | `Expenses:Housing:Utilities` | 水电燃气、话费流量、宽带、物业 |
-| 居住 | `Expenses:Housing:Daily` | 家居日用品、清洁用品、洗护用品、纸巾、桶装水、厨具餐具、床品、小件家具、宠物用品（猫粮猫砂、玩具） |
-| 交通 | `Expenses:Transport:Local` | 市内打车、地铁、公交、共享单车、日常加油、电瓶车充电 |
-| 交通 | `Expenses:Transport:Vehicle` | 车辆（含电瓶车）维修保养、换电瓶、停车费、过路费、车险以外的用车杂费 |
-| 交通 | `Expenses:Transport:LongDistance` | 不属于旅行的长途车票（回家、出差自付、城际客运） |
-| 购物 | `Expenses:Shopping:Clothes` | 服饰、鞋包、帽子、配饰 |
-| 购物 | `Expenses:Shopping:Digital` | 手机电脑、相机、耳机音箱、手机壳膜、充电器数据线、家电、电子配件 |
-| 购物 | `Expenses:Shopping:Other` | 上面都对不上的实物：文具、装饰、网购月付还款等 |
-| 文娱 | `Expenses:Entertainment:Subscription` | 个人用的会员、订阅：视频/音乐会员、App 会员、云存储、软件 |
-| 文娱 | `Expenses:Entertainment:Game` | 游戏、游戏充值、皮肤、点卡 |
-| 文娱 | `Expenses:Entertainment:Other` | 电影、演出、K歌、桌游、彩票等休闲娱乐 |
-| 运动 | `Expenses:Fitness` | 健身房、球馆、运动课程 |
-| 个护 | `Expenses:PersonalCare` | 理发、美容美发、护肤化妆品、按摩 |
-| 旅行 | `Expenses:Travel:Transport` | 出游的城际交通（机票、火车票） |
-| 旅行 | `Expenses:Travel:Lodging` | 酒店、民宿 |
-| 旅行 | `Expenses:Travel:Ticket` | 门票、游玩项目 |
-| 旅行 | `Expenses:Travel:Other` | 其他旅行支出 |
-| 学习 | `Expenses:Learning` | 学费、课程、书籍、考试、驾校 |
-| 医疗 | `Expenses:Medical` | 看病、买药、体检、牙科、眼镜、针灸理疗 |
-| 保险 | `Expenses:Insurance` | 自付保费 |
-| 人情 | `Expenses:Social` | 红包、礼物、请客、给家里的钱、替亲友买单 |
-| 服务 | `Expenses:Service:Professional` | 专业服务费：税务/法律咨询、证件代办、翻译、公证 |
-| 服务 | `Expenses:Service:Life` | 生活服务费：快递寄件、充电宝租借、跑腿、维修安装、家政、洗衣、打印复印 |
-| 税费 | `Expenses:Tax` | 个税补缴、开票税费、签证费、证件工本费、行政规费、罚款 |
-| 财务费用 | `Expenses:Finance:Interest` | 借款利息 |
-| 财务费用 | `Expenses:Finance:Fee` | 手续费、分期服务费、提现费、年费 |
+| 餐饮 | `Expenses:Food:Dining` | 早中晚饭、正餐、外卖、堂食、食堂、饭卡充值、工作餐、聚餐（自己吃的部分）、夜宵、快餐汉堡、火锅烧烤、粉面米线、冒菜麻辣烫、盒饭便当、方便面 |
+| 餐饮 | `Expenses:Food:Snack` | 奶茶、咖啡、饮料、矿泉水、酒水、香烟、零食、小吃（烤肠、炸串、关东煮）、甜品、面包蛋糕、冰淇淋、便利店零食 |
+| 餐饮 | `Expenses:Food:Grocery` | 买菜、肉蛋奶、水果、米面粮油、调料、生鲜超市、社区团购买菜 |
+| 居住 | `Expenses:Housing:Rent` | 房租、不可退的中介费、房贷以外的居住支出。**可退押金不是费用**，记 `Assets:Prepaid:Deposit`（见 4.3）；房贷本金记负债，利息记财务费用 |
+| 居住 | `Expenses:Housing:Utilities` | 水费、电费、燃气费、暖气费、话费、流量、宽带、物业费、停车位管理费以外的物业类收费 |
+| 居住 | `Expenses:Housing:Daily` | 纸巾、清洁用品、洗衣液、洗碗用品、垃圾袋、卫生巾、洗发水沐浴露等洗护用品、牙刷牙膏、厨具餐具、锅碗瓢盆、收纳、床品被褥、窗帘地垫、灯泡五金、水管配件、家具（桌椅柜子床垫）、桶装水、雨伞、小家居 |
+| 居住 | `Expenses:Housing:Repair` | 装修、刷墙、家电维修、上门安装打孔、开锁换锁、管道疏通 |
+| 交通 | `Expenses:Transport:Local` | 公交地铁、公交卡充值、打车网约车、出租车、摩的三轮、共享单车电单车、日常加油充电、电瓶车充电 |
+| 交通 | `Expenses:Transport:Vehicle` | 车辆（含电瓶车）维修保养、换电瓶轮胎、洗车、停车费、过路费、年检、车辆配件（坐垫、挡风被、头盔） |
+| 交通 | `Expenses:Transport:LongDistance` | 不属于旅行的城际交通：回家、出差自付、考试的火车高铁、长途汽车、城际巴士、机场大巴、机票 |
+| 购物 | `Expenses:Shopping:Clothes` | 衣服裤子、内衣袜子、鞋子拖鞋、包、帽子围巾手套、首饰配饰手串发饰、雨衣、防晒衣、眼镜以外的穿戴 |
+| 购物 | `Expenses:Shopping:Digital` | 手机电脑平板、相机、耳机音箱、手表手环、充电器数据线、手机壳贴膜、存储卡、键鼠、家电（冰箱洗衣机空调风扇电饭煲吹风机）、剃须刀、监控摄像头 |
+| 购物 | `Expenses:Shopping:Other` | 上面都对不上的实物：文具、书本以外的办公用品、装饰摆件、花卉绿植、玩具（自己玩的）、网购月付（先用后付）账单还款里说不清的部分 |
+| 文娱 | `Expenses:Entertainment:Subscription` | 视频/音乐会员、App 会员、网盘云存储、软件购买、个人 VPN、AI 订阅、知识付费会员 |
+| 文娱 | `Expenses:Entertainment:Game` | 游戏、游戏充值、皮肤道具、点卡、主播打赏、抖音币 |
+| 文娱 | `Expenses:Entertainment:Other` | 电影、演唱会演出、话剧、KTV、桌游剧本杀、密室、网吧、游乐场、彩票刮刮乐、景点以外的休闲娱乐 |
+| 运动 | `Expenses:Fitness` | 健身房、游泳、球馆场地、瑜伽普拉提、运动课程、比赛报名、运动装备（球拍、瑜伽垫） |
+| 个护 | `Expenses:PersonalCare` | 理发烫染、美甲美睫、美容、按摩足疗、护肤品（水乳、面霜、面膜、防晒霜）、化妆品（口红、眼影、粉底）、香水、美容仪 |
+| 宠物 | `Expenses:Pet` | 猫粮狗粮、罐头零食、猫砂、猫砂盆、猫抓板、玩具、牵引绳、宠物衣服、驱虫疫苗、绝育、宠物医院、洗澡美容、寄养 |
+| 育儿 | `Expenses:Kids` | 奶粉、尿不湿、童装、儿童玩具、绘本、托育、兴趣班、孩子学费、儿童医疗以外的孩子开支 |
+| 旅行 | `Expenses:Travel:Transport` | 出游的城际交通（机票、火车票、租车） |
+| 旅行 | `Expenses:Travel:Lodging` | 酒店、民宿、出差或考试住宿（自付） |
+| 旅行 | `Expenses:Travel:Ticket` | 门票、游玩项目、导游、景区观光车 |
+| 旅行 | `Expenses:Travel:Other` | 跟团费、旅行打包价、签证以外的旅行杂费、伴手礼（自用） |
+| 学习 | `Expenses:Learning` | 学费、培训课程、网课、书籍、考试报名费、驾校学车练车、考证、复习资料 |
+| 医疗 | `Expenses:Medical` | 挂号看病、买药（感冒药、眼药水、膏药）、体检、牙科、眼镜隐形眼镜、针灸理疗、住院、保健品、口罩体温计等医疗用品 |
+| 保险 | `Expenses:Insurance` | 自付的医疗险、意外险、重疾险、寿险、车险、宠物险 |
+| 人情 | `Expenses:Social` | 发红包、礼金份子钱、生日节日礼物、请客、给父母长辈的钱、替亲友买单（替对象买票、买奶茶）、探病慰问、捐款 |
+| 服务 | `Expenses:Service:Professional` | 税务/法律咨询、证件代办、翻译、公证、职业咨询、简历代写 |
+| 服务 | `Expenses:Service:Life` | 快递寄件、跑腿代取、充电宝租借、家政保洁、洗衣干洗、打印复印、证件照、修手机修鞋、搬家、存包寄存 |
+| 税费 | `Expenses:Tax` | 个税补缴、开发票的税费、签证费、护照身份证驾驶证工本费、行政规费、罚款罚单 |
+| 财务费用 | `Expenses:Finance:Interest` | 借款利息、信用卡分期利息、网贷利息、逾期罚息 |
+| 财务费用 | `Expenses:Finance:Fee` | 手续费、分期服务费、提现费、跨行转账费、银行卡年费、退票退款手续费 |
 | 其他 | `Expenses:Other` | 实在判断不了归哪类时的兜底（回复里说明） |
 
 收入：工资 `Income:Salary`（按实际到账金额），奖金 `Income:Bonus`，兼职、劳务和二手转卖 `Income:SideJob`，红包礼金 `Income:Redpacket`，利息、分红、买卖价差记 `Income:Invest:*`；社保公积金个人账户的入账按险种分列：医保个人账户 `Income:Benefit:Medical`、养老保险 `Income:Benefit:Pension`、住房公积金 `Income:Benefit:HousingFund`（对应资产记 `Assets:Benefit:*`，不是到手工资，月报看储蓄率时注意区分）；说不清来源的进账记 `Income:Other`。**退款不是收入**，见 4.4。

@@ -14,6 +14,45 @@
 
 三家口径基本一致，模板的大类就是在它们基础上合并而来（统计局的「交通通信」拆成交通 + 居住里的话费，「教育文化娱乐」拆成学习 + 文娱）。
 
+### 常见记账 App 分类 → 本表
+
+从钱迹、随手记、鲨鱼记账、微信支付宝账单导入时，先按下表对大类，**再看备注里具体买的是什么逐笔改判**（App 里的分类常常是随手选的，比如「日用品」里混着眼药水、手机壳，「零食」里混着正餐、给猫买的罐头）。App 里的「其它」「转账」「平账」「借贷」多半不是消费，要拆开看：转账、还信用卡、借款还款记资产负债之间的划转；平账（余额调整）记 `Equity:Adjustment`；基金每日盈亏记 `Income:Invest:PnL`。
+
+| App 里的分类 | 本表科目 |
+|---|---|
+| 三餐、早午晚餐、餐饮、外卖、食品 | `Food:Dining` |
+| 零食、饮料、水果零食、烟酒、酒水 | `Food:Snack`（水果记 `Food:Grocery`） |
+| 买菜、蔬菜、水果、粮油 | `Food:Grocery` |
+| 住房、房租、房贷 | `Housing:Rent`（房贷见左栏说明） |
+| 水电煤、水电燃气、话费网费、通讯、物业 | `Housing:Utilities` |
+| 日用品、居家、家居、生活用品 | `Housing:Daily` |
+| 维修、装修 | `Housing:Repair` |
+| 交通、出行、打车、公交 | `Transport:Local`（城际车票记 `Transport:LongDistance`） |
+| 汽车、加油、停车、车辆 | `Transport:Vehicle`（日常加油记 `Transport:Local`） |
+| 衣服、服饰、鞋包、饰品 | `Shopping:Clothes` |
+| 电器数码、数码、家电 | `Shopping:Digital` |
+| 购物、网购 | 看具体东西，归不进别类的记 `Shopping:Other` |
+| 娱乐、休闲、游戏、会员 | `Entertainment:*` |
+| 运动、健身 | `Fitness` |
+| 美妆、美容、个护、理发 | `PersonalCare` |
+| 宠物 | `Pet` |
+| 孩子、育儿、母婴 | `Kids` |
+| 旅行、旅游、度假 | `Travel:*` |
+| 学习、教育、书籍、培训 | `Learning` |
+| 医疗、医疗保健、药品 | `Medical` |
+| 保险 | `Insurance` |
+| 发红包、请客送礼、人情往来、孝敬长辈、礼物 | `Social` |
+| 快递、服务、生活服务 | `Service:Life` |
+| 税费、罚款 | `Tax` |
+| 手续费、利息 | `Finance:*` |
+| 工资、薪水 | `Income:Salary`（绩效奖金 `Income:Bonus`；单位发的差旅补助说不清就 `Income:Other`） |
+| 社保、公积金、医保入账 | `Income:Benefit:Medical` / `Pension` / `HousingFund` |
+| 兼职、外快、提成、二手转卖 | `Income:SideJob` |
+| 收红包、礼金、生活费 | `Income:Redpacket` |
+| 理财收益、利息 | `Income:Invest:*` |
+| 退款 | 冲回原那笔的科目，不算收入（见 `CATEGORIES.md` 4.4） |
+| 来源不明的进账 | `Income:Other` |
+
 ## 2. 归类三步（不问用户）
 
 1. **定大类**：问自己"这笔钱换来的是什么"，对到 `CATEGORIES.md` 第 1 节的大类。
@@ -50,7 +89,8 @@
 | 分期手续费 | 蚂蚁花呗 / 财务-分期手续费 | `Finance:Fee` | 提现费、转账费同此 |
 | 理发 / 买护肤品 | 理发店 / 个护-理发 | `PersonalCare` | 美容美发、化妆品同此 |
 | 寄快递 / 租充电宝 | 快递 / 服务-寄快递 | `Service:Life` | 跑腿、维修安装、打印复印同此；网购运费随商品记 |
-| 猫粮猫砂 | 宠物用品店 / 居住-猫砂 | `Housing:Daily` | 宠物用品按日用品记，不另开宠物类 |
+| 猫粮猫砂 / 带猫打疫苗 | 宠物用品店 / 宠物-猫砂 | `Pet` | 宠物吃用、看病、洗护都在这 |
+| 装修刷墙 / 上门装空调打孔 | 装修师傅 / 居住-空调打孔 | `Housing:Repair` | 买家电本身记数码，安装维修费记这里 |
 | 电瓶车充电 / 换电瓶 | 充电桩 / 交通-电瓶车充电 | `Transport:Local` / `Transport:Vehicle` | 充电是通勤，维修换件记车辆 |
 | 证件工本费、开票税费 | 政府部门 / 税费-驾驶证工本费 | `Tax` | |
 

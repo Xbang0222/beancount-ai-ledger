@@ -53,7 +53,8 @@
 ; —— 居住 ——
 1970-01-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不是费用，记 Assets:Prepaid:Deposit）
 1970-01-01 open Expenses:Housing:Utilities CNY    ; 居住－水电燃气、话费宽带、物业
-1970-01-01 open Expenses:Housing:Daily CNY        ; 居住－日用品、清洁用品、家居小物、宠物用品
+1970-01-01 open Expenses:Housing:Daily CNY        ; 居住－日用品、清洁洗护用品、厨具床品、家具家居
+1970-01-01 open Expenses:Housing:Repair CNY     ; 居住－装修、维修、安装
 ; —— 交通 ——
 1970-01-01 open Expenses:Transport:Local CNY      ; 交通－地铁公交、打车、共享单车、加油、电瓶车充电
 1970-01-01 open Expenses:Transport:LongDistance CNY ; 交通－非旅行的长途车票（回家、出差自付）
@@ -76,6 +77,8 @@
 1970-01-01 open Expenses:Medical CNY              ; 医疗－看病、买药、体检
 1970-01-01 open Expenses:Fitness CNY             ; 运动－健身房、球馆、运动课程
 1970-01-01 open Expenses:PersonalCare CNY        ; 个护－理发、美容、护肤化妆品
+1970-01-01 open Expenses:Pet CNY                ; 宠物－粮食用品、看病疫苗、洗护寄养
+1970-01-01 open Expenses:Kids CNY               ; 育儿－奶粉尿布、童装玩具、托育兴趣班
 1970-01-01 open Expenses:Social CNY               ; 人情－红包、礼物、请客
 1970-01-01 open Expenses:Insurance CNY            ; 保险－自付保费
 1970-01-01 open Expenses:Service:Professional CNY ; 服务－税务法律咨询、证件代办
