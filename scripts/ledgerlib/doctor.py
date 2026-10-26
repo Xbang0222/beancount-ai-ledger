@@ -151,6 +151,7 @@ def _git(r):
     rc, url = _run(["git", "remote", "get-url", "origin"])
     if rc != 0 or not url:
         r.warn("没有配置远程仓库 origin：账本只存在这台电脑上", NO_REMOTE_TODO)
+        _template_only(r)
         return
     repo = github_repo(url)
     if repo and repo.lower() == UPSTREAM.lower():
@@ -158,6 +159,7 @@ def _git(r):
                "先让用户建自己的私有仓库（GitHub 上 Use this template 并选 Private，不要 Fork），"
                "再 git remote rename origin upstream && git remote add origin <私有仓库地址>", urgent=True)
         return
+    _template_only(r)
     visibility = github_visibility(repo) if repo else None
     if visibility == "PUBLIC":
         r.warn(f"远程仓库 {repo} 是公开的，账目所有人都能看到",
@@ -165,6 +167,21 @@ def _git(r):
     else:
         note = f"（{visibility}）" if visibility else "（可见性未知：没有可用的 gh 命令，请确认是私有仓库）"
         r.ok(f"origin {url}{note}")
+
+
+# 只属于公开模板项目的文件：Use this template 时会一起复制进用户的私有仓库，在那里没有用处
+TEMPLATE_ONLY = [
+    ".github/CODE_OF_CONDUCT.md", ".github/CONTRIBUTING.md", ".github/SECURITY.md",
+    ".github/pull_request_template.md", ".github/ISSUE_TEMPLATE", ".github/workflows/release.yml",
+]
+
+
+def _template_only(r):
+    """用户自己的仓库里还留着模板项目的贡献指南、Issue 表单、发版流程时提醒删掉。"""
+    left = [f for f in TEMPLATE_ONLY if os.path.exists(os.path.join(config.ROOT, f))]
+    if left:
+        r.warn(f"还留着 {len(left)} 个只属于公开模板项目的文件（贡献指南、Issue 表单、发版流程等）",
+               "git rm -r " + " ".join(left) + " 后提交：私人账本用不上它们，发版流程还会在打 v* 标签时误发版本")
 
 
 HOOKS_DIR = "scripts/hooks"

@@ -158,3 +158,26 @@ def test_提交前检查路径的各种写法都算启用(ledger, capsys, style)
     subprocess.run(["git", "-C", str(ledger), "config", "core.hooksPath", value], check=True)
     doctor.cmd_doctor()
     assert "提交前自动检查已启用" in capsys.readouterr().out
+
+
+@needs_git
+def test_自己的仓库留着模板项目文件时提醒删除(ledger, monkeypatch, capsys):
+    monkeypatch.setattr(doctor, "github_visibility", lambda repo: "PRIVATE")
+    (ledger / ".github" / "ISSUE_TEMPLATE").mkdir(parents=True)
+    (ledger / ".github" / "CONTRIBUTING.md").write_text("贡献指南\n")
+    _git(ledger, "init", "-q")
+    _git(ledger, "remote", "add", "origin", "git@github.com:someone/my-ledger.git")
+    cli.main(["doctor"])
+    out = capsys.readouterr().out
+    assert "只属于公开模板项目的文件" in out
+    assert "git rm -r .github/CONTRIBUTING.md .github/ISSUE_TEMPLATE" in out
+
+
+@needs_git
+def test_模板仓库本身不提醒删除模板项目文件(ledger, capsys):
+    (ledger / ".github").mkdir()
+    (ledger / ".github" / "CONTRIBUTING.md").write_text("贡献指南\n")
+    _git(ledger, "init", "-q")
+    _git(ledger, "remote", "add", "origin", "https://github.com/Xbang0222/beancount-ai-ledger.git")
+    cli.main(["doctor"])
+    assert "只属于公开模板项目的文件" not in capsys.readouterr().out

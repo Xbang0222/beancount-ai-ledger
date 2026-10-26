@@ -59,10 +59,9 @@ $ python3 scripts/ledger.py report personal 2026-09
 | 你的情况 | 看这篇 |
 |---|---|
 | 在自己电脑上用 Claude Code、Codex 等 AI 编程助手，会用 Git | [快速开始：用 Git 保存账本](docs/QUICKSTART.md) |
-| 用豆包这类 AI，有（或愿意注册）GitHub 账号 | [豆包 + 私有仓库：自动存到 GitHub](docs/CLOUD-GIT.md)（推荐） |
 | 只用豆包这类 AI，不会用 Git | [不用 Git：只用豆包记账](docs/NO-GIT.md) |
 
-用豆包的，照对应那篇把话术发给它就行，下面的命令由 AI 自己跑。在自己电脑上用的，前提是本机已有 Python 3.9+ 和 git，依赖装在仓库自己的 `.venv` 里，不动系统 Python：
+任何能读文件、跑命令的 AI 都能用。账本存哪按你手里有什么来：**私有 Git 仓库**（GitHub、Gitee 等）最好，没有就备份到云盘，AI 按 `AGENTS.md`「账本存哪」自己判断。下面的命令也由 AI 来跑；自己动手的，前提是本机已有 Python 3.9+ 和 git，依赖装在仓库自己的 `.venv` 里，不动系统 Python：
 
 ```bash
 python3 scripts/bootstrap.py                 # 建 .venv、装依赖、校验账本
@@ -109,7 +108,7 @@ beancount-ai-ledger/
 2. AI 查看 `CATEGORIES.md` 与 `STATE.md`，把口语转成规范分录：必填日期、金额、科目、付款账户，标签按需；归类由 AI 自己定，**不反复问你"记在哪"**，只有金额、日期、是不是借出/代垫这类事实缺失才问；
 3. 经 `ledger.py add` 入账，一次一笔：借贷不平衡、科目未开立、未来日期、疑似重复时整笔回滚；
 4. AI 回报大类、金额、付款账户与标签，记错了一句话就能改（`amend` / `void`，不手改账本文件）；
-5. 每次改动立即提交并推送到你的私有仓库（豆包等云电脑 AI 也一样，见 [CLOUD-GIT](docs/CLOUD-GIT.md)；不用 GitHub 的按 [NO-GIT](docs/NO-GIT.md) 备份到云盘）。
+5. 每次改动立即提交并推送到你的私有仓库（没有远程仓库的按 [NO-GIT](docs/NO-GIT.md) 备份到云盘）。
 
 ## 常用命令
 

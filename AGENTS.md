@@ -16,7 +16,7 @@ Windows 上把命令里的 `python3` 换成 `python` 或 `py`。
    - 装了 `gh` 且用户同意时，可以代为执行 `gh repo create <仓库名> --private --template Xbang0222/beancount-ai-ledger --clone`。
    - 已经在模板的克隆里改了东西：`git remote rename origin upstream`，再 `git remote add origin <私有仓库地址>` 并推送。
 4. doctor 提示提交前自动检查没有启用：运行 `git config core.hooksPath scripts/hooks`。之后每次提交会自动跑账本校验和排版检查，不通过就提交不了。
-5. doctor 提示账套目录不是 Git 仓库：先 `git init` 并提交。在自己电脑上用 Claude Code、Codex 的，再建议建一个私有远程仓库；用豆包这类云电脑、愿意注册 GitHub 账号的，按下文「云电脑连私有仓库」做；不想用 GitHub 的，按下文「没有远程仓库时」做，**不要让用户去学 Git**。
+5. doctor 提示账套目录不是 Git 仓库：先 `git init` 并提交。在自己电脑上用 Claude Code、Codex 的，再建议建一个私有远程仓库；放哪、怎么同步按下文「账本存哪」选；只有云盘没有远程仓库的，按「没有远程仓库时」做，**不要让用户去学 Git**。
 6. doctor 提示账本还没初始化：按下文「首次使用」引导用户。
 
 ## 每次开始前
@@ -78,42 +78,13 @@ python3 scripts/ledger.py fmt --check    # 序时簿排版，不过就运行 led
 
 **每次改动后立即提交**；配置了远程仓库就立即推送，账本以远程为准。没有远程仓库的照常提交，推送改为下一节的备份。
 
-## 云电脑连私有仓库（豆包等）
+## 账本存哪
 
-用户在豆包这类云电脑里用 AI 记账、想把账本存到自己的 GitHub 私有仓库时走这一节（用户看的说明是 `docs/CLOUD-GIT.md`）。配好以后按普通的远程仓库规则来：开始先 pull，每次改动后提交并推送，推送成功才算记完，不再做云盘备份。**命令全部由你来做，用户只负责登录授权，不要让用户进 GitHub 设置页、不要让他敲命令。**
+账本就是这个文件夹。你在哪个环境里运行（自己的电脑、云电脑、别的 AI 平台），就把它放在那里**换一个对话还在**的位置；实际检查，不要猜。存储和同步看用户手里有什么，按下面的顺序选：
 
-账本放个人目录下换对话还在的位置（默认 `~/AI记账/ledger`），不要放本次对话的工作目录或 `/tmp`。
-
-### 默认做法：用户登录一次，其余你来
-
-1. 检查有没有 `gh`（GitHub CLI）。没有就从 <https://github.com/cli/cli/releases> 下载对应系统的压缩包，解压到 `~/bin` 并加进 PATH，放个人目录下换对话还在。
-2. `gh auth login --hostname github.com --git-protocol https --web`。它会打印一个 8 位验证码和网址 `https://github.com/login/device`：**原样发给用户**，请他打开网址、输入验证码、点 Authorize，好了告诉你。然后 `gh auth setup-git`，之后 git 走 HTTPS 用这次登录推送，不用另配钥匙。
-3. 用户还没有账本：`gh repo create <仓库名> --private --template Xbang0222/beancount-ai-ledger`，再 `gh repo clone <仓库名> ~/AI记账/ledger`。仓库名没说就用 `my-ledger`。**一定是 `--private`**，建完用 `gh repo view --json visibility` 确认是 PRIVATE。
-   用户已经有仓库：问清地址，`gh repo clone <用户名>/<仓库名> ~/AI记账/ledger`，同样确认是私有的。
-4. 设好 `git config user.name` / `user.email`，跑 `python3 scripts/ledger.py doctor`，再 `git push --dry-run` 验证能推送，成功了告诉用户。
-5. 之后按「第一次接手」「每次开始前」的规矩来。登录失效（推送报认证错误）就重复第 2 步，让用户再输一次验证码。
-
-### 只给一个仓库的钥匙（别人代配，或用户不想授权整个账号）
-
-部署密钥（deploy key）只能读写一个仓库，碰不到账号里的其他东西。通常由懂行的家人朋友替用户配好，把私钥连同配置话术一起发给用户，用户原样转给你。
-
-- **替人配的一方**（在自己电脑上，或由 AI 代做）：`ssh-keygen -t ed25519 -N "" -C "<仓库名>" -f <路径>`；`gh repo deploy-key add <路径>.pub --repo <用户名>/<仓库名> --allow-write --title "豆包云电脑"`；把私钥和下面第 2、3 步一起写成话术交给用户。
-- **你（云电脑里）收到私钥后**：
-  1. 原样存成 `~/.ssh/<仓库名>`，权限 600。**不写进仓库，不复述给任何人。**
-  2. 走 443 端口克隆（云电脑常挡 22 端口）：
-
-     ```bash
-     GIT_SSH_COMMAND="ssh -i ~/.ssh/<仓库名> -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
-       git clone ssh://git@ssh.github.com:443/<用户名>/<仓库名>.git ~/AI记账/ledger
-     cd ~/AI记账/ledger
-     git config core.sshCommand "ssh -i ~/.ssh/<仓库名> -o IdentitiesOnly=yes"
-     ```
-     远程地址就用这个 `ssh://git@ssh.github.com:443/...` 原样，不要改成 `~/.ssh/config` 里的别名，`doctor` 要靠它认出仓库。
-  3. 同上第 4、5 步：设好提交署名、跑 doctor、`git push --dry-run` 验证。权限错误多半是添加时没勾可写，告诉配钥匙的人重配。
-
-### 连不上 GitHub
-
-先实际检查网络（`git ls-remote` 或 `curl -I https://github.com`），不要猜。确实不通就如实告诉用户，改按下一节「没有远程仓库时」在本地提交、备份到云盘；网络恢复后再推送补上。
+1. **私有的 Git 远程仓库**（GitHub、Gitee、GitLab 等都行）：最好。每次改动提交并推送，账本以远程为准。连接方式用当前环境支持的（登录授权、令牌、只管一个仓库的密钥都可以）；需要用户动手的只让他做授权那一步，命令由你来做。仓库必须是私有的，`doctor` 会检查。
+2. **只有云盘、网盘**：按下一节「没有远程仓库时」在本地提交，再把 `backup` 压缩包存进云盘。
+3. **都没有**：照样在本地提交，并告诉用户账本只存在这一处，建议他找个地方备份。
 
 ## 没有远程仓库时（豆包等云电脑）
 
