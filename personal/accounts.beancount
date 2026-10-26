@@ -20,9 +20,13 @@
 ; —— 投资 ——
 1970-01-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 CATEGORIES 第 5 节）
 1970-01-01 open Assets:Invest:Stock               ; 金融资产－股票
-; —— 社保公积金个人账户（不能随时取用，合并资产时可单独看）——
+1970-01-01 open Assets:Invest:Gold "FIFO"         ; 金融资产－黄金（积存金、实物金；知道克数按 AU 记，只知道金额按 CNY 记，见 CATEGORIES 第 5 节）
+  estimate: "AU"
+; —— 社保公积金个人账户（networth: FALSE 的退休前取不出来，不计入净资产，单独列示）——
 1970-01-01 open Assets:Benefit:Medical CNY       ; 医保个人账户
+  networth: FALSE
 1970-01-01 open Assets:Benefit:Pension CNY       ; 养老保险个人账户（退休前不可支取）
+  networth: FALSE
 1970-01-01 open Assets:Benefit:HousingFund CNY   ; 住房公积金
 
 ; ===== 负债 Liabilities（余额为负数表示欠款）=====

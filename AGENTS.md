@@ -273,10 +273,11 @@ python3 scripts/bootstrap.py && git commit -q -m "chore(script): 同步上游脚
 | 月度报告（收入、支出占比、储蓄率） | `ledger.py report personal 2026-09` |
 | 每个账户还剩多少 | `ledger.py balances personal` |
 | 某次旅行、某件事总共花了多少 | `ledger.py tag personal trip` |
-| 总资产、净资产（多本账合并、外币折算） | `ledger.py networth` |
+| 总资产、净资产（多本账合并、外币金银基金股票按现价折算） | `ledger.py networth` |
+| 美元、金价、基金净值、股价现在多少 | `ledger.py quote USD AU F161226 SH600519` |
 | 账本之间的往来对不对得上 | `ledger.py reconcile` |
 
-有外币时，算总资产前按 `CATEGORIES.md` 第 5 节现查当天汇率，用 `--rate` 传给 `networth`。
+`networth` 会自动现拉外币、金银、基金、股票的当天价格折成本位币，回报时说明用的价格和数据时间；单独查价用 `ledger.py quote <代码>`（写法见 `CATEGORIES.md` 第 5 节）。养老金、医保个人账户标了 `networth: FALSE`，不算进净资产。
 
 ## 隐私
 
@@ -292,6 +293,7 @@ python3 scripts/bootstrap.py && git commit -q -m "chore(script): 同步上游脚
   - `store`：加锁、写盘、整本校验、失败还原。**所有改动序时簿的命令都必须经 `store.commit`**。
   - `add` / `edit` / `fmt`：入账、更正与作废、排版。
   - `books` / `query` / `reconcile` / `networth` / `display`：加载账本、查询、对账、合并资产、输出对齐。
+  - `fxrate` / `quote`：现拉汇率和金银价、按代码取基金股票等各类价格。
   - `doctor` / `env` / `backup` / `newbook`：环境自检、依赖与 `.venv`、打包备份、新建账本。
 - 代码里不写死任何账本名。账本、往来镜像、时区、本位币一律从 `ledger.toml` 读取（`ledgerlib/config.py`）。
 - 新增或修改逻辑要配套 `tests/` 用例。测试用 `conftest.py` 的 `ledger`（两本账）、`solo`（只有个人账）、`empty_root`（空目录）fixture 在临时目录搭账套，**不要让测试碰真实账本**。

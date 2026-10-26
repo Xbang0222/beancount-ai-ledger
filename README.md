@@ -123,7 +123,8 @@ python3 scripts/ledger.py void personal <编号>         # 作废这一笔
 python3 scripts/ledger.py summary personal 2026-09     # 按一级大类汇总
 python3 scripts/ledger.py report personal 2026-09      # 月度收支 / 储蓄率分析
 python3 scripts/ledger.py tag personal trip 2026-09    # 按标签查明细（如一趟旅行的总花费）
-python3 scripts/ledger.py networth                     # 合并资产负债，外币折合本位币
+python3 scripts/ledger.py networth                     # 合并资产负债，外币金银基金股票按现价折算
+python3 scripts/ledger.py quote USD AU F161226         # 现拉汇率、金价（每克）、基金净值
 python3 scripts/ledger.py dividend 2026-09             # 合伙店铺按月利润分配
 python3 scripts/ledger.py new-book shop --template business --link personal   # 新增店铺账
 python3 scripts/ledger.py backup --daily               # 打包整个账套（含 Git 历史），存云盘用
@@ -135,7 +136,7 @@ python3 scripts/ledger.py backup --daily               # 打包整个账套（�
 - **两级分类**：支出只分大类 + 小类（如 `Expenses:Food:Dining`），跟谁花的、哪趟行程交给标签（`#trip`、`#family`），摘要写清具体买了什么。
 - **消费信贷**：花呗、白条、信用卡消费确认负债，还款冲减负债，不重复记支出。
 - **退款与代垫**：退款冲减原支出，不算收入；借出、代垫挂往来，不算消费。
-- **多币种**：默认本位币 CNY，外币按 `price` 或命令行 `--rate` 折算；`dividend` 可现拉当天汇率。
+- **折现**：默认本位币 CNY，外币、加密币、黄金白银、基金、股票算总资产时自动现拉当天价格折算（拉不到用账内 `price`）；只记了金额的积存金按每笔当天金价估算克数和现值；养老金、医保个人账户取不出来，不计入净资产。
 - **利润分配**：合伙店铺在 `ledger.toml` 配 `[dividend]` 比例，每月初跑 `dividend`，算出各方应得、已分配与本次实付。
 - **店铺账只作内部管理**：店铺是注册主体的，对外纳税申报仍按税法与会计准则设账（可委托代理记账），这里的流水可以交给会计作依据。只记个人账的不用管这条。
 - 完整分录范例见 [`examples/cookbook.beancount`](examples/cookbook.beancount)。

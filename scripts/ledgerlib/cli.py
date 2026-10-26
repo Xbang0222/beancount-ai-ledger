@@ -26,6 +26,7 @@ EPILOG = """\
   python3 scripts/ledger.py report personal 2026-09      月度收支 / 储蓄率分析
   python3 scripts/ledger.py networth                     资产负债汇总（多本账时抵销账本间往来）
   python3 scripts/ledger.py networth --rate USD=7.1      临时指定汇率试算
+  python3 scripts/ledger.py quote AU USD F161226         现拉金价（每克）、汇率、基金净值
   python3 scripts/ledger.py dividend 2026-10             按月利润分配（汇率现拉，按 ledger.toml [dividend] 比例拆分）
   python3 scripts/ledger.py new-book shop --template business --link personal
   python3 scripts/ledger.py backup                       把整个账套连同 Git 历史打成压缩包（没有远程仓库时存云盘、网盘）
@@ -37,6 +38,15 @@ EPILOG = """\
   - 改账一律用 amend / void，不要手动编辑序时簿；
   - 查询类命令在账本存在加载错误时直接报错、不出报告，请先 check 修复。
 """
+
+
+def _date(value):
+    from datetime import date
+
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"日期写成 YYYY-MM-DD，收到：{value}") from None
 
 
 def _ym(value):
@@ -133,6 +143,11 @@ def build_parser():
     n = sub.add_parser("networth", help="资产负债汇总：合并各账本、抵销账本间往来，外币折合本位币")
     n.add_argument("--rate", type=_rate, action="append", metavar="币种=汇率",
                    help="临时指定汇率（如 USD=7.1，可重复），只用于本次试算、不写入账本")
+    n.add_argument("--offline", action="store_true", help="不联网取价，只用账内 price")
+
+    qt = sub.add_parser("quote", help="现拉价格：外币、加密币、金银（按克）、基金、股票折合本位币")
+    qt.add_argument("code", nargs="+", metavar="代码", help="USD、USDT、AU、AG、F161226、SH600519、HK00700、US.AAPL")
+    qt.add_argument("--date", type=_date, metavar="YYYY-MM-DD", help="取那一天的历史价（股票只有最新价）")
 
     dv = sub.add_parser("dividend", help="按月利润分配：算当月净利润（外币现拉汇率折算），按 [dividend] 比例拆分")
     dv.add_argument("ym", type=_ym, metavar="YYYY-MM")
@@ -256,7 +271,11 @@ def _dispatch(args):
     if args.cmd == "networth":
         from .networth import cmd_networth
 
-        return cmd_networth(dict(args.rate or []))
+        return cmd_networth(dict(args.rate or []), offline=args.offline)
+    if args.cmd == "quote":
+        from .quote import cmd_quote
+
+        return cmd_quote(args.code, args.date)
     if args.cmd == "dividend":
         from .dividend import cmd_dividend
 

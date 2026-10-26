@@ -214,21 +214,36 @@
 - 买入是资金转为金融资产，**不是费用**。知道份额时按「份额 标的代码 {单位成本}」记，便于算市值和盈亏；暂时不知道份额，就按金额记。
 - 现金分红记 `Income:Invest:Dividend`；卖出的价差记 `Income:Invest:PnL`；期末用 `price` 更新净值（写在 `common/prices.beancount`）。
 
-### 外币与汇率（算总资产时）
-- 外币账户折算成本位币，一律用**当天汇率**。**汇率现查现用，不写进账本**：每次算总资产、净资产前查一次当天汇率，用 `--rate` 传给 `networth`，可以重复传多个币种。回报时写明所用汇率、数据日期和来源。
+### 黄金、白银
+- 积存金、实物金、银条买入是资金转为资产，记 `Assets:Invest:Gold`，**不是费用**。
+- **知道克数**就按克记，单位 `AU`（白银 `AG`），带上买入单价：`Assets:Invest:Gold  2.000 AU {856.50 CNY}`。卖出写 `-1.100 AU {} @ 887.90 CNY`，价差记 `Income:Invest:PnL`，手续费记 `Expenses:Finance:Fee`。
+- **只知道金额**就按 CNY 记，科目的 open 指令下写 `estimate: "AU"`：`networth` 会按每笔发生当天的金价把金额折成克数，再按今天的金价估算现值。用户报了克数，写进 `note:`。
+
+### 折现：外币、加密币、金银、基金、股票（算总资产时）
+- 能换成钱的东西，算总资产、净资产时一律按**当天价格**折成本位币。**价格现拉现用，不写进账本**：`networth` 默认自动联网取价，回报时写明价格、数据时间和来源（`networth` 会打印）。
+- 单独查价用 `quote`，可以一次查多个，`--date` 查历史价：
 
   ```bash
-  python3 scripts/ledger.py networth --rate USD=7.12 --rate HKD=0.91
+  python3 scripts/ledger.py quote USD USDT AU F161226 SH600519
+  python3 scripts/ledger.py quote AU --date 2026-02-11
   ```
 
-- 汇率可以用开源数据集 [fawazahmed0/exchange-api](https://github.com/fawazahmed0/exchange-api) 查，它每天更新，通过 npm 发布，多数云端环境都能访问。下面的命令输出"数据日期 汇率"，把两处 `usd` 换成外币代码的小写、`cny` 换成本位币的小写：
+- 代码写法，也是账本里 commodity 的写法：
 
-  ```bash
-  curl -s "$(curl -s https://registry.npmjs.org/@fawazahmed0/currency-api/latest | python3 -c 'import sys,json;print(json.load(sys.stdin)["dist"]["tarball"])')" | tar -xzOf - package/v1/currencies/usd.min.json | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["date"], round(d["usd"]["cny"], 4))'
-  ```
+  | 东西 | 代码 | 数据来源 |
+  |---|---|---|
+  | 外币、加密币 | ISO 代码：`USD`、`HKD`、`USDT`、`BTC` | fawazahmed0/exchange-api（npm 发布，每天更新，可查历史） |
+  | 黄金、白银（每克） | `AU`、`AG` | 同上，按盎司价换算成克 |
+  | 场外基金 | `F` + 6 位代码：`F161226` | 天天基金单位净值（可查历史） |
+  | A 股、港股、美股 | `SH600519`、`SZ000001`、`BJ430047`、`HK00700`、`US.AAPL` | 腾讯行情最新价，港股美股再按汇率折算 |
 
-- 基金、股票的净值查不到公开汇率数据，仍然用 `price` 记在 `common/prices.beancount`：`YYYY-MM-DD price <标的代码> <净值> <本位币>   ; <来源>`。
-- 查不到当天价格（比如网络受限）时，**不得拿旧价格或凭记忆的数字冒充当天价格**。先向用户要当天报价；用户没给时，可以用最近一次已知的汇率试算，但要说明这不是当日实价。账内的旧价格 `networth` 会标出"非当日价格"。
+- 基金、股票知道份额时按「份额 代码 {单位成本}」记，`networth` 自动按现价折算；按金额记、每天记一笔收益的，金额已经是市值，不用再折。
+- 理财产品、非公开基金这类查不到的，用 `price` 记在 `common/prices.beancount`：`YYYY-MM-DD price <代码> <净值> <本位币>   ; <来源>`。
+- 拉不到当天价格（比如网络受限）时，`networth` 会提示并改用账内最近一次的 `price`，标出"非当日价格"；**不得拿旧价格或凭记忆的数字冒充当天价格**。用户给了当天报价，用 `--rate 代码=价格` 传入，可以重复传多个；`--offline` 只用账内价格。
+
+### 不计入净资产的钱
+- 养老保险、医保个人账户退休前取不出来，open 指令下写 `networth: FALSE`：`networth` 把它们单独列在「不计入净资产」，不算进总资产。住房公积金能按规定提取（租房、买房），算资产。
+- 月报算储蓄率时同理：`Income:Benefit:Pension`、`Income:Benefit:Medical` 不是能花的钱，跟用户说储蓄率时单独说明。
 
 ## 6. AI 入账操作流程
 

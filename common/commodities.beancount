@@ -11,3 +11,7 @@
 
 ; 1970-01-01 commodity HKD
 ;   name: "港币"
+
+; 黄金、白银按克记（networth、quote 会现拉每克价格）
+; 1970-01-01 commodity AU
+;   name: "黄金（克）"

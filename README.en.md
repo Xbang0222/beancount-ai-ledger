@@ -109,7 +109,8 @@ python3 scripts/ledger.py amend personal <id>          # replace an entry with o
 python3 scripts/ledger.py void personal <id>           # delete an entry
 python3 scripts/ledger.py report personal 2026-09      # monthly income, spending, savings rate
 python3 scripts/ledger.py tag personal trip 2026-09    # entries and totals for one tag
-python3 scripts/ledger.py networth                     # consolidated balance sheet, currencies converted
+python3 scripts/ledger.py networth                     # consolidated balance sheet, currencies/gold/funds/stocks at live prices
+python3 scripts/ledger.py quote USD AU F161226         # live FX rate, gold per gram, fund NAV
 python3 scripts/ledger.py dividend 2026-09             # monthly profit split for a shop run with partners
 python3 scripts/ledger.py new-book shop --template business --link personal   # add a shop book
 python3 scripts/ledger.py backup --daily               # zip the whole ledger with Git history

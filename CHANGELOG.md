@@ -6,6 +6,9 @@
 
 ### 新增
 
+- `quote <代码...>`：现拉价格并折成本位币——外币、加密币（`USD`、`USDT`、`BTC`）、黄金白银每克（`AU`、`AG`）、场外基金净值（`F161226`）、A 股港股美股（`SH600519`、`HK00700`、`US.AAPL`）；`--date` 查历史价。
+- `networth` 默认自动现拉当天价格折算，不用再手动 `--rate`；拉不到时提示并改用账内 `price`，`--offline` 只用账内价格。
+- 科目元数据 `estimate: "AU"`：只记了金额的积存金按每笔当天金价折成克数，`networth` 按今天金价估算现值；`networth: FALSE`：养老保险、医保个人账户单独列示，不计入净资产。个人账模板新增 `Assets:Invest:Gold`，两个社保账户默认带上 `networth: FALSE`。**升级的用户**：`accounts.beancount`、`CATEGORIES.md` 不会被覆盖，想要请对照本条手动加上（CATEGORIES 第 5 节「黄金、白银」「折现」「不计入净资产的钱」）。
 - `doctor` 在用户自己的仓库里发现模板项目专用文件（`.github` 下的贡献指南、行为准则、安全说明、Issue 与 PR 模板、发版流程）时提醒删除；模板仓库本身不提醒。
 - `AGENTS.md`「账本存哪」：不绑定具体 AI 和存储，按用户手里有什么选——私有 Git 仓库（GitHub、Gitee 等）每次推送，只有云盘的打包备份，都没有的本地提交并提醒。`doctor` 能识别 `ssh.github.com:443` 形式的远程地址。
 - `dividend YYYY-MM`：合伙店铺按月利润分配。算出当月净利润（外币默认从 fawazahmed0/exchange-api 现拉汇率折算，也可 `--rate` 指定），按 `ledger.toml` 新增的 `[dividend]` 比例拆分；分红分录带 `period: "YYYY-MM"` 即可归集已分配，补记当月收支后自动显出差额；`offset` 可把对方欠款从差额里扣掉。写法见 `docs/REFERENCE.md`「利润分配」。
