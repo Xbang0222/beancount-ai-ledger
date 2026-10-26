@@ -20,6 +20,10 @@
 ; —— 投资 ——
 1970-01-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 CATEGORIES 第 5 节）
 1970-01-01 open Assets:Invest:Stock               ; 金融资产－股票
+; —— 社保公积金个人账户（不能随时取用，合并资产时可单独看）——
+1970-01-01 open Assets:Benefit:Medical CNY       ; 医保个人账户
+1970-01-01 open Assets:Benefit:Pension CNY       ; 养老保险个人账户（退休前不可支取）
+1970-01-01 open Assets:Benefit:HousingFund CNY   ; 住房公积金
 
 ; ===== 负债 Liabilities（余额为负数表示欠款）=====
 1970-01-01 open Liabilities:CreditCard CNY        ; 信用卡应还款（多张卡可细分，如 Liabilities:CreditCard:CMB）
@@ -31,11 +35,14 @@
 ; ===== 收入 Income（复式记账里收入记在贷方，余额显示为负数是正常的）=====
 1970-01-01 open Income:Salary CNY                 ; 工资薪金（按实发到账金额）
 1970-01-01 open Income:Bonus CNY                  ; 奖金、绩效
-1970-01-01 open Income:SideJob CNY                ; 兼职、劳务报酬
+1970-01-01 open Income:SideJob CNY                ; 兼职、劳务报酬、二手转卖所得
 1970-01-01 open Income:Redpacket CNY              ; 红包、礼金
 1970-01-01 open Income:Invest:Interest CNY        ; 投资收益－利息（余额宝、存款）
 1970-01-01 open Income:Invest:Dividend CNY        ; 投资收益－分红
 1970-01-01 open Income:Invest:PnL CNY             ; 投资收益－买卖价差
+1970-01-01 open Income:Benefit:Medical CNY       ; 社保入账－医保个人账户
+1970-01-01 open Income:Benefit:Pension CNY       ; 社保入账－养老保险个人账户
+1970-01-01 open Income:Benefit:HousingFund CNY   ; 社保入账－住房公积金
 1970-01-01 open Income:Other CNY                  ; 其他收入（返现、奖励等；退款不算收入，冲减原支出）
 
 ; ===== 支出 Expenses（一级大类 : 二级明细，与 CATEGORIES.md 第 1 节一一对应）=====
@@ -46,10 +53,11 @@
 ; —— 居住 ——
 1970-01-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不是费用，记 Assets:Prepaid:Deposit）
 1970-01-01 open Expenses:Housing:Utilities CNY    ; 居住－水电燃气、话费宽带、物业
-1970-01-01 open Expenses:Housing:Daily CNY        ; 居住－日用品、清洁用品、家居小物
+1970-01-01 open Expenses:Housing:Daily CNY        ; 居住－日用品、清洁用品、家居小物、宠物用品
 ; —— 交通 ——
-1970-01-01 open Expenses:Transport:Local CNY      ; 交通－地铁公交、打车、共享单车、加油停车
+1970-01-01 open Expenses:Transport:Local CNY      ; 交通－地铁公交、打车、共享单车、加油、电瓶车充电
 1970-01-01 open Expenses:Transport:LongDistance CNY ; 交通－非旅行的长途车票（回家、出差自付）
+1970-01-01 open Expenses:Transport:Vehicle CNY   ; 交通－车辆（含电瓶车）维修保养、停车过路
 ; —— 购物 ——
 1970-01-01 open Expenses:Shopping:Clothes CNY     ; 购物－服饰鞋包
 1970-01-01 open Expenses:Shopping:Digital CNY     ; 购物－数码电子及配件
@@ -66,8 +74,13 @@
 ; —— 其他一级大类 ——
 1970-01-01 open Expenses:Learning CNY             ; 学习－学费、课程、书籍、考试
 1970-01-01 open Expenses:Medical CNY              ; 医疗－看病、买药、体检
+1970-01-01 open Expenses:Fitness CNY             ; 运动－健身房、球馆、运动课程
+1970-01-01 open Expenses:PersonalCare CNY        ; 个护－理发、美容、护肤化妆品
 1970-01-01 open Expenses:Social CNY               ; 人情－红包、礼物、请客
 1970-01-01 open Expenses:Insurance CNY            ; 保险－自付保费
+1970-01-01 open Expenses:Service:Professional CNY ; 服务－税务法律咨询、证件代办
+1970-01-01 open Expenses:Service:Life CNY        ; 服务－快递、充电宝、跑腿、维修、家政、打印
+1970-01-01 open Expenses:Tax CNY                 ; 税费－个税补缴、开票税费、证件工本费、罚款
 1970-01-01 open Expenses:Finance:Interest CNY     ; 财务费用－借款利息
 1970-01-01 open Expenses:Finance:Fee CNY          ; 财务费用－手续费、分期服务费
 1970-01-01 open Expenses:Other CNY                ; 其他（实在判断不了归哪类时的兜底）

@@ -20,6 +20,10 @@
 ; —— 投资 ——
 {{OPEN_DATE}} open Assets:Invest:Fund ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 CATEGORIES 第 5 节）
 {{OPEN_DATE}} open Assets:Invest:Stock ; 金融资产－股票
+; —— 社保公积金个人账户（不能随时取用，合并资产时可单独看）——
+{{OPEN_DATE}} open Assets:Benefit:Medical {{CURRENCY}} ; 医保个人账户
+{{OPEN_DATE}} open Assets:Benefit:Pension {{CURRENCY}} ; 养老保险个人账户（退休前不可支取）
+{{OPEN_DATE}} open Assets:Benefit:HousingFund {{CURRENCY}} ; 住房公积金
 
 ; ===== 负债 Liabilities（余额为负数表示欠款）=====
 {{OPEN_DATE}} open Liabilities:CreditCard {{CURRENCY}} ; 信用卡应还款（多张卡可细分，如 Liabilities:CreditCard:CMB）
@@ -31,11 +35,14 @@
 ; ===== 收入 Income（复式记账里收入记在贷方，余额显示为负数是正常的）=====
 {{OPEN_DATE}} open Income:Salary {{CURRENCY}} ; 工资薪金（按实发到账金额）
 {{OPEN_DATE}} open Income:Bonus {{CURRENCY}} ; 奖金、绩效
-{{OPEN_DATE}} open Income:SideJob {{CURRENCY}} ; 兼职、劳务报酬
+{{OPEN_DATE}} open Income:SideJob {{CURRENCY}} ; 兼职、劳务报酬、二手转卖所得
 {{OPEN_DATE}} open Income:Redpacket {{CURRENCY}} ; 红包、礼金
 {{OPEN_DATE}} open Income:Invest:Interest {{CURRENCY}} ; 投资收益－利息（余额宝、存款）
 {{OPEN_DATE}} open Income:Invest:Dividend {{CURRENCY}} ; 投资收益－分红
 {{OPEN_DATE}} open Income:Invest:PnL {{CURRENCY}} ; 投资收益－买卖价差
+{{OPEN_DATE}} open Income:Benefit:Medical {{CURRENCY}} ; 社保入账－医保个人账户
+{{OPEN_DATE}} open Income:Benefit:Pension {{CURRENCY}} ; 社保入账－养老保险个人账户
+{{OPEN_DATE}} open Income:Benefit:HousingFund {{CURRENCY}} ; 社保入账－住房公积金
 {{OPEN_DATE}} open Income:Other {{CURRENCY}} ; 其他收入（返现、奖励等；退款不算收入，冲减原支出）
 
 ; ===== 支出 Expenses（一级大类 : 二级明细，与 CATEGORIES.md 第 1 节一一对应）=====
@@ -46,10 +53,11 @@
 ; —— 居住 ——
 {{OPEN_DATE}} open Expenses:Housing:Rent {{CURRENCY}} ; 居住－房租（可退押金不是费用，记 Assets:Prepaid:Deposit）
 {{OPEN_DATE}} open Expenses:Housing:Utilities {{CURRENCY}} ; 居住－水电燃气、话费宽带、物业
-{{OPEN_DATE}} open Expenses:Housing:Daily {{CURRENCY}} ; 居住－日用品、清洁用品、家居小物
+{{OPEN_DATE}} open Expenses:Housing:Daily {{CURRENCY}} ; 居住－日用品、清洁用品、家居小物、宠物用品
 ; —— 交通 ——
-{{OPEN_DATE}} open Expenses:Transport:Local {{CURRENCY}} ; 交通－地铁公交、打车、共享单车、加油停车
+{{OPEN_DATE}} open Expenses:Transport:Local {{CURRENCY}} ; 交通－地铁公交、打车、共享单车、加油、电瓶车充电
 {{OPEN_DATE}} open Expenses:Transport:LongDistance {{CURRENCY}} ; 交通－非旅行的长途车票（回家、出差自付）
+{{OPEN_DATE}} open Expenses:Transport:Vehicle {{CURRENCY}} ; 交通－车辆（含电瓶车）维修保养、停车过路
 ; —— 购物 ——
 {{OPEN_DATE}} open Expenses:Shopping:Clothes {{CURRENCY}} ; 购物－服饰鞋包
 {{OPEN_DATE}} open Expenses:Shopping:Digital {{CURRENCY}} ; 购物－数码电子及配件
@@ -66,8 +74,13 @@
 ; —— 其他一级大类 ——
 {{OPEN_DATE}} open Expenses:Learning {{CURRENCY}} ; 学习－学费、课程、书籍、考试
 {{OPEN_DATE}} open Expenses:Medical {{CURRENCY}} ; 医疗－看病、买药、体检
+{{OPEN_DATE}} open Expenses:Fitness {{CURRENCY}} ; 运动－健身房、球馆、运动课程
+{{OPEN_DATE}} open Expenses:PersonalCare {{CURRENCY}} ; 个护－理发、美容、护肤化妆品
 {{OPEN_DATE}} open Expenses:Social {{CURRENCY}} ; 人情－红包、礼物、请客
 {{OPEN_DATE}} open Expenses:Insurance {{CURRENCY}} ; 保险－自付保费
+{{OPEN_DATE}} open Expenses:Service:Professional {{CURRENCY}} ; 服务－税务法律咨询、证件代办
+{{OPEN_DATE}} open Expenses:Service:Life {{CURRENCY}} ; 服务－快递、充电宝、跑腿、维修、家政、打印
+{{OPEN_DATE}} open Expenses:Tax {{CURRENCY}} ; 税费－个税补缴、开票税费、证件工本费、罚款
 {{OPEN_DATE}} open Expenses:Finance:Interest {{CURRENCY}} ; 财务费用－借款利息
 {{OPEN_DATE}} open Expenses:Finance:Fee {{CURRENCY}} ; 财务费用－手续费、分期服务费
 {{OPEN_DATE}} open Expenses:Other {{CURRENCY}} ; 其他（实在判断不了归哪类时的兜底）

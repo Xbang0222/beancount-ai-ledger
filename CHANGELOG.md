@@ -16,6 +16,7 @@
 - 归类改由 AI 自己定，不再问用户"记在哪"：分类固定为大类 + 小类两级，拿不准先查 `CLASSIFY.md` 和通行口径，必要时新开科目；只有金额、日期、记哪本账、是不是借出/代垫这类事实缺失才问。`AGENTS.md`、`CATEGORIES.md` 第 0、1 节相应改写。**升级的用户**：`CATEGORIES.md` 不会被覆盖，想要新规则请对照本条手动合并第 0 节第 5 条和第 1 节开头。
 - README 重写：补上文档约定、目录结构、记账流程、常用命令、核算要点与数据可靠性说明，中英文结构一致。
 - `CATEGORIES.md` 0.1：摘要要写清具体买了什么（「购物-蓝牙耳机」），不写「购物-日用品」这类笼统词。
+- 分类表补全：新增运动 `Fitness`、个护 `PersonalCare`、服务 `Service:Professional` / `Service:Life`、税费 `Tax`、交通-车辆 `Transport:Vehicle`；各小类关键词写细（宠物用品归居住-日用品、电瓶车充电归市内交通等）；收入新增社保公积金个人账户入账 `Income:Benefit:Medical` / `Pension` / `HousingFund`，对应资产 `Assets:Benefit:*`。**升级的用户**：`accounts.beancount` 和 `CATEGORIES.md` 不会被覆盖，要用新科目请照新模板手动补。
 
 - 云盘和本地 `backups/` 都只留最新一份备份（改动历史已经在压缩包里）。新的上传成功后才删旧的。
 - `AGENTS.md`：找不到云盘工具时先看 `~/vm/resource-loader/bin/`；还是没有就把压缩包发在对话里让用户自己保存，并明说没存到云盘。
