@@ -4,6 +4,7 @@
 分红分录用 `period: "YYYY-MM"` 元数据标明属于哪个月的利润，按对方名称（payee）归到各方，
 算出「应得 − 已分配 = 还差多少」：发完分红后又补记了当月收支，差额会自动显出来。
 配了 offset 的一方，再把该科目当前余额（对方欠账本的钱，如多发的分红）从差额里扣掉，得出本次实付。
+往月一旦发过分红就算结清：只列实发金额，不再拉汇率重算应得与差额（汇率变动、补记更正都不补差）；--recalc 照常重算。
 """
 from collections import defaultdict
 from decimal import ROUND_HALF_UP, Decimal
@@ -62,7 +63,23 @@ def _resolve_rates(currencies, cfg, overrides):
     return rates
 
 
-def cmd_dividend(ym, overrides=None):
+def _print_settled(book, ym, base, cfg, paid):
+    """往月已发分红：只列实发金额，不重算。"""
+    print(f"\n===== {book} · {ym} · 利润分配（已结清） =====")
+    print("  本月分红已发放，按「分红发完即结账」结清：只列实发金额，")
+    print("  汇率变动、补记更正产生的差额不再补差，合伙人欠款留到下次未结月份扣；")
+    print("  确要重算加 --recalc。")
+    print(f"\n【已分配】（{cfg.dividend.account} 上 period: \"{ym}\" 的分录）")
+    total = Decimal(0)
+    for p in cfg.dividend.partners:
+        done = paid.get(p.payee, Decimal(0))
+        total += done
+        print(f"  {pad(p.name, 10)}{p.share * 100:>5.0f}%   已分配 {done:>10.2f} {base}")
+    print(f"  {pad('合计', 17)}已分配 {total:>10.2f} {base}")
+    return 0
+
+
+def cmd_dividend(ym, overrides=None, recalc=False):
     cfg = config.load()
     if cfg.dividend is None:
         raise config.ConfigError("ledger.toml 没有配置 [dividend]（利润分配的账本与各方比例）。")
@@ -71,6 +88,10 @@ def cmd_dividend(ym, overrides=None):
     entries = load_entries(book)
     if entries is None:
         return 1
+
+    paid = distributed(entries, cfg.dividend.account, ym)
+    if paid and not recalc and ym < entry_ym(now_local().date()):
+        return _print_settled(book, ym, base, cfg, paid)
 
     profit = month_profit(entries, ym)
     try:
@@ -97,7 +118,6 @@ def cmd_dividend(ym, overrides=None):
         print("  [!] 本月还没结束，数字会随后续入账变化，月初再算定稿。")
 
     bals = balances(entries)
-    paid = distributed(entries, cfg.dividend.account, ym)
     print(f"\n【分配】（已分配 = {cfg.dividend.account} 上 period: \"{ym}\" 的分录）")
     for p in cfg.dividend.partners:
         due = _money(total * p.share)

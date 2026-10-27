@@ -153,6 +153,8 @@ def build_parser():
     dv.add_argument("ym", type=_ym, metavar="YYYY-MM")
     dv.add_argument("--rate", type=_rate, action="append", metavar="币种=汇率",
                     help="指定汇率（如 USDT=6.69），不指定则现拉当天汇率")
+    dv.add_argument("--recalc", action="store_true",
+                    help="已发过分红的往月也重新计算应得与差额（默认视为结清，只列实发）")
 
     f = sub.add_parser("fmt", help="序时簿排版规范化（分录间空行、按日期时间重排）")
     f.add_argument("--check", action="store_true", help="只检测不写入，未格式化则退出码 1")
@@ -312,7 +314,7 @@ def _dispatch(args):
     if args.cmd == "dividend":
         from .dividend import cmd_dividend
 
-        return cmd_dividend(args.ym, dict(args.rate or []))
+        return cmd_dividend(args.ym, dict(args.rate or []), args.recalc)
     if args.cmd == "fmt":
         from .fmt import cmd_fmt
 

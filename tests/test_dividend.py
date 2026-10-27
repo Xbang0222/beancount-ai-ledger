@@ -1,4 +1,5 @@
 """按月利润分配：外币按汇率折算、按比例拆分、已分配按 period 与 payee 归集、对方欠款从差额里扣。"""
+from datetime import datetime
 from decimal import Decimal
 
 import pytest
@@ -62,6 +63,12 @@ def shop(ledger):
     return ledger
 
 
+@pytest.fixture
+def in_september(monkeypatch):
+    """把「今天」定在 9 月，让 9 月算作未结月份。"""
+    monkeypatch.setattr(dividend, "now_local", lambda: datetime(2026, 9, 30, 12))
+
+
 def _run(capsys, ym="2026-09", rates=None):
     assert dividend.cmd_dividend(ym, rates) == 0
     return capsys.readouterr().out
@@ -100,7 +107,7 @@ def test_拉不到汇率时报错提示用rate(shop, capsys, monkeypatch):
     assert "--rate" in capsys.readouterr().out
 
 
-def test_已分配按period和payee归集_欠款从差额里扣(shop, capsys):
+def test_已分配按period和payee归集_欠款从差额里扣(shop, capsys, in_september):
     _append(shop / "shop" / "journal" / "2026-09.beancount", PAID)
     out = _run(capsys, rates={"USDT": Decimal("7")})
     me = _line(out, "本人")
@@ -110,7 +117,7 @@ def test_已分配按period和payee归集_欠款从差额里扣(shop, capsys):
     assert "仍欠 17.50 CNY" in partner
 
 
-def test_欠款够扣时给出实付(shop, capsys):
+def test_欠款够扣时给出实付(shop, capsys, in_september):
     _append(shop / "shop" / "journal" / "2026-09.beancount", PAID.replace("200.00", "100.00"))
     out = _run(capsys, rates={"USDT": Decimal("7")})
     assert "本次实付 82.50 CNY" in out.split("合伙人", 1)[1]
@@ -155,3 +162,25 @@ def test_fx_alias写错要报错():
 
 def test_config_load读到真实结构(shop):
     assert config.load().dividend.book == "shop"
+
+
+def test_往月发过分红即结清_不拉汇率不算差额(shop, capsys, monkeypatch):
+    _append(shop / "shop" / "journal" / "2026-09.beancount", PAID)
+    monkeypatch.setattr(fxrate, "fetch", lambda cur, base: pytest.fail("已结清月份不该拉汇率"))
+    out = _run(capsys)
+    assert "已结清" in out and "差额" not in out.replace("产生的差额", "")
+    assert "已分配     200.00" in _line(out, "合伙人")
+    assert "已分配       0.00" in _line(out, "本人")
+
+
+def test_当月发过分红也照常计算(shop, capsys, in_september):
+    _append(shop / "shop" / "journal" / "2026-09.beancount", PAID)
+    out = _run(capsys, rates={"USDT": Decimal("7")})
+    assert "已结清" not in out and "差额      32.50" in out.split("合伙人", 1)[1]
+
+
+def test_recalc时往月照常重算(shop, capsys):
+    _append(shop / "shop" / "journal" / "2026-09.beancount", PAID)
+    assert dividend.cmd_dividend("2026-09", {"USDT": Decimal("7")}, recalc=True) == 0
+    out = capsys.readouterr().out
+    assert "已结清" not in out and "差额      32.50" in out.split("合伙人", 1)[1]
