@@ -1,0 +1,5 @@
+
+# {{NAME}} 账本的摘要开头（new-book 按最简模板生成）；细分科目后在这里补上对应开头
+[naming.prefix.{{NAME}}]
+"Expenses:Other" = "支出-"
+"Income:Other" = "收入-"

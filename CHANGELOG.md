@@ -6,6 +6,7 @@
 
 ### 新增
 
+- 对方与摘要的写法由脚本把关：`ledger.toml` 新增 `[naming]`（摘要开头按科目、括号固定标记、空泛对方名、笼统事项词、退款结尾、固定场景），`add` / `amend` 不合规直接拒绝并提示正确写法，`check` 扫全账并报出没配摘要开头的收支科目；`rules [账本]` 打印对照表与「找不到分类时」的处理步骤；记到 `Expenses:Other` 必须写 `note:`。`new-book` 按模板自动补上新账本的摘要开头。写法见 `docs/REFERENCE.md`「写法规则」。**升级的用户**：`ledger.toml` 不会被覆盖，想启用请把模板的 `[naming]` 段复制过去，再跑 `check` 按提示更正老账。
 - `quote <代码...>`：现拉价格并折成本位币——外币、加密币（`USD`、`USDT`、`BTC`）、黄金白银每克（`AU`、`AG`）、场外基金净值（`F161226`）、A 股港股美股（`SH600519`、`HK00700`、`US.AAPL`）；`--date` 查历史价。
 - `networth` 默认自动现拉当天价格折算，不用再手动 `--rate`；拉不到时提示并改用账内 `price`，`--offline` 只用账内价格。
 - 科目元数据 `estimate: "AU"`：只记了金额的积存金按每笔当天金价折成克数，`networth` 按今天金价估算现值；`networth: FALSE`：养老保险、医保个人账户单独列示，不计入净资产。个人账模板新增 `Assets:Invest:Gold`，两个社保账户默认带上 `networth: FALSE`。**升级的用户**：`accounts.beancount`、`CATEGORIES.md` 不会被覆盖，想要请对照本条手动加上（CATEGORIES 第 5 节「黄金、白银」「折现」「不计入净资产的钱」）。

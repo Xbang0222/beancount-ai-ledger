@@ -1,0 +1,15 @@
+
+# {{NAME}} 账本的摘要开头（new-book 按经营模板生成）；一笔有几个收支科目时按金额最大的那个
+[naming.prefix.{{NAME}}]
+"Expenses:COGS" = "主营业务成本-"
+"Expenses:Shipping" = "销售费用-"
+"Expenses:Packaging" = "销售费用-"
+"Expenses:Ads" = "销售费用-"
+"Expenses:Tools" = "管理费用-"
+"Expenses:Rent" = "管理费用-"
+"Expenses:Salary" = "管理费用-"
+"Expenses:PlatformFee" = "财务费用-"
+"Expenses:Tax" = "税金-"
+"Expenses:Other" = "其他-"
+"Income:Revenue" = ["主营业务收入-", "销售退回"]
+"Income:Other" = "其他业务收入-"

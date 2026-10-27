@@ -121,6 +121,22 @@ partners = [
   Assets:Bank:Main
 ```
 
+## 写法规则
+
+`ledger.toml` 的 `[naming]` 是对方与摘要写法的唯一来源，`ledger.py rules [账本]` 把它打印成对照表。配了就由 `add` / `amend` 拦截、`check` 扫全账；整段删掉就不做写法检查。
+
+| 键 | 作用 |
+|---|---|
+| `markers` | 摘要括号里允许的固定标记，其他补充写进 `note:` |
+| `banned_payees` / `vague_items` | 不能当对方名称的空泛词 / 不能单独当事项的笼统词 |
+| `refund_suffix` | 费用冲回、收入冲减时摘要必须的结尾（「退款」「退回」） |
+| `note_required` | 记到这些兜底科目必须写 `note:` |
+| `fallback` | 找不到分类时的处理步骤，`rules` 原样打印 |
+| `[naming.prefix.<账本>]` | 科目前缀 → 摘要开头；一笔有几个收支科目按金额最大的那个定。账本配了这张表，新开的收支科目没配开头 `check` 会报错 |
+| `[[naming.patterns]]` | 固定场景：分录出现 `when` 里的科目、其余科目都在 `with` 里时，对方只能是 `payee`，摘要只能以 `narration` 开头 |
+
+`new-book` 建账时会按所选模板自动追加这本账的 `[naming.prefix.<账本>]`。
+
 ## 目录结构
 
 ```text

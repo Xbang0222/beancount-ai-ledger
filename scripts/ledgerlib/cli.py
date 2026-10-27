@@ -160,6 +160,9 @@ def build_parser():
 
     sub.add_parser("books", help="列出 ledger.toml 中的账本与往来镜像")
 
+    ru = sub.add_parser("rules", help="对方与摘要的写法对照表（ledger.toml 的 [naming]，入账前查它）")
+    ru.add_argument("book", nargs="?", help="只看某本账，默认全部")
+
     nb = sub.add_parser("new-book", help="新建账本（生成科目表模板并登记到 ledger.toml）")
     nb.add_argument("name", help="账本名：小写字母开头，可含数字、- 和 _（如 personal、shop、family）")
     nb.add_argument("--template", choices=("personal", "business", "minimal"), default="personal",
@@ -190,6 +193,7 @@ def cmd_check(no_reconcile=False):
             print_errors(book, errors)
         else:
             print(f"[OK] {book}: 校验通过，共 {len(entries)} 条指令")
+            ok = _check_naming(book, entries) and ok
     if no_reconcile or not cfg.mirrors:
         return 0 if ok else 1
     if not ok:
@@ -198,6 +202,31 @@ def cmd_check(no_reconcile=False):
     from .reconcile import cmd_reconcile
 
     return cmd_reconcile()
+
+
+def _check_naming(book, entries):
+    """对方与摘要的写法（ledger.toml 的 [naming]）；不合规的逐笔列出文件与行号。"""
+    from .naming import scan, unmapped
+
+    ok = True
+    missing = unmapped(book, entries)
+    if missing:
+        ok = False
+        print(f"[FAIL] {book}: {len(missing)} 个收支科目没配摘要开头，这些科目的账不会被检查；"
+              f"请在 {config.CONFIG_NAME} 的 [naming.prefix.{book}] 补上：")
+        for acc in missing:
+            print(f"   - {acc}")
+    found = scan(book, entries)
+    if not found:
+        return ok
+    print(f"[FAIL] {book}: {len(found)} 笔对方/摘要写法不合规（对照表见 ledger.py rules {book}，用 amend 更正）：")
+    for t, msgs in found:
+        meta = t.meta or {}
+        where = os.path.relpath(meta.get("filename", ""), config.ROOT).replace(os.sep, "/")
+        print(f"   - {where}:{meta.get('lineno')}  {t.date} \"{t.payee or ''}\" \"{t.narration or ''}\"")
+        for m in msgs:
+            print(f"       {m}")
+    return False
 
 
 def cmd_books():
@@ -248,6 +277,10 @@ def _dispatch(args):
         return cmd_check(args.no_reconcile)
     if args.cmd == "books":
         return cmd_books()
+    if args.cmd == "rules":
+        from .naming import cmd_rules
+
+        return cmd_rules(args.book)
     if args.cmd == "backup":
         from .backup import cmd_backup
 

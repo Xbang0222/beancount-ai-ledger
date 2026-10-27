@@ -29,3 +29,67 @@ kind = "personal"
 #
 # 只是想单独看某件事（一次旅行、装修、婚礼）花了多少钱？不用新建账本，打标签就行（CATEGORIES.md 4.5）。
 # ------------------------------------------------------------
+
+# ============================================================
+# 对方与摘要的写法规则：只在这里写一份，`python3 scripts/ledger.py rules` 打印成对照表。
+# add / amend 不合规直接拒绝并提示正确写法，check 扫全账。整段删掉就不做写法检查。
+# ============================================================
+[naming]
+# 摘要括号里只许出现这些固定标记，其他补充说明一律写进 note: 元数据
+markers = ["测试", "按利息处理", "按手续费处理"]
+# 不许单独用作对方名称的空泛词
+banned_payees = ["个人", "测试", "银行", "供应商", "商家", "商户", "未知"]
+# 钱退回来（费用冲回、收入冲减）时摘要必须以这些结尾，如「餐饮-燕麦退款」「销售退回」
+refund_suffix = ["退款", "退回"]
+# 记到兜底科目必须写 note: 说明是什么、为什么现有分类都对不上
+note_required = ["Expenses:Other"]
+# 找不到分类时的处理顺序（rules 原样打印）
+fallback = [
+  "先查 CLASSIFY.md 的速查词典，按「东西」找，找不到再按「商家/平台」找",
+  "大类定得下、小类对不上：记该大类的「其他」小类（Shopping:Other、Entertainment:Other、Travel:Other），没有「其他」小类的挑最接近的",
+  "大类都对不上：参考统计局八大类和随手记、钱迹的分类挑最接近的；确是会反复出现的新品类，就在 accounts.beancount 开新科目、在下面 prefix 配好开头、补进 CATEGORIES 第 1 节和速查词典",
+  "实在判断不了：记 Expenses:Other，摘要写「其他-<具体东西>」，note: 写清是什么，回报时告诉用户；不问用户记哪类",
+  "连是消费、借出还是代垫都不清楚：先挂往来，不记费用（只有这类事实才问用户）",
+]
+# 「大类-事项」里不许单独当事项的笼统词
+vague_items = ["日用品", "消费", "支出", "杂项", "商品", "东西", "购物", "其他"]
+
+# 摘要开头按记账科目固定；一笔有几个收支科目时按金额最大的那个。
+# 新开收支科目要在这里配上开头，否则 check 报错；new-book 建的账本会自动追加自己的一段。
+[naming.prefix.personal]
+"Expenses:Food" = "餐饮-"
+"Expenses:Housing" = "居住-"
+"Expenses:Transport" = "交通-"
+"Expenses:Shopping" = "购物-"
+"Expenses:Entertainment" = "文娱-"
+"Expenses:Travel" = "旅行-"
+"Expenses:Learning" = "教育-"
+"Expenses:Medical" = "医疗-"
+"Expenses:Fitness" = "运动-"
+"Expenses:PersonalCare" = "个护-"
+"Expenses:Pet" = "宠物-"
+"Expenses:Kids" = "育儿-"
+"Expenses:Social" = "人情-"
+"Expenses:Insurance" = "保险-"
+"Expenses:Service" = "服务-"
+"Expenses:Tax" = "税费-"
+"Expenses:Finance" = "财务费用-"
+"Expenses:Other" = "其他-"
+"Income:Salary" = "工资收入-"
+"Income:Bonus" = "奖金收入-"
+"Income:SideJob" = "兼职收入-"
+"Income:Redpacket" = "红包收入-"
+"Income:Invest" = "投资收益-"
+"Income:Invest:Interest" = "利息收入-"
+"Income:Benefit" = "社保入账-"
+"Income:Other" = "其他收入-"
+
+# 固定场景（可选）：分录只涉及这些科目时，对方和摘要只能这样写。例如个人账与店铺账之间的往来：
+# [[naming.patterns]]
+# book = "personal"
+# name = "个人账与店铺之间的往来"
+# when = ["Assets:Receivable:Shop", "Liabilities:Shop"]          # 出现其中任一科目
+# with = ["Assets:Bank", "Assets:Wechat", "Assets:Alipay"]       # 其余科目只能是这些
+# payee = ["店铺"]
+# narration = ["代垫店铺款-", "代收店铺款-"]
+# hint = "个人账里不写店铺的经营收支"

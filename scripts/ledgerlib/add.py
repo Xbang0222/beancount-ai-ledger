@@ -5,7 +5,7 @@
 import os
 import sys
 
-from . import config, journal
+from . import config, journal, naming
 from .books import transactions
 from .entry import (
     count_transactions,
@@ -48,9 +48,12 @@ def read_block(stream=None, path=None):
     return block
 
 
-def precheck(block):
-    """写盘前的文本级检查；有问题打印原因并返回 None，否则返回 (年, 月)。"""
-    err = future_error(block) or validate(block)
+def precheck(block, book=None):
+    """写盘前的文本级检查；有问题打印原因并返回 None，否则返回 (年, 月)。
+
+    给了 book 时连带检查对方与摘要的写法（ledger.toml 的 [naming]）。
+    """
+    err = future_error(block) or validate(block) or (book and naming.block_error(book, block))
     if err:
         print(f"[FAIL] {err}")
         return None
@@ -68,7 +71,7 @@ def cmd_add(book, stream=None, path=None, allow_duplicate=False):
     block = read_block(stream, path)
     if block is None:
         return 1
-    ymd = precheck(block)
+    ymd = precheck(block, book)
     if ymd is None:
         return 1
     block = inject_time(block)

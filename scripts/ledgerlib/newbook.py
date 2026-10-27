@@ -189,6 +189,9 @@ def cmd_new_book(name, template="personal", title=None, kind=None, link=None, op
         toml_text = f"\n[books.{name}]\ntitle = {_toml_str(title)}\nkind = \"{kind}\"\n"
         if not consolidate:
             toml_text += "consolidate = false            # 与他人共有：不并入 networth 合并资产负债\n"
+        if cfg and cfg.naming is not None:  # 账套启用了写法检查：按模板补上新账本的摘要开头
+            with open(os.path.join(TEMPLATES_DIR, f"{template}.naming.toml"), encoding="utf-8") as f:
+                toml_text += f.read().replace("{{NAME}}", name)
         if link:
             toml_text += _link(ch, cfg, name, title, link, base, open_date, owner_accounts, notes)
         if cfg is None:

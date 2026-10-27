@@ -35,12 +35,15 @@ BOOK_NAME_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 ACCOUNT_RE = re.compile(r"^(Assets|Liabilities|Equity|Income|Expenses)(:[^:\s]+)+$")
 CURRENCY_RE = re.compile(r"^[A-Z][A-Z0-9'._-]{0,22}[A-Z0-9]$")
 
-_TOP_KEYS = {"ledger", "books", "mirrors", "dividend"}
+_TOP_KEYS = {"ledger", "books", "mirrors", "dividend", "naming"}
 _LEDGER_KEYS = {"timezone", "base_currency", "fx_alias"}
 _DIVIDEND_KEYS = {"book", "account", "partners"}
 _PARTNER_KEYS = {"name", "payee", "share", "offset"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
 _MIRROR_KEYS = {"name", "currency", "accounts"}
+_NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "note_required", "fallback",
+                "prefix", "patterns"}
+_PATTERN_KEYS = {"book", "name", "when", "with", "payee", "narration", "hint"}
 
 
 class ConfigError(Exception):
@@ -88,6 +91,31 @@ class Dividend:
 
 
 @dataclass(frozen=True)
+class Pattern:
+    """固定场景的写法：分录出现 when 里的科目、其余科目都在 with 里时，对方与摘要只能按这里写。"""
+    book: str
+    name: str
+    when: tuple        # 出现其中任一科目即可能命中（前缀匹配）
+    with_: tuple       # 其余科目只能是这些（前缀匹配）；有别的科目就不算这个场景
+    payees: tuple      # 允许的对方名称
+    narrations: tuple  # 允许的摘要开头；空表示不限
+    hint: str = ""
+
+
+@dataclass(frozen=True)
+class Naming:
+    """对方名称与摘要的写法规则（[naming]）。未配置时不做任何写法检查。"""
+    markers: tuple        # 摘要括号里允许出现的固定标记
+    banned_payees: tuple  # 不许用作对方名称的空泛词
+    vague_items: tuple    # 摘要“大类-事项”里不许单独当事项用的笼统词
+    refund_suffix: tuple  # 费用冲回、收入冲减（退款/退回）时摘要必须的结尾；空表示不查
+    note_required: tuple  # 记到这些科目（兜底科目）时必须写 note: 说明是什么、为什么没有合适分类
+    fallback: tuple       # 找不到分类时的处理步骤，rules 原样打印
+    prefix: dict          # 账本名 -> {科目前缀: (允许的摘要开头, ...)}
+    patterns: tuple       # Pattern 元组
+
+
+@dataclass(frozen=True)
 class Config:
     books: dict        # 账本名 -> Book，保持 ledger.toml 中的书写顺序
     mirrors: tuple     # Mirror 元组
@@ -95,6 +123,7 @@ class Config:
     base_currency: str
     fx_alias: dict = None       # 折算时视同另一币种取汇率，如 {"USDT": "USD"}
     dividend: Dividend = None   # 按月利润分配；未配置为 None
+    naming: Naming = None       # 对方与摘要写法规则；未配置为 None
 
 
 def config_path():
@@ -195,8 +224,74 @@ def parse(data):
         raise ConfigError(f"[ledger] fx_alias 写成 {{ USDT = \"USD\" }}（大写币种代码），收到：{fx_alias!r}")
 
     dividend = _parse_dividend(data.get("dividend"), books)
+    naming = _parse_naming(data.get("naming"), books)
     return Config(books=books, mirrors=tuple(mirrors), timezone=timezone, base_currency=base,
-                  fx_alias=dict(fx_alias), dividend=dividend)
+                  fx_alias=dict(fx_alias), dividend=dividend, naming=naming)
+
+
+def _str_list(value, where, allow_empty=True):
+    """接受一个字符串或字符串数组，统一成元组。"""
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, list) or not all(isinstance(v, str) and v for v in value) \
+            or (not allow_empty and not value):
+        raise ConfigError(f"{where} 应为非空字符串或字符串数组，收到：{value!r}")
+    return tuple(value)
+
+
+def _account_prefix(value, where):
+    if not ACCOUNT_RE.match(value):
+        raise ConfigError(f"{where} 科目名不合法：{value!r}")
+    return value
+
+
+def _parse_naming(raw, books):
+    if raw is None:
+        return None
+    where = "[naming]"
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{where} 应为一个表（table）")
+    _no_unknown(raw, _NAMING_KEYS, where)
+    prefix = {}
+    raw_prefix = raw.get("prefix", {})
+    if not isinstance(raw_prefix, dict):
+        raise ConfigError(f"{where} prefix 要写成 [naming.prefix.<账本>] 表")
+    for book, table in raw_prefix.items():
+        pw = f"[naming.prefix.{book}]"
+        if book not in books:
+            raise ConfigError(f"{pw} 引用了未声明的账本；已声明：{' / '.join(books)}")
+        if not isinstance(table, dict):
+            raise ConfigError(f"{pw} 应为 科目前缀 = \"摘要开头\" 的表")
+        prefix[book] = {_account_prefix(acc, pw): _str_list(v, f"{pw} {acc}", allow_empty=False)
+                        for acc, v in table.items()}
+    patterns = []
+    raw_patterns = raw.get("patterns", [])
+    if not isinstance(raw_patterns, list):
+        raise ConfigError("patterns 要写成 [[naming.patterns]]（数组表），每个场景一段")
+    for i, p in enumerate(raw_patterns, 1):
+        pw = f"第 {i} 个 [[naming.patterns]]"
+        if not isinstance(p, dict):
+            raise ConfigError(f"{pw} 应为一个表（table）")
+        _no_unknown(p, _PATTERN_KEYS, pw)
+        if p.get("book") not in books:
+            raise ConfigError(f"{pw} book 应为已声明的账本，收到：{p.get('book')!r}")
+        name = p.get("name") or f"场景{i}"
+        when = tuple(_account_prefix(a, pw) for a in _str_list(p.get("when"), f"{pw} when", False))
+        with_ = tuple(_account_prefix(a, pw) for a in _str_list(p.get("with", []), f"{pw} with"))
+        patterns.append(Pattern(
+            book=p["book"], name=str(name), when=when, with_=with_,
+            payees=_str_list(p.get("payee"), f"{pw} payee", allow_empty=False),
+            narrations=_str_list(p.get("narration", []), f"{pw} narration"),
+            hint=str(p.get("hint", ""))))
+    return Naming(
+        markers=_str_list(raw.get("markers", []), f"{where} markers"),
+        banned_payees=_str_list(raw.get("banned_payees", []), f"{where} banned_payees"),
+        vague_items=_str_list(raw.get("vague_items", []), f"{where} vague_items"),
+        refund_suffix=_str_list(raw.get("refund_suffix", []), f"{where} refund_suffix"),
+        note_required=tuple(_account_prefix(a, where) for a in
+                            _str_list(raw.get("note_required", []), f"{where} note_required")),
+        fallback=_str_list(raw.get("fallback", []), f"{where} fallback"),
+        prefix=prefix, patterns=tuple(patterns))
 
 
 def _parse_dividend(raw, books):

@@ -26,7 +26,8 @@ Windows 上把命令里的 `python3` 换成 `python` 或 `py`。
 3. 读 `CATEGORIES.md` 和 `STATE.md`。
    - `CATEGORIES.md`：分类与核算口径的唯一依据，包括付款渠道对应哪个账户、科目怎么归类、摘要怎么写、往来和标签怎么处理、时间戳规则。
    - `STATE.md`：当前生效的临时情况，比如进行中的行程和它的默认标签、临时的默认付款账户。事项结束后删掉。
-   - 两者冲突时以 `CATEGORIES.md` 为准。长期规则只写进 CATEGORIES，会过期的情况只写进 STATE。
+   - `python3 scripts/ledger.py rules`：对方与摘要的写法对照表（摘要开头、括号固定标记、退款结尾、找不到分类时怎么办），唯一来源是 `ledger.toml` 的 `[naming]`，入账不合规会被拒。
+   - 两者冲突时以 `CATEGORIES.md` 为准（写法以 `[naming]` 为准）。长期规则只写进 CATEGORIES，会过期的情况只写进 STATE。
 4. 分录写法参照 `examples/cookbook.beancount`：AA、代垫、信用卡还款、退款、押金、贷款、基金、外币等都有范例。
 
 ## 入账
@@ -48,7 +49,7 @@ EOF
 硬规矩：
 
 - **不要手动编辑序时簿**（`<账本>/journal/*.beancount`）。入账只用 `add`，改账只用 `amend` / `void`（见「更正与删除」）。这三条命令写盘后都会校验整本账，不通过就原样还原；手改会绕过这些保护。
-- **对方和摘要都要写。** 首行缺任何一段，`add` 会拒绝。
+- **对方和摘要都要写，而且要按规范写。** 首行缺任何一段，`add` 会拒绝；写法（摘要开头对应科目、括号只留固定标记、退款结尾加「退款」、记到 `Expenses:Other` 要写 `note:` 等）由 `ledger.toml` 的 `[naming]` 把关，不合规同样被拒，照提示改了再录，不要绕开。
 - **不许估时间。** 用户没报具体时间就不写 `time` 行，由脚本注入录入时刻。"7 点半"这类分不清上下午的先问。手写的 `time` 晚于此刻、交易日期晚于今天，`add` 都会拒绝。
 - **一次只录一笔。** 多笔分多次调用，脚本检测到多笔会直接拒绝。
 - **账本之间的往来两边都记。** beancount 只校验单本账内部平衡，只记一边它发现不了。`add` 碰到往来科目会打印 `[提示]`，告诉你另一边该记到哪本账的哪个科目。两边记完运行 `python3 scripts/ledger.py reconcile`，确认每对镜像科目相加为 0。
@@ -288,6 +289,7 @@ python3 scripts/bootstrap.py && git commit -q -m "chore(script): 同步上游脚
 - 实现在 `scripts/ledgerlib/`，`scripts/ledger.py` 只是入口。已有命令的用法不要随意改，用户和规则文档都依赖它们。命令清单以 `python3 scripts/ledger.py --help` 为准。
 - 各模块只管一件事，新逻辑放进对应模块，不要跨模块借用下划线开头的内部函数：
   - `config`：读 `ledger.toml`。
+  - `naming`：对方与摘要的写法检查与 `rules` 对照表（规则在 `ledger.toml` 的 `[naming]`，没配就不查）。改写法规则只改 `[naming]`，文档不再抄表。
   - `entry`：分录文本的检查与预处理，不碰磁盘。
   - `journal`：序时簿分块、行号与分录编号。
   - `store`：加锁、写盘、整本校验、失败还原。**所有改动序时簿的命令都必须经 `store.commit`**。
@@ -295,6 +297,6 @@ python3 scripts/bootstrap.py && git commit -q -m "chore(script): 同步上游脚
   - `books` / `query` / `reconcile` / `networth` / `display`：加载账本、查询、对账、合并资产、输出对齐。
   - `fxrate` / `quote`：现拉汇率和金银价、按代码取基金股票等各类价格。
   - `doctor` / `env` / `backup` / `newbook`：环境自检、依赖与 `.venv`、打包备份、新建账本。
-- 代码里不写死任何账本名。账本、往来镜像、时区、本位币一律从 `ledger.toml` 读取（`ledgerlib/config.py`）。
+- 代码里不写死任何账本名。账本、往来镜像、时区、本位币、写法规则一律从 `ledger.toml` 读取（`ledgerlib/config.py`）。
 - 新增或修改逻辑要配套 `tests/` 用例。测试用 `conftest.py` 的 `ledger`（两本账）、`solo`（只有个人账）、`empty_root`（空目录）fixture 在临时目录搭账套，**不要让测试碰真实账本**。
 - 改了查询类命令，要拿改动前的 `balances` / `report` 输出比对，确认口径没有意外变化。

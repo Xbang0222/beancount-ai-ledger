@@ -85,7 +85,7 @@ def cmd_amend(book, ident, stream=None, path=None, allow_duplicate=False):
     new = read_block(stream, path)
     if new is None:
         return 1
-    ymd = precheck(new)
+    ymd = precheck(new, book)
     if ymd is None:
         return 1
     ym = f"{ymd[0]}-{ymd[1]}"

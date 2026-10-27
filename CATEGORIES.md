@@ -33,6 +33,8 @@
 
 ### 0.1 对方名称（payee）与摘要（narration）
 
+> **能机读的写法规则只在 `ledger.toml` 的 `[naming]` 写一份**，本节不再抄表：摘要开头对照、括号固定标记、退款结尾、空泛对方名、笼统事项词，入账前用 `python3 scripts/ledger.py rules` 查。脚本强制执行：`add` / `amend` 不合规直接拒绝并提示正确写法，`check`（含提交前钩子和 GitHub Actions）扫全账，收支科目没配摘要开头也会报错。本节只讲脚本判断不了、要靠入账时自己把关的部分（事项写得是否具体、对方名怎么取、什么写进 note）。
+
 **原则：简洁、有意义、保护隐私。关系信息交给标签，摘要不重复科目和账户。**
 
 对方名称：
@@ -54,20 +56,10 @@
     Assets:Alipay          11.25 CNY
     Expenses:Food:Grocery
   ```
-  摘要里的括号只留规则规定的固定标记（如「（股东往来）」「（测试）」），其他补充一律进 `note`。
-- **摘要开头的大类简称按记账科目固定**，一笔分录涉及几个收支科目时按金额最大的那个；退款、退回用同一个开头，事项后加「退款」：
-
-  | 账本 | 科目 | 摘要开头 |
-  |---|---|---|
-  | 个人 | `Expenses:Food:*` / `Housing:*` / `Transport:*` / `Shopping:*` / `Entertainment:*` | 餐饮 / 居住 / 交通 / 购物 / 文娱 |
-  | 个人 | `Expenses:Fitness` / `PersonalCare` / `Pet` / `Kids` / `Travel:*` / `Learning` | 运动 / 个护 / 宠物 / 育儿 / 旅行 / 教育 |
-  | 个人 | `Expenses:Medical` / `Insurance` / `Social` / `Service:*` / `Tax` / `Finance:*` / `Other` | 医疗 / 保险 / 人情 / 服务 / 税费 / 财务费用 / 其他 |
-  | 个人 | `Income:Salary` / `Bonus` / `SideJob` / `Redpacket` / `Invest:*` / `Benefit:*` / `Other` | 工资收入 / 奖金收入 / 兼职收入 / 红包收入 / 投资收益 / 社保入账 / 其他收入 |
-  | 经营 | `Expenses:COGS` | 主营业务成本 |
-  | 经营 | `Expenses:Shipping` / `Packaging` / `Ads` | 销售费用 |
-  | 经营 | `Expenses:Tools` / `Rent` / `Salary` | 管理费用 |
-  | 经营 | `Expenses:PlatformFee` / `Tax` / `Other` | 财务费用 / 税金 / 其他 |
-  | 经营 | `Income:Revenue` / `Income:Other` | 主营业务收入 / 其他业务收入 |
+  摘要里的括号只留固定标记（清单见 `ledger.py rules`），其他补充一律进 `note`。
+- **摘要开头的大类简称按记账科目固定**（对照表见 `ledger.py rules`），一笔分录涉及几个收支科目时按金额最大的那个。
+- **退款、退回用原来的开头，事项末尾加「退款」**（经营账客户退款固定写「销售退回」）：这是随手记、钱迹等通行做法——退款冲减原分类，不算收入，摘要一眼看得出是退回来的钱。余额核对多出、少了的差额**不是退款**：多出记收入（`Income:Other`「其他收入-对账差额」），少了记费用（`Expenses:Finance:Fee`「财务费用-对账差额」），不要用负数费用冲。
+- 记到 `Expenses:Other` 必须写 `note:`，说明是什么、为什么现有分类都对不上；找不到分类时的完整步骤见 `ledger.py rules`。
 
 - 对方名称不写「个人」「测试」「银行」「供应商」这类空泛词：个人写称呼或姓名，银行写机构名（「招商银行」），供应商写固定名称，说不出名字的写业务描述（「服务器供应商」）。
 - 不写口语，不写冗长修饰。
