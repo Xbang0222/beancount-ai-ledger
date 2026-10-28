@@ -91,6 +91,7 @@ beancount-ai-ledger/
 │   ├── ledger.py               # single entry point: add, amend, void, check, query, reconcile, format
 │   ├── bootstrap.py            # environment setup
 │   ├── hooks/pre-commit        # pre-commit checks
+│   ├── hooks/commit-msg        # commit message format check
 │   └── ledgerlib/              # implementation and account templates
 ├── examples/                   # cookbook of tricky entries and a full demo ledger
 ├── docs/                       # quick start, user guide, reference, FAQ (Chinese)

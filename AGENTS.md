@@ -15,7 +15,7 @@ Windows 上把命令里的 `python3` 换成 `python` 或 `py`。
    - 做法：在 GitHub 打开模板仓库，点 Use this template，可见性选 Private。不要 Fork，公开仓库的 Fork 也是公开的。
    - 装了 `gh` 且用户同意时，可以代为执行 `gh repo create <仓库名> --private --template Xbang0222/beancount-ai-ledger --clone`。
    - 已经在模板的克隆里改了东西：`git remote rename origin upstream`，再 `git remote add origin <私有仓库地址>` 并推送。
-4. doctor 提示提交前自动检查没有启用：运行 `git config core.hooksPath scripts/hooks`。之后每次提交会自动跑账本校验和排版检查，不通过就提交不了。
+4. doctor 提示提交前自动检查没有启用：运行 `git config core.hooksPath scripts/hooks`。之后每次提交会自动跑账本校验和排版检查、核对提交信息写法，不通过就提交不了。
 5. doctor 提示账套目录不是 Git 仓库：先 `git init` 并提交。在自己电脑上用 Claude Code、Codex 的，再建议建一个私有远程仓库；放哪、怎么同步按下文「账本存哪」选；只有云盘没有远程仓库的，按「没有远程仓库时」做，**不要让用户去学 Git**。
 6. doctor 提示账本还没初始化：按下文「首次使用」引导用户。
 
@@ -71,11 +71,12 @@ python3 scripts/ledger.py fmt --check    # 序时簿排版，不过就运行 led
 
 启用了提交前自动检查（`scripts/hooks/pre-commit`）的仓库，提交时会自动跑上面这些。改脚本要用的 pytest、ruff 用 `.venv/bin/python -m pip install -r requirements-dev.txt` 安装。
 
-然后 `git status` 过一遍变更清单再提交。提交信息用 Conventional Commits（`type(scope): 摘要`）：
+然后 `git status` 过一遍变更清单再提交。提交信息首行写 `类型: 摘要`：类型保留英文，摘要用书面中文，首行不带括号、不超过 80 字。启用了 `scripts/hooks/commit-msg` 的仓库会强制检查，不合规提交不了。
 
-- `type`：`feat` 记新账，`fix` 更正账目，`docs` 改规则或文档，`refactor` / `test` / `chore` 用于脚本与杂务；
-- `scope`：账本名（如 `personal`、`shop`），或 `script` / `docs`；
-- 示例：`feat(personal): 餐饮-午餐 18 元`，`fix(personal): 打车改记花呗`，`docs: 新增宠物支出分类`。
+- 类型：`feat` 登记新账、补记、新开科目；`fix` 更正、作废、对账调整；`style` 只重排序时簿；`docs` 改规则或文档；`refactor` / `test` / `chore` 用于脚本与杂务。改了账本的提交只能用 `feat` / `fix` / `style`。
+- 改了账本的摘要以「登记」「补记」「更正」「作废」「对账」「重排」（科目表、建账用「新开」「新建」「初始化」）之一开头，依次写账本、日期、业务、金额、结算方式，并写明改到的每本账（称呼取 `ledger.toml` 的 title，「个人账本」写「个人账」）。
+- 金额保留两位小数带「元」，日期写「10月28日」，结算方式写「支付宝付款」「微信收款」。
+- 示例：`feat: 登记个人账10月28日午餐支出18.00元，微信付款`，`fix: 更正个人账10月25日打车费，改记花呗付款`，`docs: 新增宠物支出分类`。
 
 **每次改动后立即提交**；配置了远程仓库就立即推送，账本以远程为准。没有远程仓库的照常提交，推送改为下一节的备份。
 
@@ -118,7 +119,7 @@ python3 scripts/ledger.py fmt --check    # 序时簿排版，不过就运行 led
 每批改动后（记账、更正、改规则都算），一条命令：
 
 ```bash
-git add -A && git commit -q -m "feat(personal): 餐饮-午餐 18 元、交通-打车 32 元" && python3 scripts/ledger.py backup --daily
+git add -A && git commit -q -m "feat: 登记个人账10月28日午餐支出18.00元、打车支出32.00元" && python3 scripts/ledger.py backup --daily
 ```
 
 - 提交信息按「提交信息」一节写。一批里有好几笔时逐笔 `add`，全部记完再提交一次。
@@ -144,7 +145,7 @@ git add -A && git commit -q -m "feat(personal): 餐饮-午餐 18 元、交通-�
 3. 建好后建本地仓库并提交，只需要做这一次：
 
    ```bash
-   git init -q && git config user.name "记账助手" && git config user.email "ledger@localhost" && git config core.hooksPath scripts/hooks && git add -A && git commit -q -m "chore: 初始化账本"
+   git init -q && git config user.name "记账助手" && git config user.email "ledger@localhost" && git config core.hooksPath scripts/hooks && git add -A && git commit -q -m "feat: 初始化个人账"
    ```
 
 4. 运行 `python3 scripts/ledger.py backup`，把压缩包传到云盘「AI记账」文件夹（没有就新建）。
@@ -253,7 +254,7 @@ EOF
 git remote add upstream https://github.com/Xbang0222/beancount-ai-ledger.git 2>/dev/null; git fetch -q upstream
 git checkout upstream/main -- scripts tests docs AGENTS.md requirements.txt requirements-dev.txt pyproject.toml
 [ -f CLASSIFY.md ] || git checkout upstream/main -- CLASSIFY.md   # 分类指南：没有才取，用户补过判例的不覆盖
-python3 scripts/bootstrap.py && git commit -q -m "chore(script): 同步上游脚本"
+python3 scripts/bootstrap.py && git commit -q -m "chore: 同步上游脚本"
 ```
 
 - `CATEGORIES.md`、`STATE.md`、`ledger.toml` 和各账本目录不要覆盖。用户改过 `AGENTS.md` 的，先问他再覆盖。

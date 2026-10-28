@@ -6,6 +6,7 @@
 
 ### 新增
 
+- 提交信息写法由 `scripts/hooks/commit-msg` 把关（新命令 `ledger.py commit-msg`）：首行 `类型: 摘要`，英文类型、书面中文摘要、不带括号；改了账本只能用 `feat` / `fix` / `style`，摘要以登记、补记、更正、作废、对账、重排、新开、新建、初始化之一开头，并写明改到的账本（称呼取 `ledger.toml` 的 title）。写法见 `AGENTS.md`「每次改动后」。已执行过 `git config core.hooksPath scripts/hooks` 的仓库升级后自动生效。
 - `dividend` 对已发过分红的往月直接显示「已结清」，只列实发金额，不再按新汇率重算出几块钱的差额；确要重算加 `--recalc`。
 - 对方与摘要的写法由脚本把关：`ledger.toml` 新增 `[naming]`（摘要开头按科目、括号固定标记、空泛对方名、笼统事项词、退款结尾、固定场景），`add` / `amend` 不合规直接拒绝并提示正确写法，`check` 扫全账并报出没配摘要开头的收支科目；`rules [账本]` 打印对照表与「找不到分类时」的处理步骤；记到 `Expenses:Other` 必须写 `note:`。`new-book` 按模板自动补上新账本的摘要开头。写法见 `docs/REFERENCE.md`「写法规则」。**升级的用户**：`ledger.toml` 不会被覆盖，想启用请把模板的 `[naming]` 段复制过去，再跑 `check` 按提示更正老账。
 - `quote <代码...>`：现拉价格并折成本位币——外币、加密币（`USD`、`USDT`、`BTC`）、黄金白银每克（`AU`、`AG`）、场外基金净值（`F161226`）、A 股港股美股（`SH600519`、`HK00700`、`US.AAPL`）；`--date` 查历史价。

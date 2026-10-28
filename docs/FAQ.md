@@ -32,7 +32,7 @@ git remote add upstream https://github.com/Xbang0222/beancount-ai-ledger.git   #
 git fetch upstream
 git checkout upstream/main -- scripts tests requirements.txt requirements-dev.txt pyproject.toml
 python3 -m pytest tests/ -q && python3 scripts/ledger.py check
-git commit -m "chore(script): 同步上游脚本"
+git commit -m "chore: 同步上游脚本"
 ```
 
 `AGENTS.md`、`CATEGORIES.md` 里可能有你自己改过的规则，请对照[更新日志](../CHANGELOG.md)手动合并。让 AI 来做的话，说一句"帮我升级记账项目"。

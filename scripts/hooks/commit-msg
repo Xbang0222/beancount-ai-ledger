@@ -1,0 +1,11 @@
+#!/bin/sh
+# 提交信息把关：type(scope): 摘要，scope 要和这次改到的账本对上（规则见 README「提交信息规范」）。
+# 与 pre-commit 一起启用（每个克隆做一次）：git config core.hooksPath scripts/hooks
+root=$(git rev-parse --show-toplevel) || exit 1
+
+py=python3
+command -v python3 >/dev/null 2>&1 || py=python
+[ -x "$root/.venv/bin/python" ] && py="$root/.venv/bin/python"
+[ -x "$root/.venv/Scripts/python.exe" ] && py="$root/.venv/Scripts/python.exe"
+
+exec "$py" "$root/scripts/ledger.py" commit-msg "$1"

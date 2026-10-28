@@ -92,6 +92,7 @@ beancount-ai-ledger/
 │   ├── ledger.py               # 统一入口（入账/更正/作废/校验/查询/对账/格式化）
 │   ├── bootstrap.py            # 环境准备：建 .venv、装依赖、校验账本
 │   ├── hooks/pre-commit        # 提交前自动检查
+│   ├── hooks/commit-msg        # 提交信息写法检查
 │   └── ledgerlib/              # 实现与科目表模板
 ├── examples/
 │   ├── cookbook.beancount      # AA、代垫、信用卡、退款、押金、贷款、基金、外币等写法

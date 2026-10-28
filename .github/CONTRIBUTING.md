@@ -35,7 +35,7 @@ python3 -m pytest tests/ -q
    bean-check examples/cookbook.beancount
    ```
 
-4. 提交信息使用 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)，格式为 `type(scope): 摘要`，如 `fix(script): add 读取带 BOM 的文件`、`docs: 补充导入账单的说明`。
+4. 提交信息首行写 `类型: 摘要`（类型取自 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)，摘要用书面中文，不带括号），如 `fix: 修正 add 读取带 BOM 的文件`、`docs: 补充导入账单的说明`；`scripts/hooks/commit-msg` 会检查。
 5. 用户能感知到的改动，在 [CHANGELOG.md](../CHANGELOG.md) 的 `[Unreleased]` 下补一条。
 6. 发起 Pull Request，写清楚改了什么、为什么改。
 

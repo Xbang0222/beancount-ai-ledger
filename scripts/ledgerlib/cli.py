@@ -165,6 +165,9 @@ def build_parser():
     ru = sub.add_parser("rules", help="对方与摘要的写法对照表（ledger.toml 的 [naming]，入账前查它）")
     ru.add_argument("book", nargs="?", help="只看某本账，默认全部")
 
+    cm = sub.add_parser("commit-msg", help="检查提交信息（commit-msg 钩子调用）")
+    cm.add_argument("file", help="git 传入的提交信息文件")
+
     nb = sub.add_parser("new-book", help="新建账本（生成科目表模板并登记到 ledger.toml）")
     nb.add_argument("name", help="账本名：小写字母开头，可含数字、- 和 _（如 personal、shop、family）")
     nb.add_argument("--template", choices=("personal", "business", "minimal"), default="personal",
@@ -279,6 +282,10 @@ def _dispatch(args):
         return cmd_check(args.no_reconcile)
     if args.cmd == "books":
         return cmd_books()
+    if args.cmd == "commit-msg":
+        from .commitmsg import cmd_commit_msg
+
+        return cmd_commit_msg(args.file)
     if args.cmd == "rules":
         from .naming import cmd_rules
 
