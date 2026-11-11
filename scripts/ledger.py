@@ -1,24 +1,7 @@
 #!/usr/bin/env python3
 """统一记账入口（由 AI 调用，也可手动运行）。
 
-用法：
-  python3 scripts/ledger.py doctor                               检查环境与账套状态（第一次用先跑它）
-  python3 scripts/ledger.py check                                校验全部账本（有往来镜像时含跨账本对账）
-  python3 scripts/ledger.py add <账本> [--file 文件]  < 分录       追加【一笔】（自动校验，失败自动回滚）
-  python3 scripts/ledger.py recent <账本> [-n N]                 最近 N 笔交易（行首显示分录编号）
-  python3 scripts/ledger.py find <账本> <关键词...>              按关键词找分录并显示编号
-  python3 scripts/ledger.py amend <账本> <编号> [--file 文件] < 新分录   更正一笔（自动校验，失败自动回滚）
-  python3 scripts/ledger.py void <账本> <编号>                   作废一笔
-  python3 scripts/ledger.py summary <账本> [YYYY-MM]             按大类汇总支出/收入
-  python3 scripts/ledger.py balances <账本>                      各账户余额
-  python3 scripts/ledger.py tag <账本> <单个标签> [YYYY-MM]      按标签查账（一次只支持一个标签）
-  python3 scripts/ledger.py report <账本> [YYYY-MM]              月度财务分析报告
-  python3 scripts/ledger.py reconcile                            跨账本往来对账
-  python3 scripts/ledger.py networth [--rate 币种=汇率]          资产负债汇总
-  python3 scripts/ledger.py fmt [--check] [账本]                 序时簿排版规范化
-  python3 scripts/ledger.py books                                列出账本与往来镜像
-  python3 scripts/ledger.py new-book <名称> [--template ...] [--link ...]   新建账本
-
+命令清单与参数以 `python3 scripts/ledger.py --help` 为准（定义在 ledgerlib/cli.py），这里不另抄一份。
 账本名来自账套根目录的 ledger.toml。实现拆分在 scripts/ledgerlib/ 下，本文件只做入口转发。
 缺依赖时，如果仓库里有 .venv（scripts/bootstrap.py 建的），会自动改用 .venv 的解释器运行。
 """
