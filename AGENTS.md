@@ -70,9 +70,9 @@ python3 scripts/ledger.py fmt --check    # 序时簿排版，不过就运行 led
 .venv/bin/python -m ruff check scripts tests && .venv/bin/python -m pytest   # 改了 scripts/ 或 tests/ 才需要
 ```
 
-启用了提交前自动检查（`scripts/hooks/pre-commit`）的仓库，提交时会自动跑上面这些。改脚本要用的 pytest、ruff 用 `.venv/bin/python -m pip install -r requirements-dev.txt` 安装。
+启用了提交前自动检查（`scripts/hooks/pre-commit`）的仓库，提交时会自动跑上面这些。推送后没有云端检查兜底，钩子是唯一的关口：每台设备、每个克隆都要启用一次（`git config core.hooksPath scripts/hooks`），没启用时 `add` / `amend` / `void` 会在末尾提醒，看到就先启用再提交。改脚本要用的 pytest、ruff 用 `.venv/bin/python -m pip install -r requirements-dev.txt` 安装。
 
-然后 `git status` 过一遍变更清单再提交。提交信息首行写 `类型: 摘要`：类型保留英文，摘要用书面中文，首行不带括号、不超过 80 字。启用了 `scripts/hooks/commit-msg` 的仓库会强制检查，不合规提交不了；推送后 CI 还会用 `ledger.py commit-msg --range` 把这次推上来的提交再查一遍。
+然后 `git status` 过一遍变更清单再提交。提交信息首行写 `类型: 摘要`：类型保留英文，摘要用书面中文，首行不带括号、不超过 80 字。启用了 `scripts/hooks/commit-msg` 的仓库会强制检查，不合规提交不了。
 
 - 类型：`feat` 登记新账、补记、新开科目；`fix` 更正、作废、对账调整；`style` 只重排序时簿；`docs` 改规则或文档；`refactor` / `test` / `chore` 用于脚本与杂务。改了账本的提交只能用 `feat` / `fix` / `style`。
 - 改了账本的摘要以「登记」「补记」「更正」「作废」「对账」「重排」（科目表、建账用「新开」「新建」「初始化」）之一开头，依次写账本、日期、业务、金额、结算方式，并写明改到的每本账（称呼取 `ledger.toml` 的 title，「个人账本」写「个人账」）。

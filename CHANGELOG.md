@@ -8,7 +8,7 @@
 
 - 提交信息写法由 `scripts/hooks/commit-msg` 把关（新命令 `ledger.py commit-msg`）：首行 `类型: 摘要`，英文类型、书面中文摘要、不带括号；改了账本只能用 `feat` / `fix` / `style`，摘要以登记、补记、更正、作废、对账、重排、新开、新建、初始化之一开头，并写明改到的账本（称呼取 `ledger.toml` 的 title）。写法见 `AGENTS.md`「每次改动后」。已执行过 `git config core.hooksPath scripts/hooks` 的仓库升级后自动生效。
 - `dividend` 对已结清的月份直接显示「已结清」，只列实发金额，不再按新汇率重算出几块钱的差额；确要重算加 `--recalc`。结清的口径是「这个月过完之后记过该月的分红」：月内预发时全月利润还没定，过了月仍按全月利润多退少补，补发那一笔记在月后才算结清。
-- `ledger.py commit-msg --range A..B`：逐条检查范围里已有的提交，各自按它改到的文件核对账本；范围取不出来（首次推送、强推）时只查最新一条。CI 在 push 时加跑这一步，没启用提交钩子的设备推上来的不合规提交也能被发现。**升级的用户**：`.github/workflows/ci.yml` 不会被覆盖，想要这项检查请对照模板给 `checkout` 加上 `fetch-depth: 0`，再补上「提交信息」这一步。
+- `ledger.py commit-msg --range A..B`：逐条检查范围里已有的提交，各自按它改到的文件核对账本；范围取不出来（首次推送、强推）时只查最新一条。自己接 CI 时可以用它把推上来的提交再查一遍，没启用提交钩子的设备推上来的不合规提交也能被发现。
 - `add` / `amend` / `void` 成功后，这台设备要是没启用提交前自动检查（账套带了 `scripts/hooks`、又是 Git 仓库，却没执行过 `git config core.hooksPath scripts/hooks`），会打印一行提醒。
 - `doctor` 提醒有余额却久未核对的账户：资产负债科目有余额、超过 `[ledger] reconcile_days` 天（新配置项，默认 35，0 为不提醒）没用 `balance` 断言核对过的逐本账列出来；从没核对过的从第一笔发生额算起，账本间往来镜像由 `reconcile` 把关，不算在内。只是提醒，不影响退出码。
 - `[dividend]` 的 `partners` 新增可选 `owner = true`，标出账本所有者自己那一方。标了之后，其余各方在未结清月份里「应得 − 已分配」的利润不是所有者的钱：`networth` 在折合本位币的净资产之后单列「应付某某未分利润」，再给出「扣后净资产」；预支超过应得时加回。没标 `owner`、分红账本不并入 `networth` 时不扣。写法见 `docs/REFERENCE.md`「利润分配」。
@@ -37,6 +37,10 @@
 - `doctor` 的「没有远程仓库时」「首次使用」两处提示，账套的 `AGENTS.md` 里确有这一节才指过去，没有就只说怎么做（用模板建的账套不一定留着这些引导章节）。模板自带这两节，提示不变。
 - `scripts/ledger.py` 开头的说明不再另抄一份命令清单，以 `python3 scripts/ledger.py --help` 为准。
 - 脚本内部整理，命令用法不变：`books.print_error_lines`、`fxrate.http_get` 改为公开名；`env.run_command` 统一 `doctor`、`backup`、`commitmsg` 里跑外部命令的函数；`journal.rstrip_blank` 取代 `fmt` 里的重复函数；`entry.inject_time` 复用 `with_time_line`。
+
+### 移除
+
+- 移除 CI（`.github/workflows/ci.yml`）：推送后不再有云端检查，把关只剩两道——命令写盘后的整本校验，和提交前的钩子（`check`、`fmt --check`、提交信息，改脚本时加跑 ruff 与 pytest）。每台设备、每个克隆都要启用一次钩子（`git config core.hooksPath scripts/hooks`），`doctor` 会查，`add` / `amend` / `void` 成功后也会提醒。发版流程 `release.yml` 不受影响，它自己会跑测试与校验。README 的 CI 徽章和各文档里「推送后 GitHub Actions 再跑一遍」的说法一并去掉。**升级的用户**：你仓库里已有的 `.github/workflows/ci.yml` 不会被删除，想继续用就留着，不想要自己删掉即可。
 
 ### 修复
 

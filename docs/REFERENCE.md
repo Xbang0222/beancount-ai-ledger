@@ -29,7 +29,7 @@
 | `fmt [--check] [账本]` | 整理序时簿格式、按日期时间排序，不改金额 |
 | `books` | 列出账本与往来镜像 |
 | `new-book <名称> [选项]` | 新建账本，见[多本账](#多本账) |
-| `commit-msg <文件>` / `commit-msg --range A..B` | 检查提交信息写法：前者由 `scripts/hooks/commit-msg` 钩子调用，后者逐条检查范围里已有的提交（CI 在推送后用它），规则见 `AGENTS.md`「每次改动后」 |
+| `commit-msg <文件>` / `commit-msg --range A..B` | 检查提交信息写法：前者由 `scripts/hooks/commit-msg` 钩子调用，后者逐条检查范围里已有的提交（自己接 CI 时可以用它查推上来的提交），规则见 `AGENTS.md`「每次改动后」 |
 | `backup [-o 目录] [--daily]` | 把整个账套连同 Git 历史打成一个压缩包，没有远程仓库时存到云盘、网盘。`--daily` 今天备份过就跳过；默认目录只留最新一份 |
 
 不经过 AI、手动入账时这样写：

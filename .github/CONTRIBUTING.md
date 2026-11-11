@@ -24,7 +24,7 @@ python3 -m pytest tests/ -q
 
 1. Fork 本仓库，从 `main` 新建分支。Fork 只用来提交代码，不要在里面记真实的账。
 2. 改代码的同时补测试。测试用 `tests/conftest.py` 里的 fixture 在临时目录搭账套，不要读写仓库里的账本文件。
-3. 在本地跑一遍 CI 会跑的检查：
+3. 在本地跑一遍下面的检查（仓库没有云端 CI，合并前全靠这一步）：
 
    ```bash
    python3 -m ruff check scripts tests

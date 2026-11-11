@@ -2,7 +2,6 @@
 
 [简体中文](README.md) | English
 
-[![CI](https://github.com/Xbang0222/beancount-ai-ledger/actions/workflows/ci.yml/badge.svg)](https://github.com/Xbang0222/beancount-ai-ledger/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Xbang0222/beancount-ai-ledger)](https://github.com/Xbang0222/beancount-ai-ledger/releases)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](requirements.txt)
 [![License](https://img.shields.io/github/license/Xbang0222/beancount-ai-ledger)](LICENSE)
@@ -130,7 +129,8 @@ python3 scripts/ledger.py backup --daily               # zip the whole ledger wi
 
 1. **In every command**: `add` / `amend` / `void` / `fmt` validate the whole book after writing and restore the files if anything fails.
 2. **Before each commit**: the pre-commit hook runs validation, reconciliation and formatting checks, plus ruff and pytest when scripts change; the commit-msg hook checks the commit message format.
-3. **After each push**: GitHub Actions runs all of the above again and checks the message of every commit in the push, so a device without the hooks enabled cannot slip one through.
+
+There is no cloud check after a push: enable the hooks once on every device and every clone (`git config core.hooksPath scripts/hooks`). `doctor` reports whether they are enabled, and `add` / `amend` / `void` remind you after a successful write.
 
 Entry guards also reject future dates, guessed times, missing payees or narrations, and exact duplicates.
 

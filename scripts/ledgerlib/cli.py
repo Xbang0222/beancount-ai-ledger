@@ -164,7 +164,7 @@ def build_parser():
     ru = sub.add_parser("rules", help="对方与摘要的写法对照表（ledger.toml 的 [naming]，入账前查它）")
     ru.add_argument("book", nargs="?", help="只看某本账，默认全部")
 
-    cm = sub.add_parser("commit-msg", help="检查提交信息（commit-msg 钩子调用；CI 用 --range 查已推送的提交）")
+    cm = sub.add_parser("commit-msg", help="检查提交信息（commit-msg 钩子调用；--range 检查已有的提交）")
     cm.add_argument("file", nargs="?", help="git 传入的提交信息文件")
     cm.add_argument("--range", dest="rev_range", metavar="A..B",
                     help="改为检查这个范围里已有的提交，如 origin/main..HEAD")

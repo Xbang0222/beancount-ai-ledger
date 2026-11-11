@@ -2,7 +2,6 @@
 
 简体中文 | [English](README.en.md)
 
-[![CI](https://github.com/Xbang0222/beancount-ai-ledger/actions/workflows/ci.yml/badge.svg)](https://github.com/Xbang0222/beancount-ai-ledger/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Xbang0222/beancount-ai-ledger)](https://github.com/Xbang0222/beancount-ai-ledger/releases)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](requirements.txt)
 [![License](https://img.shields.io/github/license/Xbang0222/beancount-ai-ledger)](LICENSE)
@@ -144,11 +143,12 @@ python3 scripts/ledger.py backup --daily               # 打包整个账套（�
 
 ## 数据可靠性
 
-三道把关，越往后越兜底：
+两道把关：
 
 1. **命令内**：`add` / `amend` / `void` / `fmt` 写盘后整本校验，不通过原样还原；
-2. **提交前**：`scripts/hooks/pre-commit` 跑账本校验、往来对账与排版检查，改了脚本再跑 ruff 与 pytest；`scripts/hooks/commit-msg` 核对提交信息写法；
-3. **推送后**：GitHub Actions 把上面全部再跑一遍，并逐条检查这次推上来的提交信息（没启用提交钩子的设备也漏不掉）。
+2. **提交前**：`scripts/hooks/pre-commit` 跑账本校验、往来对账与排版检查，改了脚本再跑 ruff 与 pytest；`scripts/hooks/commit-msg` 核对提交信息写法。
+
+没有推送后的云端检查：每台设备、每个克隆都要先启用钩子（`git config core.hooksPath scripts/hooks`），`doctor` 会查有没有启用，`add` / `amend` / `void` 成功后也会提醒。
 
 此外，入账守卫拒绝未来日期、估出来的时间、缺对方或摘要、内容相同的重复分录；Git 管理全部变更，可追溯、可 diff、可回滚。
 
