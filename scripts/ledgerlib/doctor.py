@@ -20,11 +20,23 @@ GITHUB_URL_RE = re.compile(r"github\.com(?::\d+)?[:/]+([^/\s]+)/([^/\s]+?)(?:\.g
 TEMPLATE_MARK = "这是模板，请改成你自己的"
 # 没有 Git 时的两条路：会用 Git 的建私有仓库；只用豆包这类云电脑的改用压缩包加云盘
 NO_GIT_TODO = ("在账套目录 git init 并提交，改动才有记录可查。"
-               "用户没有远程仓库（如豆包云电脑）：按 AGENTS.md「没有远程仓库时」，"
+               "用户没有远程仓库（如豆包云电脑）：{guide}"
                "用 python3 scripts/ledger.py backup 把压缩包存进用户的云盘")
 NO_REMOTE_TODO = ("用户会用 GitHub：建一个私有远程仓库，git remote add origin <地址> 后推送；"
-                  "用户不会用（如豆包云电脑）：按 AGENTS.md「没有远程仓库时」，"
+                  "用户不会用（如豆包云电脑）：{guide}"
                   "用 python3 scripts/ledger.py backup 把压缩包存进用户的云盘")
+NO_REMOTE_SECTION = "没有远程仓库时"
+FIRST_USE_SECTION = "首次使用"
+
+
+def _guide(section):
+    """AGENTS.md 里有这一节才指过去：模板带着引导章节，用户自己的账套不一定留着。"""
+    try:
+        with open(os.path.join(config.ROOT, "AGENTS.md"), encoding="utf-8") as f:
+            found = re.search(rf"^#+ .*{re.escape(section)}", f.read(), re.M)
+    except OSError:
+        found = None
+    return f"按 AGENTS.md「{section}」，" if found else ""
 
 
 class _Report:
@@ -147,7 +159,7 @@ def _books(r):
                    + "、".join(acc for acc, _ in stale))
         if txns == 0 and checks == 0 and pads == 0:
             r.warn(f"{name} 还没有期初余额，也没有任何交易",
-                   f"第一次使用：按 AGENTS.md「首次使用」问清用户的账户和余额，初始化 {name}")
+                   f"第一次使用：{_guide(FIRST_USE_SECTION)}问清用户的账户和余额，初始化 {name}")
 
     cats = os.path.join(config.ROOT, "CATEGORIES.md")
     if os.path.exists(cats):
@@ -164,10 +176,10 @@ def _git(r):
         return
     rc, inside = _run(["git", "rev-parse", "--is-inside-work-tree"])
     if rc is None:
-        r.warn("没有安装 git：改动无法追溯，也没法同步到远程", NO_GIT_TODO)
+        r.warn("没有安装 git：改动无法追溯，也没法同步到远程", NO_GIT_TODO.format(guide=_guide(NO_REMOTE_SECTION)))
         return
     if rc != 0 or inside != "true":
-        r.warn("账套目录不是 Git 仓库：改动无法追溯", NO_GIT_TODO)
+        r.warn("账套目录不是 Git 仓库：改动无法追溯", NO_GIT_TODO.format(guide=_guide(NO_REMOTE_SECTION)))
         return
     _, branch = _run(["git", "branch", "--show-current"])
     _, status = _run(["git", "status", "--porcelain"])
@@ -178,7 +190,7 @@ def _git(r):
 
     rc, url = _run(["git", "remote", "get-url", "origin"])
     if rc != 0 or not url:
-        r.warn("没有配置远程仓库 origin：账本只存在这台电脑上", NO_REMOTE_TODO)
+        r.warn("没有配置远程仓库 origin：账本只存在这台电脑上", NO_REMOTE_TODO.format(guide=_guide(NO_REMOTE_SECTION)))
         _template_only(r)
         return
     repo = github_repo(url)

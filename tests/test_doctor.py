@@ -46,7 +46,16 @@ def test_新账本提示先初始化(empty_root, capsys):
     assert cli.main(["doctor"]) == 0
     out = capsys.readouterr().out
     assert "[WARN] personal 还没有期初余额，也没有任何交易" in out
-    assert "首次使用" in out
+    assert "问清用户的账户和余额" in out
+    assert "AGENTS.md" not in out   # 账套里没有引导章节，就不往那儿指
+
+
+def test_AGENTS里有引导章节时提示指过去(empty_root, capsys):
+    (empty_root / "AGENTS.md").write_text("# 须知\n\n### 首次使用（doctor 提示未初始化）\n", encoding="utf-8")
+    assert newbook.cmd_new_book("personal") == 0
+    capsys.readouterr()
+    cli.main(["doctor"])
+    assert "按 AGENTS.md「首次使用」，问清用户的账户和余额" in capsys.readouterr().out
 
 
 def test_账本有错时报_FAIL_且退出码非零(ledger, capsys):
@@ -103,7 +112,9 @@ def test_私有远程仓库不警告(ledger, monkeypatch, capsys):
 def test_没有远程仓库时提醒备份(ledger, capsys):
     _git(ledger, "init", "-q")
     cli.main(["doctor"])
-    assert "没有配置远程仓库" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "没有配置远程仓库" in out
+    assert "没有远程仓库时" not in out   # 同上：没有那一节就只说怎么做
 
 
 @needs_git
@@ -209,6 +220,7 @@ def test_不是_Git_仓库或没带检查脚本时不提醒(ledger):
     (ledger / "scripts" / "hooks").mkdir(parents=True)
     (ledger / "scripts" / "hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
     assert doctor.hooks_missing() is False
+
 
 # ---------- 余额久未核对的提醒 ----------
 
