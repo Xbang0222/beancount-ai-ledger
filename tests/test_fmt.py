@@ -119,3 +119,21 @@ def test_一位数小时按时间而不是按字符串排序():
     text = MESSY.replace('"19:00"', '"12:00"').replace('"08:00"', '"9:40"')
     out = fmt.format_text(text)
     assert out.index('"丙"') < out.index('"乙"')
+
+
+def test_重排时拿互斥锁_只检查时不拿(ledger, monkeypatch):
+    """重排和入账抢同一把锁：否则重排会拿读到的旧内容把别的会话刚入的账盖掉。"""
+    import contextlib
+
+    held = []
+
+    @contextlib.contextmanager
+    def fake_lock():
+        held.append(True)
+        yield
+
+    monkeypatch.setattr(fmt, "book_lock", fake_lock)
+    assert fmt.cmd_fmt(("personal",), check_only=True) == 1   # 脚手架的个人账是乱序的
+    assert held == []
+    assert fmt.cmd_fmt(("personal",)) == 0
+    assert held == [True]

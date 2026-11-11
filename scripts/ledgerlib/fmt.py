@@ -5,6 +5,8 @@
 
 本模块只动排版，不动任何金额、日期与文字。写入前后各加载一次账本比对
 交易笔数与全部科目余额，任一不符立即还原——否则不敢对历史账跑。
+这套前后比对比 store.commit 的整本校验更严，所以自己写盘；但同样要拿 store 的互斥锁，
+不然另一个会话正好在入账时，重排会拿读到的旧内容把刚写进去的那一笔盖掉。
 """
 import os
 from collections import Counter
@@ -12,6 +14,7 @@ from collections import Counter
 from . import config, journal
 from .books import balances, load_book, print_errors, transactions
 from .journal import journal_files
+from .store import book_lock
 
 
 def format_text(text):
@@ -47,7 +50,11 @@ def cmd_fmt(books=None, check_only=False):
         books = tuple(config.load().books)
     rc = 0
     for book in books:
-        rc |= _fmt_book(book, check_only)
+        if check_only:   # 只读：不拿锁，只读文件系统（CI、导出的暂存区）上也能查
+            rc |= _fmt_book(book, check_only)
+        else:
+            with book_lock():
+                rc |= _fmt_book(book, check_only)
     return 1 if rc else 0
 
 
