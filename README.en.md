@@ -129,8 +129,8 @@ python3 scripts/ledger.py backup --daily               # zip the whole ledger wi
 ## Reliability
 
 1. **In every command**: `add` / `amend` / `void` / `fmt` validate the whole book after writing and restore the files if anything fails.
-2. **Before each commit**: the pre-commit hook runs validation, reconciliation and formatting checks, plus ruff and pytest when scripts change.
-3. **After each push**: GitHub Actions runs all of the above again.
+2. **Before each commit**: the pre-commit hook runs validation, reconciliation and formatting checks, plus ruff and pytest when scripts change; the commit-msg hook checks the commit message format.
+3. **After each push**: GitHub Actions runs all of the above again and checks the message of every commit in the push, so a device without the hooks enabled cannot slip one through.
 
 Entry guards also reject future dates, guessed times, missing payees or narrations, and exact duplicates.
 

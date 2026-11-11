@@ -7,7 +7,11 @@
 ### 新增
 
 - 提交信息写法由 `scripts/hooks/commit-msg` 把关（新命令 `ledger.py commit-msg`）：首行 `类型: 摘要`，英文类型、书面中文摘要、不带括号；改了账本只能用 `feat` / `fix` / `style`，摘要以登记、补记、更正、作废、对账、重排、新开、新建、初始化之一开头，并写明改到的账本（称呼取 `ledger.toml` 的 title）。写法见 `AGENTS.md`「每次改动后」。已执行过 `git config core.hooksPath scripts/hooks` 的仓库升级后自动生效。
-- `dividend` 对已发过分红的往月直接显示「已结清」，只列实发金额，不再按新汇率重算出几块钱的差额；确要重算加 `--recalc`。
+- `dividend` 对已结清的月份直接显示「已结清」，只列实发金额，不再按新汇率重算出几块钱的差额；确要重算加 `--recalc`。结清的口径是「这个月过完之后记过该月的分红」：月内预发时全月利润还没定，过了月仍按全月利润多退少补，补发那一笔记在月后才算结清。
+- `ledger.py commit-msg --range A..B`：逐条检查范围里已有的提交，各自按它改到的文件核对账本；范围取不出来（首次推送、强推）时只查最新一条。CI 在 push 时加跑这一步，没启用提交钩子的设备推上来的不合规提交也能被发现。**升级的用户**：`.github/workflows/ci.yml` 不会被覆盖，想要这项检查请对照模板给 `checkout` 加上 `fetch-depth: 0`，再补上「提交信息」这一步。
+- `add` / `amend` / `void` 成功后，这台设备要是没启用提交前自动检查（账套带了 `scripts/hooks`、又是 Git 仓库，却没执行过 `git config core.hooksPath scripts/hooks`），会打印一行提醒。
+- `doctor` 提醒有余额却久未核对的账户：资产负债科目有余额、超过 `[ledger] reconcile_days` 天（新配置项，默认 35，0 为不提醒）没用 `balance` 断言核对过的逐本账列出来；从没核对过的从第一笔发生额算起，账本间往来镜像由 `reconcile` 把关，不算在内。只是提醒，不影响退出码。
+- `[dividend]` 的 `partners` 新增可选 `owner = true`，标出账本所有者自己那一方。标了之后，其余各方在未结清月份里「应得 − 已分配」的利润不是所有者的钱：`networth` 在折合本位币的净资产之后单列「应付某某未分利润」，再给出「扣后净资产」；预支超过应得时加回。没标 `owner`、分红账本不并入 `networth` 时不扣。写法见 `docs/REFERENCE.md`「利润分配」。
 - 对方与摘要的写法由脚本把关：`ledger.toml` 新增 `[naming]`（摘要开头按科目、括号固定标记、空泛对方名、笼统事项词、退款结尾、固定场景），`add` / `amend` 不合规直接拒绝并提示正确写法，`check` 扫全账并报出没配摘要开头的收支科目；`rules [账本]` 打印对照表与「找不到分类时」的处理步骤；记到 `Expenses:Other` 必须写 `note:`。`new-book` 按模板自动补上新账本的摘要开头。写法见 `docs/REFERENCE.md`「写法规则」。**升级的用户**：`ledger.toml` 不会被覆盖，想启用请把模板的 `[naming]` 段复制过去，再跑 `check` 按提示更正老账。
 - `quote <代码...>`：现拉价格并折成本位币——外币、加密币（`USD`、`USDT`、`BTC`）、黄金白银每克（`AU`、`AG`）、场外基金净值（`F161226`）、A 股港股美股（`SH600519`、`HK00700`、`US.AAPL`）；`--date` 查历史价。
 - `networth` 默认自动现拉当天价格折算，不用再手动 `--rate`；拉不到时提示并改用账内 `price`，`--offline` 只用账内价格。
@@ -30,6 +34,17 @@
 
 - 云盘和本地 `backups/` 都只留最新一份备份（改动历史已经在压缩包里）。新的上传成功后才删旧的。
 - `AGENTS.md`：找不到云盘工具时先看 `~/vm/resource-loader/bin/`；还是没有就把压缩包发在对话里让用户自己保存，并明说没存到云盘。
+- `doctor` 的「没有远程仓库时」「首次使用」两处提示，账套的 `AGENTS.md` 里确有这一节才指过去，没有就只说怎么做（用模板建的账套不一定留着这些引导章节）。模板自带这两节，提示不变。
+- `scripts/ledger.py` 开头的说明不再另抄一份命令清单，以 `python3 scripts/ledger.py --help` 为准。
+- 脚本内部整理，命令用法不变：`books.print_error_lines`、`fxrate.http_get` 改为公开名；`env.run_command` 统一 `doctor`、`backup`、`commitmsg` 里跑外部命令的函数；`journal.rstrip_blank` 取代 `fmt` 里的重复函数；`entry.inject_time` 复用 `with_time_line`。
+
+### 修复
+
+- `fmt` 重排序时簿时拿互斥锁（`store.book_lock`）：以前另一个会话正好在入账时，重排会拿读到的旧内容把刚写进去的那一笔盖掉。`fmt --check` 只读，不拿锁。
+- `networth` 估值科目的 `estimate` 元数据按科目所在的账本取：以前别的账本开了同名科目并标了 `estimate`，会让本账本没标的科目也被拿去按金价估值。
+- 现拉汇率时，CDN 明确回 404 就直接报「数据集里没有这个代码」，不再下载整包确认；查不到的结果在本次运行内记住，不重复请求。
+- `quote` 取基金最新净值的截止日期按 `ledger.toml` 配置时区的今天，不用系统日期。
+- 提交信息检查不通过时的提示改指 `AGENTS.md`「每次改动后」，原先指向 README 里并不存在的章节。
 
 ## [0.4.0] - 2026-10-04
 

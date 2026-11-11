@@ -147,8 +147,8 @@ python3 scripts/ledger.py backup --daily               # 打包整个账套（�
 三道把关，越往后越兜底：
 
 1. **命令内**：`add` / `amend` / `void` / `fmt` 写盘后整本校验，不通过原样还原；
-2. **提交前**：`scripts/hooks/pre-commit` 跑账本校验、往来对账与排版检查，改了脚本再跑 ruff 与 pytest；
-3. **推送后**：GitHub Actions 把上面全部再跑一遍。
+2. **提交前**：`scripts/hooks/pre-commit` 跑账本校验、往来对账与排版检查，改了脚本再跑 ruff 与 pytest；`scripts/hooks/commit-msg` 核对提交信息写法；
+3. **推送后**：GitHub Actions 把上面全部再跑一遍，并逐条检查这次推上来的提交信息（没启用提交钩子的设备也漏不掉）。
 
 此外，入账守卫拒绝未来日期、估出来的时间、缺对方或摘要、内容相同的重复分录；Git 管理全部变更，可追溯、可 diff、可回滚。
 

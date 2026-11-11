@@ -15,9 +15,10 @@ Windows 上把命令里的 `python3` 换成 `python` 或 `py`。
    - 做法：在 GitHub 打开模板仓库，点 Use this template，可见性选 Private。不要 Fork，公开仓库的 Fork 也是公开的。
    - 装了 `gh` 且用户同意时，可以代为执行 `gh repo create <仓库名> --private --template Xbang0222/beancount-ai-ledger --clone`。
    - 已经在模板的克隆里改了东西：`git remote rename origin upstream`，再 `git remote add origin <私有仓库地址>` 并推送。
-4. doctor 提示提交前自动检查没有启用：运行 `git config core.hooksPath scripts/hooks`。之后每次提交会自动跑账本校验和排版检查、核对提交信息写法，不通过就提交不了。
+4. doctor 提示提交前自动检查没有启用（`add` / `amend` / `void` 成功后也会提醒）：运行 `git config core.hooksPath scripts/hooks`。之后每次提交会自动跑账本校验和排版检查、核对提交信息写法，不通过就提交不了。
 5. doctor 提示账套目录不是 Git 仓库：先 `git init` 并提交。在自己电脑上用 Claude Code、Codex 的，再建议建一个私有远程仓库；放哪、怎么同步按下文「账本存哪」选；只有云盘没有远程仓库的，按「没有远程仓库时」做，**不要让用户去学 Git**。
 6. doctor 提示账本还没初始化：按下文「首次使用」引导用户。
+7. doctor 提示有账户超过若干天没和实际余额核对：请用户报出这些账户现在的实际余额，按下文「余额核对」逐个核对。天数在 `ledger.toml` 的 `[ledger] reconcile_days` 里改，默认 35，0 为不提醒。
 
 ## 每次开始前
 
@@ -71,7 +72,7 @@ python3 scripts/ledger.py fmt --check    # 序时簿排版，不过就运行 led
 
 启用了提交前自动检查（`scripts/hooks/pre-commit`）的仓库，提交时会自动跑上面这些。改脚本要用的 pytest、ruff 用 `.venv/bin/python -m pip install -r requirements-dev.txt` 安装。
 
-然后 `git status` 过一遍变更清单再提交。提交信息首行写 `类型: 摘要`：类型保留英文，摘要用书面中文，首行不带括号、不超过 80 字。启用了 `scripts/hooks/commit-msg` 的仓库会强制检查，不合规提交不了。
+然后 `git status` 过一遍变更清单再提交。提交信息首行写 `类型: 摘要`：类型保留英文，摘要用书面中文，首行不带括号、不超过 80 字。启用了 `scripts/hooks/commit-msg` 的仓库会强制检查，不合规提交不了；推送后 CI 还会用 `ledger.py commit-msg --range` 把这次推上来的提交再查一遍。
 
 - 类型：`feat` 登记新账、补记、新开科目；`fix` 更正、作废、对账调整；`style` 只重排序时簿；`docs` 改规则或文档；`refactor` / `test` / `chore` 用于脚本与杂务。改了账本的提交只能用 `feat` / `fix` / `style`。
 - 改了账本的摘要以「登记」「补记」「更正」「作废」「对账」「重排」（科目表、建账用「新开」「新建」「初始化」）之一开头，依次写账本、日期、业务、金额、结算方式，并写明改到的每本账（称呼取 `ledger.toml` 的 title，「个人账本」写「个人账」）。
@@ -293,7 +294,7 @@ python3 scripts/bootstrap.py && git commit -q -m "chore: 同步上游脚本"
   - `naming`：对方与摘要的写法检查与 `rules` 对照表（规则在 `ledger.toml` 的 `[naming]`，没配就不查）。改写法规则只改 `[naming]`，文档不再抄表。
   - `entry`：分录文本的检查与预处理，不碰磁盘。
   - `journal`：序时簿分块、行号与分录编号。
-  - `store`：加锁、写盘、整本校验、失败还原。**所有改动序时簿的命令都必须经 `store.commit`**。
+  - `store`：加锁、写盘、整本校验、失败还原。**所有改动序时簿的命令都必须经 `store.commit`**（唯一例外是 `fmt`：它要做更严的前后余额比对，自己写盘，但同样要拿 `store.book_lock`）。
   - `add` / `edit` / `fmt`：入账、更正与作废、排版。
   - `books` / `query` / `reconcile` / `networth` / `display`：加载账本、查询、对账、合并资产、输出对齐。
   - `fxrate` / `quote`：现拉汇率和金银价、按代码取基金股票等各类价格。

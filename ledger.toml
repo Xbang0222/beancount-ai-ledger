@@ -7,6 +7,7 @@
 [ledger]
 timezone = "Asia/Shanghai"      # 记账时区：自动注入的 time、未来日期/时间校验都按它
 base_currency = "CNY"           # 本位币：networth 折算合计的目标币种
+# reconcile_days = 35           # 有余额的账户超过这么多天没用 balance 核对，doctor 就提醒（默认 35，0 为不提醒）
 
 [books.personal]
 title = "个人账本"
@@ -26,6 +27,15 @@ kind = "personal"
 # name = "personal 垫付 shop"
 # currency = "CNY"
 # accounts = { personal = "Assets:Receivable:Shop", shop = "Liabilities:OwnerLoan" }
+#
+# 店铺和别人合伙、按月分利润？配 [dividend]（ledger.py dividend YYYY-MM，写法见 docs/REFERENCE.md「利润分配」）：
+#
+# [dividend]
+# book = "shop"
+# partners = [
+#   { name = "我", payee = "股东", share = 0.6, owner = true },   # owner = true 标出你自己：networth 会把
+#   { name = "合伙人小王", share = 0.4 },                         # 其余各方还没分走的利润从净资产里扣掉
+# ]
 #
 # 只是想单独看某件事（一次旅行、装修、婚礼）花了多少钱？不用新建账本，打标签就行（CATEGORIES.md 4.5）。
 # ------------------------------------------------------------
