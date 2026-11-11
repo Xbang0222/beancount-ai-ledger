@@ -97,7 +97,6 @@ def build_parser():
     a.add_argument("book")
     a.add_argument("-f", "--file", metavar="PATH",
                    help="从 UTF-8 文本文件读取分录，不读 stdin（Windows PowerShell 管道会弄坏中文时用）")
-
     a.add_argument("--allow-duplicate", action="store_true",
                    help="账上已有内容相同的一笔时仍然入账（确实是两笔才用）")
 
@@ -266,6 +265,16 @@ def main(argv=None):
         return 2
 
 
+def _remind_hooks(rc):
+    """改完账顺带提醒：这台设备没启用提交检查的话，排版和提交信息不合规也能提交上去。"""
+    if rc == 0:
+        from .doctor import HOOKS_DIR, hooks_missing
+
+        if hooks_missing():
+            print(f"\n[WARN] 这台设备没有启用提交前自动检查，提交前先运行一次：git config core.hooksPath {HOOKS_DIR}")
+    return rc
+
+
 def _dispatch(args):
     if args.cmd == "doctor":
         from .doctor import cmd_doctor
@@ -304,15 +313,16 @@ def _dispatch(args):
     if args.cmd == "add":
         from .add import cmd_add
 
-        return cmd_add(args.book, path=args.file, allow_duplicate=args.allow_duplicate)
+        return _remind_hooks(cmd_add(args.book, path=args.file, allow_duplicate=args.allow_duplicate))
     if args.cmd in ("find", "void", "amend"):
         from . import edit
 
         if args.cmd == "find":
             return edit.cmd_find(args.book, args.keyword, args.month, args.n)
         if args.cmd == "void":
-            return edit.cmd_void(args.book, args.id)
-        return edit.cmd_amend(args.book, args.id, path=args.file, allow_duplicate=args.allow_duplicate)
+            return _remind_hooks(edit.cmd_void(args.book, args.id))
+        return _remind_hooks(
+            edit.cmd_amend(args.book, args.id, path=args.file, allow_duplicate=args.allow_duplicate))
     if args.cmd == "reconcile":
         from .reconcile import cmd_reconcile
 

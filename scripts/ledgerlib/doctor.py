@@ -178,17 +178,26 @@ def _template_only(r):
 HOOKS_DIR = "scripts/hooks"
 
 
+def hooks_missing():
+    """账套带了提交检查脚本、又是 Git 仓库，却没启用时返回 True。"""
+    if not os.path.isfile(os.path.join(config.ROOT, HOOKS_DIR, "pre-commit")):
+        return False
+    if not os.path.exists(os.path.join(config.ROOT, ".git")):
+        return False
+    _, path = _run(["git", "config", "--get", "core.hooksPath"])
+    # 相对路径按仓库根目录解析；写成绝对路径或 ./scripts/hooks 同样算启用
+    want = os.path.realpath(os.path.join(config.ROOT, HOOKS_DIR))
+    return not (path and os.path.realpath(os.path.join(config.ROOT, path)) == want)
+
+
 def _hooks(r):
     """仓库带了提交前检查脚本却没启用时提醒：不启用的话，校验全靠记得手动跑。"""
     if not os.path.isfile(os.path.join(config.ROOT, HOOKS_DIR, "pre-commit")):
         return
-    _, path = _run(["git", "config", "--get", "core.hooksPath"])
-    # 相对路径按仓库根目录解析；写成绝对路径或 ./scripts/hooks 同样算启用
-    want = os.path.realpath(os.path.join(config.ROOT, HOOKS_DIR))
-    if path and os.path.realpath(os.path.join(config.ROOT, path)) == want:
-        r.ok("提交前自动检查已启用（check + fmt --check，改脚本时加跑测试）")
-    else:
+    if hooks_missing():
         r.warn("提交前自动检查没有启用", f"运行 git config core.hooksPath {HOOKS_DIR} 启用提交前自动检查")
+    else:
+        r.ok("提交前自动检查已启用（check + fmt --check + 提交信息，改脚本时加跑测试）")
 
 
 def cmd_doctor():

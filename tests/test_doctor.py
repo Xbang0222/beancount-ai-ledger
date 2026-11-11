@@ -181,3 +181,32 @@ def test_模板仓库本身不提醒删除模板项目文件(ledger, capsys):
     _git(ledger, "remote", "add", "origin", "https://github.com/Xbang0222/beancount-ai-ledger.git")
     cli.main(["doctor"])
     assert "只属于公开模板项目的文件" not in capsys.readouterr().out
+
+
+ENTRY = '''2026-09-03 * "食堂" "餐饮-晚餐"
+  time: "18:30"
+  Expenses:Food:Dining  18.00 CNY
+  Assets:Alipay
+'''
+
+
+@needs_git
+@pytest.mark.parametrize("enabled", [False, True])
+def test_改账后提醒启用提交检查(ledger, capsys, enabled):
+    _git_init(ledger)
+    (ledger / "scripts" / "hooks").mkdir(parents=True)
+    (ledger / "scripts" / "hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
+    if enabled:
+        _git(ledger, "config", "core.hooksPath", "scripts/hooks")
+    entry = ledger / "entry.tmp"
+    entry.write_text(ENTRY, encoding="utf-8")
+    assert cli.main(["add", "personal", "--file", str(entry)]) == 0
+    assert ("git config core.hooksPath scripts/hooks" in capsys.readouterr().out) is not enabled
+
+
+def test_不是_Git_仓库或没带检查脚本时不提醒(ledger):
+    assert doctor.hooks_missing() is False
+    (ledger / "scripts" / "hooks").mkdir(parents=True)
+    (ledger / "scripts" / "hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
+    assert doctor.hooks_missing() is False
+
