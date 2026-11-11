@@ -154,13 +154,12 @@ def cmd_networth(overrides=None, today=None, offline=False):
     live = _Live(base, not offline)
     held = {cur for kind in rows.values() for _, _, cur, _ in kind}
     estimates = {}   # (book, acc) -> (代码, 数量 或 None, 失败原因)
-    for book, entries in books.items():
-        for _, acc, cur, _ in rows["Assets"]:
-            code = str(meta[book].get(acc, {}).get("estimate", "")).upper()
-            if code and cur == base and (book, acc) not in estimates:
-                qty, why = _estimate(entries, acc, code, base, live)
-                estimates[(book, acc)] = (code, qty, why)
-                held.add(code)
+    for book, acc, cur, _ in rows["Assets"]:   # 元数据按这一行自己所在的账本取：别的账本有同名科目不算
+        code = str(meta[book].get(acc, {}).get("estimate", "")).upper()
+        if code and cur == base and (book, acc) not in estimates:
+            qty, why = _estimate(books[book], acc, code, base, live)
+            estimates[(book, acc)] = (code, qty, why)
+            held.add(code)
     all_entries = [e for entries in books.values() for e in entries]
     rates = _rates(all_entries, base, held, live, overrides, cfg.fx_alias)
 

@@ -160,6 +160,24 @@ def test_按金额记的黄金按每笔当天金价估算克数和现值(ledger,
     assert "1 AU = 800 CNY" in out
 
 
+def test_别的账本同名科目标了estimate不影响本账本(ledger, capsys, monkeypatch):
+    # 个人账的 Assets:Gold 没标 estimate，商店账开了同名科目并标了、但没有余额：不该去拉金价
+    _append(_accounts(ledger), "2026-08-31 open Assets:Gold CNY\n")
+    _append(ledger / "shop" / "accounts.beancount", '2026-08-31 open Assets:Gold CNY\n  estimate: "AU"\n')
+    _append(_personal_journal(ledger), GOLD)
+    asked = []
+
+    def price(code, base, day=None):
+        asked.append(code)
+        raise quote.NoRate(code)
+
+    monkeypatch.setattr(quote, "price", price)
+    out = _run(capsys)
+    line = [x for x in out.splitlines() if "Assets:Gold" in x][0]
+    assert "1900.00 CNY" in line and "买入成本" not in line
+    assert "AU" not in asked
+
+
 def test_金价查不到时按成本列示并说明(ledger, capsys):
     _append(_accounts(ledger), '2026-08-31 open Assets:Gold CNY\n  estimate: "AU"\n')
     _append(_personal_journal(ledger), GOLD)
