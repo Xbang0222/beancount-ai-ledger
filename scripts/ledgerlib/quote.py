@@ -12,7 +12,7 @@ import re
 from datetime import date as _date
 from decimal import Decimal
 
-from . import fxrate
+from . import entry, fxrate
 from .fxrate import NoRate, RateError
 
 FUND_RE = re.compile(r"^F(\d{6})$")
@@ -26,7 +26,7 @@ STOCK_URL = "https://qt.gtimg.cn/q={code}"
 
 def _fund(code, day):
     """(单位净值, 净值日期)。day 为 None 取最新一期，否则取 day 当天或之前最近一期。"""
-    end = (day or _date.today()).isoformat()
+    end = (day or entry.now_local().date()).isoformat()
     start = "" if day is None else _date.fromordinal(day.toordinal() - 15).isoformat()
     try:
         data = json.loads(fxrate.http_get(FUND_URL.format(code=code, start=start, end=end), FUND_HEADERS))

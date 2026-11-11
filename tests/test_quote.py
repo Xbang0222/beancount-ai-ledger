@@ -40,6 +40,44 @@ def test_历史汇率按不补零的版本号取(web):
     assert "@2026.2.1/v1/currencies/usd.min.json" in asked[0]
 
 
+def test_CDN明确404就是没有_不再下整包(web, monkeypatch):
+    import urllib.error
+
+    _, asked = web
+
+    def gone(url, headers=None):
+        asked.append(url)
+        raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
+
+    monkeypatch.setattr(fxrate, "http_get", gone)
+    for _ in range(2):   # 第二次直接用记住的结果，不再请求
+        with pytest.raises(quote.NoRate, match="数据集里没有 XYZ"):
+            quote.price("XYZ", "CNY")
+    assert len(asked) == 1 and "registry.npmjs.org" not in asked[0]
+
+
+def test_CDN访问不了时改下整包_包里没有才算没有(web, monkeypatch):
+    import io
+    import tarfile
+
+    pages, asked = web
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        body = json.dumps({"date": "2026-10-25", "usd": {"cny": 7.0}}).encode()
+        info = tarfile.TarInfo("package/v1/currencies/usd.min.json")
+        info.size = len(body)
+        tar.addfile(info, io.BytesIO(body))
+    pages["registry.npmjs.org"] = {"dist": {"tarball": "https://example.invalid/pkg.tgz"}}
+    pages["pkg.tgz"] = buf.getvalue()
+    assert quote.price("USD", "CNY")[0] == Decimal("7.0")
+    with pytest.raises(quote.NoRate):
+        quote.price("XYZ", "CNY")
+    n = len(asked)
+    with pytest.raises(quote.NoRate):
+        quote.price("XYZ", "CNY")
+    assert len(asked) == n
+
+
 def test_同一币种同一天只请求一次(web):
     pages, asked = web
     pages["usd.min.json"] = {"date": "2026-10-25", "usd": {"cny": 7.0}}

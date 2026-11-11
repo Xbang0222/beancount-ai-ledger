@@ -7,6 +7,7 @@
 import io
 import json
 import tarfile
+import urllib.error
 import urllib.request
 
 REGISTRY = "https://registry.npmjs.org/@fawazahmed0/currency-api"
@@ -42,18 +43,27 @@ def _table(code, day):
     """{目标币种: 汇率} 与数据日期。先取单个文件，取不到再下整包（npm 源云端也能访问）。"""
     key = (code, day)
     if key in _cache:
-        return _cache[key]
+        hit = _cache[key]
+        if isinstance(hit, NoRate):
+            raise hit
+        return hit
     ver = _version(day)
+    missing = NoRate(f"数据集里没有 {code.upper()}" + (f"在 {day} 的数据" if day else ""))
     try:
         data = json.loads(http_get(CDN.format(ver=ver, code=code)))
-    except Exception:
-        meta = json.loads(http_get(f"{REGISTRY}/{ver}"))
-        with tarfile.open(fileobj=io.BytesIO(http_get(meta["dist"]["tarball"])), mode="r:gz") as tar:
-            try:
-                f = tar.extractfile(f"package/v1/currencies/{code}.min.json")
-            except KeyError:
-                raise NoRate(f"数据集里没有 {code.upper()}") from None
-            data = json.load(f)
+    except Exception as ex:
+        # CDN 明确回 404：这个代码（或那天的版本）不存在，不必再下整包确认；其余情况才当作 CDN 访问不了
+        gone = isinstance(ex, urllib.error.HTTPError) and ex.code == 404
+        if not gone:
+            meta = json.loads(http_get(f"{REGISTRY}/{ver}"))
+            with tarfile.open(fileobj=io.BytesIO(http_get(meta["dist"]["tarball"])), mode="r:gz") as tar:
+                try:
+                    data = json.load(tar.extractfile(f"package/v1/currencies/{code}.min.json"))
+                except KeyError:
+                    gone = True
+        if gone:
+            _cache[key] = missing   # 查不到也记住：同一次运行里不重复请求
+            raise missing from None
     _cache[key] = data[code], data["date"]
     return _cache[key]
 
