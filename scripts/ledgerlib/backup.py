@@ -11,11 +11,9 @@
 """
 import glob
 import os
-import shutil
-import subprocess
 import zipfile
 
-from . import config
+from . import config, env
 from .books import load_book, print_errors
 from .query import last_summary
 
@@ -55,14 +53,7 @@ def _files(root, out_dir):
 
 def _git(root, *args):
     """在账套目录跑 git，返回 (退出码, 标准输出)；没装 git 返回 (None, "")。"""
-    if not shutil.which("git"):
-        return None, ""
-    try:
-        p = subprocess.run(["git", *args], cwd=root, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=60)
-    except (OSError, subprocess.TimeoutExpired):
-        return None, ""
-    return p.returncode, p.stdout.strip()
+    return env.run_command(["git", *args], root, timeout=60)
 
 
 def _history(root):

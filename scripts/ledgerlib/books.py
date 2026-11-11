@@ -18,10 +18,10 @@ def load_book(book):
 
 def print_errors(book, errors):
     print(f"[FAIL] {book}: {len(errors)} 个错误")
-    _print_error_lines(errors)
+    print_error_lines(errors)
 
 
-def _print_error_lines(errors):
+def print_error_lines(errors):
     for e in errors[:MAX_SHOWN_ERRORS]:
         print("   -", _describe(e))
     if len(errors) > MAX_SHOWN_ERRORS:
@@ -47,7 +47,7 @@ def load_entries(book):
     entries, errors, _ = load_book(book)
     if errors:
         print(f"[FAIL] {book} 账本存在 {len(errors)} 个错误，请先运行 check 修复后再查询：")
-        _print_error_lines(errors)
+        print_error_lines(errors)
         return None
     return entries
 

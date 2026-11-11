@@ -29,7 +29,7 @@ def _fund(code, day):
     end = (day or _date.today()).isoformat()
     start = "" if day is None else _date.fromordinal(day.toordinal() - 15).isoformat()
     try:
-        data = json.loads(fxrate._get(FUND_URL.format(code=code, start=start, end=end), FUND_HEADERS))
+        data = json.loads(fxrate.http_get(FUND_URL.format(code=code, start=start, end=end), FUND_HEADERS))
         rows = (data.get("Data") or {}).get("LSJZList") or []
     except Exception as ex:
         raise RateError(f"拉取基金 {code} 净值失败：{ex}") from None
@@ -42,7 +42,7 @@ def _stock(market, code):
     """(最新价, 行情时间)，价格币种见 STOCK_CURRENCY。"""
     sym = market.lower() + code
     try:
-        text = fxrate._get(STOCK_URL.format(code=sym)).decode("gbk", "replace")
+        text = fxrate.http_get(STOCK_URL.format(code=sym)).decode("gbk", "replace")
     except Exception as ex:
         raise RateError(f"拉取股票 {market}{code} 行情失败：{ex}") from None
     fields = text.split('"', 2)[1].split("~") if '"' in text else []

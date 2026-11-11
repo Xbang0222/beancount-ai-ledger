@@ -93,6 +93,7 @@ def with_time_line(block, line):
     if TIME_RE.search(block):
         return block
     lines = block.split("\n")
+    # 定位交易首行（而非固定第 2 行）：块首可能有注释行，插错位置会导致语法错误
     for i, text in enumerate(lines):
         if TXN_RE.match(text):
             lines.insert(i + 1, line)
@@ -119,20 +120,10 @@ def inject_time(block, now=None):
     无论交易日期是否为今天都注入：补记历史账同样带 time（即录入时刻），口径见 CATEGORIES.md 第 7 节。
     用户已手写 time 的不覆盖；余额断言、价格等非交易指令不注入（balance 断言的是当天开始时，time 无意义）。
     """
-    if TIME_RE.search(block):
-        return block
-    lines = block.split("\n")
-    # 定位交易首行（而非固定第 2 行）：块首可能有注释行，插错位置会导致语法错误
-    header = None
-    for i, line in enumerate(lines):
-        if TXN_RE.match(line):
-            header = i
-            break
-    if header is None:
+    if TIME_RE.search(block) or not TXN_RE.search(block):
         return block
     now = now or now_local()
-    lines.insert(header + 1, f'  time: "{now.strftime("%H:%M")}"')
-    return "\n".join(lines)
+    return with_time_line(block, f'  time: "{now.strftime("%H:%M")}"')
 
 
 def has_active_include(main_text, rel):

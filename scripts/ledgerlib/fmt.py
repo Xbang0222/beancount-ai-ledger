@@ -14,17 +14,11 @@ from .books import balances, load_book, print_errors, transactions
 from .journal import journal_files
 
 
-def _rstrip_blank(block):
-    while block and not block[-1].strip():
-        block.pop()
-    return block
-
-
 def format_text(text):
     header, blocks = journal.split(text)
     # sorted 是稳定排序：同日同时间的分录保持原有先后
     ordered = [b.lines for b in sorted(blocks, key=lambda b: b.sort_key)]
-    head = "\n".join(_rstrip_blank(list(header)))
+    head = "\n".join(journal.rstrip_blank(list(header)))
     body = "\n\n".join("\n".join(b) for b in ordered)
     if not body:
         return head + "\n" if head else ""

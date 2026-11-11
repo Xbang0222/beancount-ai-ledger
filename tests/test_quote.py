@@ -21,7 +21,7 @@ def web(monkeypatch):
                 return body if isinstance(body, bytes) else json.dumps(body).encode()
         raise OSError("not found")
 
-    monkeypatch.setattr(fxrate, "_get", get)
+    monkeypatch.setattr(fxrate, "http_get", get)
     yield pages, asked
     fxrate._cache.clear()
 

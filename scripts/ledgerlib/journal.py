@@ -59,7 +59,8 @@ class Block:
         return (self.date, "")
 
 
-def _rstrip_blank(lines):
+def rstrip_blank(lines):
+    """就地去掉末尾的空行。"""
     while lines and not lines[-1].strip():
         lines.pop()
     return lines
@@ -101,7 +102,7 @@ def split(text, path=""):
     if cur is not None:
         blocks.append(cur)
     for b in blocks:
-        _rstrip_blank(b.lines)
+        rstrip_blank(b.lines)
     return header, blocks
 
 

@@ -6,8 +6,6 @@
 import json
 import os
 import re
-import shutil
-import subprocess
 import sys
 
 from . import __version__, config, env
@@ -56,15 +54,8 @@ class _Report:
 
 
 def _run(cmd, timeout=20):
-    """跑外部命令，返回 (退出码, 标准输出)；命令不存在或超时返回 (None, "")。"""
-    if not shutil.which(cmd[0]):
-        return None, ""
-    try:
-        p = subprocess.run(cmd, cwd=config.ROOT, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=timeout)
-    except (OSError, subprocess.TimeoutExpired):
-        return None, ""
-    return p.returncode, p.stdout.strip()
+    """在账套目录跑外部命令，返回 (退出码, 标准输出)；命令不存在或超时返回 (None, "")。"""
+    return env.run_command(cmd, config.ROOT, timeout)
 
 
 def github_repo(url):

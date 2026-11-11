@@ -27,7 +27,7 @@ class NoRate(RateError):
     """数据集里没有这个代码（基金、股票等），不是网络问题。"""
 
 
-def _get(url, headers=None):
+def http_get(url, headers=None):
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})})
     with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
         return r.read()
@@ -45,10 +45,10 @@ def _table(code, day):
         return _cache[key]
     ver = _version(day)
     try:
-        data = json.loads(_get(CDN.format(ver=ver, code=code)))
+        data = json.loads(http_get(CDN.format(ver=ver, code=code)))
     except Exception:
-        meta = json.loads(_get(f"{REGISTRY}/{ver}"))
-        with tarfile.open(fileobj=io.BytesIO(_get(meta["dist"]["tarball"])), mode="r:gz") as tar:
+        meta = json.loads(http_get(f"{REGISTRY}/{ver}"))
+        with tarfile.open(fileobj=io.BytesIO(http_get(meta["dist"]["tarball"])), mode="r:gz") as tar:
             try:
                 f = tar.extractfile(f"package/v1/currencies/{code}.min.json")
             except KeyError:

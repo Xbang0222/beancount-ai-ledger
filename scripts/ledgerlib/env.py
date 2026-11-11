@@ -4,6 +4,7 @@
 """
 import os
 import re
+import shutil
 import subprocess
 import sys
 from importlib.util import find_spec
@@ -14,6 +15,18 @@ VENV_DIR = os.path.join(REPO_ROOT, ".venv")
 REQUIREMENTS = os.path.join(REPO_ROOT, "requirements.txt")
 # 已经切换过一次解释器的标记，防止 .venv 损坏时来回重启
 REEXEC_FLAG = "LEDGER_VENV_REEXEC"
+
+
+def run_command(cmd, cwd=None, timeout=20):
+    """跑外部命令（git、gh），返回 (退出码, 标准输出)；命令不存在或超时返回 (None, "")。"""
+    if not shutil.which(cmd[0]):
+        return None, ""
+    try:
+        p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired):
+        return None, ""
+    return p.returncode, p.stdout.strip()
 
 
 def utf8_output():

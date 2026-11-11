@@ -7,7 +7,7 @@ import contextlib
 import os
 
 from . import config
-from .books import _print_error_lines, load_book
+from .books import load_book, print_error_lines
 
 try:
     import fcntl
@@ -94,6 +94,6 @@ def commit(book, changes):
     if errors:
         rollback()
         print("[FAIL] 未通过校验，已回滚，账本未被改动：")
-        _print_error_lines(errors)
+        print_error_lines(errors)
         return None, rollback
     return entries, rollback
