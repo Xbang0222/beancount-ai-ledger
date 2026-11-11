@@ -4,7 +4,11 @@
 分红分录用 `period: "YYYY-MM"` 元数据标明属于哪个月的利润，按对方名称（payee）归到各方，
 算出「应得 − 已分配 = 还差多少」：发完分红后又补记了当月收支，差额会自动显出来。
 配了 offset 的一方，再把该科目当前余额（对方欠账本的钱，如多发的分红）从差额里扣掉，得出本次实付。
-往月一旦发过分红就算结清：只列实发金额，不再拉汇率重算应得与差额（汇率变动、补记更正都不补差）；--recalc 照常重算。
+一个月过完之后发过这个月的分红就算结清：只列实发金额，不再拉汇率重算应得与差额（汇率变动、补记更正都不补差）；
+--recalc 照常重算。月内预发的不算结清——那时利润还没定，月初仍要按全月利润多退少补。
+
+账本所有者那一方标了 owner = true 时，其余各方在未结清月份里「应得 − 已分配」的利润还留在账本里、
+却不是所有者的钱：outstanding() 算出这个数，networth 据此给出扣后的净资产。
 """
 from collections import defaultdict
 from decimal import ROUND_HALF_UP, Decimal
@@ -46,6 +50,60 @@ def distributed(entries, account, ym):
     return dict(paid)
 
 
+def settled(entries, account, ym):
+    """ym 月的分红结清了没有：这个月过完之后，account 上记过 period 为 ym 的分录才算。
+
+    月内预发的不算：那时全月利润还没定，下月初要按实际利润多退少补，补发（或把多发的转成欠款）
+    那一笔记在月后，记了才结清。
+    """
+    for txn in transactions(entries):
+        if str((txn.meta or {}).get("period", "")) == ym and entry_ym(txn.date) > ym:
+            if any(p.account == account for p in txn.postings):
+                return True
+    return False
+
+
+def unsettled_months(entries, account):
+    """还没结清的月份及其 (净利润, 已分配)：有收支，且分红还没结清。"""
+    months = sorted({entry_ym(t.date) for t in transactions(entries)
+                     if any(p.account.startswith(("Income:", "Expenses:")) for p in t.postings)})
+    return [(ym, month_profit(entries, ym), distributed(entries, account, ym))
+            for ym in months if not settled(entries, account, ym)]
+
+
+def outstanding(entries, cfg, rate_of):
+    """所有者以外各方还没分走的利润（本位币）：[(Partner, 金额, [(月份, 净利润, 应得, 已分配)])]。
+
+    没有哪一方标 owner = true 时返回空列表（分不清谁是所有者，不扣）。rate_of(币种) 给出折本位币的
+    汇率，给不出时返回 None；有币种缺汇率则整体算不了，返回 (None, 缺汇率的币种)。
+    金额为负表示已发的分红超过了目前应得（预支），欠款抵扣科目 offset 不在这里算——它已经列在资产里。
+    """
+    div = cfg.dividend
+    others = [p for p in div.partners if not p.owner] if div else []
+    if not others or len(others) == len(div.partners):
+        return [], set()
+    months, missing = [], set()
+    for ym, profit, paid in unsettled_months(entries, div.account):
+        total = Decimal(0)
+        for cur, v in profit.items():
+            rate = Decimal(1) if cur == cfg.base_currency else rate_of(cur)
+            if rate is None:
+                missing.add(cur)
+            else:
+                total += v * rate.quantize(RATE_PLACES, rounding=ROUND_HALF_UP)
+        months.append((ym, _money(total), paid))
+    if missing:
+        return None, missing
+    out = []
+    for p in others:
+        rows = [(ym, total, _money(total * p.share), paid.get(p.payee, Decimal(0)))
+                for ym, total, paid in months]
+        rows = [r for r in rows if r[2] != r[3]]
+        if rows:
+            out.append((p, sum(due - done for _, _, due, done in rows), rows))
+    return out, set()
+
+
 def _resolve_rates(currencies, cfg, overrides):
     """{币种: (汇率, 说明)}；拉不到时抛 fxrate.RateError。"""
     rates = {}
@@ -64,7 +122,7 @@ def _resolve_rates(currencies, cfg, overrides):
 
 
 def _print_settled(book, ym, base, cfg, paid):
-    """往月已发分红：只列实发金额，不重算。"""
+    """月后已发分红：只列实发金额，不重算。"""
     print(f"\n===== {book} · {ym} · 利润分配（已结清） =====")
     print("  本月分红已发放，按「分红发完即结账」结清：只列实发金额，")
     print("  汇率变动、补记更正产生的差额不再补差，合伙人欠款留到下次未结月份扣；")
@@ -90,7 +148,7 @@ def cmd_dividend(ym, overrides=None, recalc=False):
         return 1
 
     paid = distributed(entries, cfg.dividend.account, ym)
-    if paid and not recalc and ym < entry_ym(now_local().date()):
+    if not recalc and settled(entries, cfg.dividend.account, ym):
         return _print_settled(book, ym, base, cfg, paid)
 
     profit = month_profit(entries, ym)

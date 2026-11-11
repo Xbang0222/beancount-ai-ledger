@@ -138,6 +138,7 @@ BOOKS = {"books": {"shop": {}}}
     ({"book": "shop", "partners": [{"name": "a", "share": "x"}]}, "share"),
     ({"book": "shop", "partners": [{"name": "a", "share": 1, "offset": "bad"}]}, "offset"),
     ({"book": "shop", "partners": [{"name": "a", "share": 1, "pct": 1}]}, "不认识"),
+    ({"book": "shop", "partners": [{"name": "a", "share": 1, "owner": "yes"}]}, "owner"),
 ])
 def test_dividend配置写错要报错(raw, hint):
     with pytest.raises(ConfigError, match=hint):
@@ -153,6 +154,13 @@ def test_dividend配置解析(monkeypatch):
     me, other = cfg.dividend.partners
     assert (me.payee, me.share, other.payee, other.share) == ("股东", Decimal("0.75"), "合伙人", Decimal("0.25"))
     assert cfg.dividend.account == "Equity:Distributions"
+    assert (me.owner, other.owner) == (False, False)   # 没标 owner 时谁也不算所有者
+
+
+def test_owner标出账本所有者():
+    cfg = parse({**BOOKS, "dividend": {"book": "shop", "partners": [
+        {"name": "本人", "share": 0.75, "owner": True}, {"name": "合伙人", "share": 0.25}]}})
+    assert [p.owner for p in cfg.dividend.partners] == [True, False]
 
 
 def test_fx_alias写错要报错():
@@ -164,8 +172,12 @@ def test_config_load读到真实结构(shop):
     assert config.load().dividend.book == "shop"
 
 
-def test_往月发过分红即结清_不拉汇率不算差额(shop, capsys, monkeypatch):
-    _append(shop / "shop" / "journal" / "2026-09.beancount", PAID)
+# 月份过完之后才发的分红（9 月的分红 10 月发）
+PAID_AFTER = PAID.replace("2026-09-21", "2026-10-05")
+
+
+def test_月后发过分红即结清_不拉汇率不算差额(shop, capsys, monkeypatch):
+    _append(shop / "shop" / "journal" / "2026-09.beancount", PAID_AFTER)
     monkeypatch.setattr(fxrate, "fetch", lambda cur, base: pytest.fail("已结清月份不该拉汇率"))
     out = _run(capsys)
     assert "已结清" in out and "差额" not in out.replace("产生的差额", "")
@@ -179,8 +191,14 @@ def test_当月发过分红也照常计算(shop, capsys, in_september):
     assert "已结清" not in out and "差额      32.50" in out.split("合伙人", 1)[1]
 
 
+def test_月内预发的不算结清_过了月仍按全月利润重算(shop, capsys):
+    _append(shop / "shop" / "journal" / "2026-09.beancount", PAID)   # 9 月 21 日预发，此刻早已过了 9 月
+    out = _run(capsys, rates={"USDT": Decimal("7")})
+    assert "已结清" not in out and "差额      32.50" in out.split("合伙人", 1)[1]
+
+
 def test_recalc时往月照常重算(shop, capsys):
-    _append(shop / "shop" / "journal" / "2026-09.beancount", PAID)
+    _append(shop / "shop" / "journal" / "2026-09.beancount", PAID_AFTER)
     assert dividend.cmd_dividend("2026-09", {"USDT": Decimal("7")}, recalc=True) == 0
     out = capsys.readouterr().out
     assert "已结清" not in out and "差额      32.50" in out.split("合伙人", 1)[1]

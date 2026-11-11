@@ -8,6 +8,9 @@
 外币、加密币、金银、基金、股票默认现拉当天价格折算（见 quote）；--rate 币种=汇率 临时覆盖，
 --offline 或拉不到时改用账内最新一条 `price <代码> ... <本位币>`。
 
+配了 [dividend] 且所有者那一方标了 owner = true 时，其余各方在未结清月份里还没分走的利润
+（见 dividend.outstanding）不是所有者的钱：折合净资产之后单列一行，再给出扣后的净资产。
+
 两种账户元数据（写在 open 指令下面）：
 - `networth: FALSE`：退休前取不出来的钱（养老保险、医保个人账户），单独列示，不计入净资产。
 - `estimate: "AU"`：按人民币金额记、没记克数的黄金（积存金等），按每笔发生当天的价格折成克数，
@@ -16,7 +19,7 @@
 from collections import defaultdict
 from decimal import Decimal
 
-from . import config, quote
+from . import config, dividend, quote
 from .books import balances, load_entries
 from .config import EPSILON
 from .display import pad
@@ -160,6 +163,13 @@ def cmd_networth(overrides=None, today=None, offline=False):
             qty, why = _estimate(books[book], acc, code, base, live)
             estimates[(book, acc)] = (code, qty, why)
             held.add(code)
+    # 未结清月份的利润币种也要折算：算其余各方还没分走的利润用
+    div_entries = books.get(cfg.dividend.book) if cfg.dividend else None
+    if div_entries is not None and any(p.owner for p in cfg.dividend.partners):
+        for _, profit, _ in dividend.unsettled_months(div_entries, cfg.dividend.account):
+            held |= set(profit)
+    else:
+        div_entries = None
     all_entries = [e for entries in books.values() for e in entries]
     rates = _rates(all_entries, base, held, live, overrides, cfg.fx_alias)
 
@@ -210,7 +220,11 @@ def cmd_networth(overrides=None, today=None, offline=False):
         print(f"  {pad('净资产', 20)}{v:>12.2f} {cur}")
 
     print(f"\n【折合 {base}{'，按现价' if estimates else ''}】")
-    used = set(net) | {e[0] for e in estimates.values()}
+    claims, no_rate = [], set()
+    if div_entries is not None:
+        claims, no_rate = dividend.outstanding(
+            div_entries, cfg, lambda cur: rates[cur][0] if cur in rates else None)
+    used = set(net) | {e[0] for e in estimates.values()} | (held if div_entries is not None else set())
     for cur, (r, d, src) in sorted(rates.items()):
         if cur == base or cur not in used:
             continue
@@ -223,7 +237,18 @@ def cmd_networth(overrides=None, today=None, offline=False):
         print(f"  1 {cur} = {_fmt_rate(r)} {base}（{note}）")
     print(f"  {pad('总资产', 20)}{in_base['Assets']:>12.2f} {base}")
     print(f"  {pad('总负债', 20)}{in_base['Liabilities']:>12.2f} {base}")
-    print(f"  {pad('净资产', 20)}{in_base['Assets'] - in_base['Liabilities']:>12.2f} {base}")
+    net_base = in_base["Assets"] - in_base["Liabilities"]
+    print(f"  {pad('净资产', 20)}{net_base:>12.2f} {base}")
+    if claims:
+        for p, amount, months in claims:
+            detail = "；".join(f"{ym} 净利润 {total:.2f} × {p.share * 100:.0f}% − 已分配 {done:.2f}"
+                              for ym, total, _, done in months)
+            title = f"应付{p.name}未分利润" if amount >= 0 else f"{p.name}预支分红超出应得"
+            print(f"  {pad(title, 20)}{-amount:>12.2f} {base}（{detail}）")
+            net_base -= amount
+        print(f"  {pad('扣后净资产', 20)}{net_base:>12.2f} {base}")
+    elif claims is None:
+        print(f"  [!] 缺少 {', '.join(sorted(no_rate))} 的价格，算不出合伙人未分利润，上面的净资产没有计入这一项")
     if live.failed:
         print(f"  [!] 联网取价失败（{live.failed}），已改用账内价格")
     if missing:

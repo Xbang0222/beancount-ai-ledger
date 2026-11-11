@@ -38,7 +38,7 @@ CURRENCY_RE = re.compile(r"^[A-Z][A-Z0-9'._-]{0,22}[A-Z0-9]$")
 _TOP_KEYS = {"ledger", "books", "mirrors", "dividend", "naming"}
 _LEDGER_KEYS = {"timezone", "base_currency", "fx_alias", "reconcile_days"}
 _DIVIDEND_KEYS = {"book", "account", "partners"}
-_PARTNER_KEYS = {"name", "payee", "share", "offset"}
+_PARTNER_KEYS = {"name", "payee", "share", "offset", "owner"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
 _MIRROR_KEYS = {"name", "currency", "accounts"}
 _NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "note_required", "fallback",
@@ -81,6 +81,7 @@ class Partner:
     share: Decimal
     offset: str = ""
     payee: str = ""    # 分红分录的对方名称，默认同 name
+    owner: bool = False   # 账本所有者自己：标了之后，networth 把其余各方还没分走的利润从净资产里扣掉
 
 
 @dataclass(frozen=True)
@@ -334,7 +335,10 @@ def _parse_dividend(raw, books):
         payee = p.get("payee", name)
         if not isinstance(payee, str) or not payee.strip():
             raise ConfigError(f"{pw}（{name}）payee 应为分红分录的对方名称")
-        partners.append(Partner(name, share, offset, payee))
+        owner = p.get("owner", False)
+        if not isinstance(owner, bool):
+            raise ConfigError(f"{pw}（{name}）owner 只能是 true 或 false")
+        partners.append(Partner(name, share, offset, payee, owner))
     total = sum(p.share for p in partners)
     if total != 1:
         raise ConfigError(f"{where} 各方 share 合计应为 1，现在是 {total}")
