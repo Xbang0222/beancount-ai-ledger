@@ -1,14 +1,16 @@
-"""提交信息检查（commit-msg 钩子调用）：首行 `type: 摘要`，不带括号，改了账本要在摘要里写明是哪本。
+"""提交信息检查：首行 `type: 摘要`，不带括号，改了账本要在摘要里写明是哪本。
+
+提交时由 commit-msg 钩子逐条把关；推送后 CI 再用 --range 把这次推上来的提交查一遍，
+没启用钩子的设备推上来的不合规提交也能被发现。
 
 改到哪本账按暂存的文件自动判断（`<账本>.beancount` 与账本目录），不靠记；
 摘要里要出现的账本称呼取 ledger.toml 的 title（「个人账本」去掉末尾的「本」即「个人账」），不写死。
 """
 import os
 import re
-import subprocess
 import sys
 
-from . import config
+from . import config, env
 
 TYPES = {
     "feat": "登记新业务、补记，脚本新功能",
@@ -77,10 +79,21 @@ def problems(message, files, books):
     return out
 
 
+def _git(*args):
+    """跑 git，返回标准输出；失败返回 None。"""
+    rc, out = env.run_command(["git", *args], config.ROOT, timeout=60)
+    return out if rc == 0 else None
+
+
 def _staged_files():
-    r = subprocess.run(["git", "diff", "--cached", "--name-only"], cwd=config.ROOT,
-                       capture_output=True, text=True, encoding="utf-8")
-    return [f for f in r.stdout.splitlines() if f] if r.returncode == 0 else []
+    out = _git("diff", "--cached", "--name-only")
+    return [f for f in (out or "").splitlines() if f]
+
+
+def _report(msgs, title):
+    print(title, file=sys.stderr)
+    for m in msgs:
+        print(f"   - {m}", file=sys.stderr)
 
 
 def cmd_commit_msg(path):
@@ -90,8 +103,38 @@ def cmd_commit_msg(path):
     msgs = problems(message, _staged_files(), books)
     if not msgs:
         return 0
-    print("[commit-msg] 提交信息不合规，已拒绝提交：", file=sys.stderr)
-    for m in msgs:
-        print(f"   - {m}", file=sys.stderr)
-    print(f"   规范见 README.md「提交信息规范」，如 feat: {EXAMPLE}", file=sys.stderr)
+    _report(msgs, "[commit-msg] 提交信息不合规，已拒绝提交：")
+    print(f"   规范见 AGENTS.md「每次改动后」，如 feat: {EXAMPLE}", file=sys.stderr)
     return 1
+
+
+def cmd_commit_range(rev_range):
+    """逐条检查 rev_range（如 A..B）里的提交，各自按它改到的文件核对账本。
+
+    范围取不出来（首次推送、强推后旧提交已不在）时只查最新一条，不让 CI 因此失败。
+    """
+    out = _git("rev-list", "--reverse", "--no-merges", rev_range)
+    if out is None:
+        print(f"[commit-msg] 取不到提交范围 {rev_range}，只检查最新一条提交。")
+        out = _git("rev-list", "--no-merges", "-1", "HEAD")
+    if out is None:
+        print("[FAIL] 当前目录不是 Git 仓库，没法检查提交信息。")
+        return 1
+    shas = out.split()
+    books = list(config.load().books.values())
+    bad = 0
+    for sha in shas:
+        message = _git("log", "-1", "--format=%B", sha) or ""
+        files = (_git("diff-tree", "--no-commit-id", "--name-only", "-r", "--root", sha) or "").splitlines()
+        msgs = problems(message, [f for f in files if f], books)
+        if msgs:
+            bad += 1
+            head = next((ln.strip() for ln in message.splitlines() if ln.strip()), "")
+            _report(msgs, f"[FAIL] {sha[:7]} {head}")
+    if bad:
+        print(f"共 {bad} 条提交信息不合规（规范见 AGENTS.md「每次改动后」）。已经推送的不要改写历史，"
+              "在推送它的那台设备上运行 git config core.hooksPath scripts/hooks 启用提交检查，以后就不会再漏。",
+              file=sys.stderr)
+        return 1
+    print(f"[OK] {len(shas)} 条提交信息合规")
+    return 0

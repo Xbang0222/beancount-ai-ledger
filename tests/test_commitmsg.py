@@ -1,4 +1,7 @@
 """提交信息检查：首行 `type: 摘要`，不带括号；改了账本要用对类型、动词开头、写明账本。"""
+import shutil
+import subprocess
+
 import pytest
 
 from ledgerlib import cli, commitmsg
@@ -72,3 +75,44 @@ def test_钩子命令读文件并按暂存区判断(ledger, tmp_path, monkeypatc
     assert cli.main(["commit-msg", str(good)]) == 0
     assert cli.main(["commit-msg", str(bad)]) == 1
     assert "测试商店账" in capsys.readouterr().err
+
+
+def _git(root, *args):
+    subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                   check=True, capture_output=True)
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="需要 git")
+def test_按范围逐条检查已有提交(ledger, monkeypatch, capsys):
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(ledger.parent))
+    _git(ledger, "init", "-q")
+    _git(ledger, "add", "-A")
+    _git(ledger, "commit", "-q", "-m", "feat: 初始化测试个人账与测试商店账")
+    journal = ledger / "shop" / "journal" / "2026-09.beancount"
+    journal.write_text(journal.read_text(encoding="utf-8") + "\n; 备注\n", encoding="utf-8")
+    _git(ledger, "commit", "-qam", "fix: 更正测试商店账9月采购备注")
+    assert cli.main(["commit-msg", "--range", "HEAD~1..HEAD"]) == 0
+    assert "1 条提交信息合规" in capsys.readouterr().out
+
+    journal.write_text(journal.read_text(encoding="utf-8") + "; 再备注\n", encoding="utf-8")
+    _git(ledger, "commit", "-qam", "fix: 营业收入改为零点口径(time 00:00)")
+    assert cli.main(["commit-msg", "--range", "HEAD~2..HEAD"]) == 1
+    err = capsys.readouterr().err
+    assert "零点口径" in err and "括号" in err and "测试商店账" in err
+    assert "更正测试商店账9月采购备注" not in err   # 合规的那条不报
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="需要 git")
+def test_范围取不到时只查最新一条(ledger, monkeypatch, capsys):
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(ledger.parent))
+    _git(ledger, "init", "-q")
+    _git(ledger, "add", "-A")
+    _git(ledger, "commit", "-q", "-m", "feat: 初始化测试个人账与测试商店账")
+    zeros = "0" * 40
+    assert cli.main(["commit-msg", "--range", f"{zeros}..HEAD"]) == 0
+    assert "只检查最新一条" in capsys.readouterr().out
+
+
+def test_既没给文件也没给范围时报错(ledger, capsys):
+    assert cli.main(["commit-msg"]) == 1
+    assert "--range" in capsys.readouterr().out
