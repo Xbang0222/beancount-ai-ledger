@@ -7,9 +7,10 @@ import json
 import os
 import re
 import sys
+from decimal import Decimal
 
-from . import __version__, config, env
-from .books import load_book
+from . import __version__, config, entry, env
+from .books import balances, load_book, transactions
 from .query import last_summary
 
 # 公开的模板仓库。用户的真实账目只能放在自己的私有仓库，不能推到这里。
@@ -75,6 +76,36 @@ def github_visibility(repo):
         return None
 
 
+def stale_accounts(book, entries, cfg, today):
+    """有余额、却超过 cfg.reconcile_days 天没用 balance 断言核对过的资产负债科目：[(科目, 天数)]，最久的在前。
+
+    记账只保证借贷平衡，记漏、记错账户要靠和真实余额对一次才发现得了。从没核对过的科目
+    从第一笔发生额算起；账本间往来镜像由 reconcile 把关，不算在内。
+    """
+    from beancount.core import data
+
+    if not cfg.reconcile_days:
+        return []
+    eps = Decimal(config.EPSILON)
+    mirrored = {acc for m in cfg.mirrors for b, acc in m.sides() if b == book}
+    checked = {}
+    for e in entries:
+        if isinstance(e, data.Balance):
+            checked[e.account] = max(checked.get(e.account, e.date), e.date)
+    first = {}
+    for t in transactions(entries):
+        for p in t.postings:
+            first.setdefault(p.account, t.date)
+    out = []
+    for acc, curs in balances(entries, ("Assets:", "Liabilities:")).items():
+        if acc in mirrored or all(abs(v) < eps for v in curs.values()):
+            continue
+        days = (today - checked.get(acc, first[acc])).days
+        if days > cfg.reconcile_days:
+            out.append((acc, days))
+    return sorted(out, key=lambda it: (-it[1], it[0]))
+
+
 def _environment(r):
     print("===== 运行环境 =====")
     r.ok(f"Python {sys.version.split()[0]}（{sys.executable}）")
@@ -108,6 +139,12 @@ def _books(r):
         checks = sum(isinstance(e, data.Balance) for e in entries)
         pads = sum(isinstance(e, data.Pad) for e in entries)
         r.ok(f"{name}（{book.title}）：校验通过，{last_summary(entries)}，余额断言 {checks} 条")
+        stale = stale_accounts(name, entries, cfg, entry.now_local().date())
+        if stale:
+            r.warn(f"{name}：{len(stale)} 个有余额的账户超过 {cfg.reconcile_days} 天没和实际余额核对"
+                   f"（最久 {stale[0][0]}，{stale[0][1]} 天）",
+                   f"请用户报出 {name} 这些账户现在的实际余额，逐个用 balance 断言核对，对不上的查明后更正："
+                   + "、".join(acc for acc, _ in stale))
         if txns == 0 and checks == 0 and pads == 0:
             r.warn(f"{name} 还没有期初余额，也没有任何交易",
                    f"第一次使用：按 AGENTS.md「首次使用」问清用户的账户和余额，初始化 {name}")

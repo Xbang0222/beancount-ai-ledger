@@ -51,6 +51,8 @@ def test_镜像按书写顺序解析两侧():
     ({"books": {"personal": {}}, "mirror": []}, "不认识的键"),
     ({"books": {"personal": {}}, "ledger": {"timezone": "Mars/Base"}}, "timezone"),
     ({"books": {"personal": {}}, "ledger": {"base_currency": "rmb"}}, "base_currency"),
+    ({"books": {"personal": {}}, "ledger": {"reconcile_days": -1}}, "reconcile_days"),
+    ({"books": {"personal": {}}, "ledger": {"reconcile_days": True}}, "reconcile_days"),
     ({"books": {"personal": {}}, "ledger": {"tz": "Asia/Shanghai"}}, "不认识的键"),
 ])
 def test_写错的配置被拒(data, hint):

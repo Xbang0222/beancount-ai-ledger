@@ -210,3 +210,54 @@ def test_不是_Git_仓库或没带检查脚本时不提醒(ledger):
     (ledger / "scripts" / "hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
     assert doctor.hooks_missing() is False
 
+# ---------- 余额久未核对的提醒 ----------
+
+@pytest.fixture
+def in_november(monkeypatch):
+    """把「今天」挪到 11 月：脚手架里 9 月初的账户此时已经两个多月没核对。"""
+    from datetime import datetime
+
+    from ledgerlib import entry
+
+    monkeypatch.setattr(entry, "now_local", lambda: datetime(2026, 11, 10, 9, 0))
+
+
+def _stale(book="personal"):
+    from ledgerlib import config
+    from ledgerlib.books import load_book
+
+    return doctor.stale_accounts(book, load_book(book)[0], config.load(), entry_today())
+
+
+def entry_today():
+    from ledgerlib import entry
+
+    return entry.now_local().date()
+
+
+def test_刚记不久的账户不提醒核对(ledger, capsys):
+    assert _stale() == []
+    cli.main(["doctor"])
+    assert "没和实际余额核对" not in capsys.readouterr().out
+
+
+def test_有余额的账户久未核对时提醒_往来镜像不算(ledger, capsys, in_november):
+    assert _stale() == [("Assets:Wechat", 70), ("Assets:Alipay", 69)]   # 从第一笔发生额算起
+    assert cli.main(["doctor"]) == 0                                     # 只是提醒，不算失败
+    out = capsys.readouterr().out
+    assert "[WARN] personal：2 个有余额的账户超过 35 天没和实际余额核对（最久 Assets:Wechat，70 天）" in out
+    assert "Assets:Wechat、Assets:Alipay" in out and "Receivable:Shop" not in out
+
+
+def test_核对过的账户从最近一次断言算起(ledger, in_november):
+    j = ledger / "personal" / "journal" / "2026-09.beancount"
+    j.write_text(j.read_text(encoding="utf-8") + "\n2026-11-01 balance Assets:Wechat -100.00 CNY\n",
+                 encoding="utf-8")
+    assert _stale() == [("Assets:Alipay", 69)]
+
+
+def test_reconcile_days为零时不提醒(ledger, in_november):
+    cfg = ledger / "ledger.toml"
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace(
+        'base_currency = "CNY"\n', 'base_currency = "CNY"\nreconcile_days = 0\n'), encoding="utf-8")
+    assert _stale() == []

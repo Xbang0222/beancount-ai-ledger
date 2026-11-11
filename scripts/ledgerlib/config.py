@@ -36,7 +36,7 @@ ACCOUNT_RE = re.compile(r"^(Assets|Liabilities|Equity|Income|Expenses)(:[^:\s]+)
 CURRENCY_RE = re.compile(r"^[A-Z][A-Z0-9'._-]{0,22}[A-Z0-9]$")
 
 _TOP_KEYS = {"ledger", "books", "mirrors", "dividend", "naming"}
-_LEDGER_KEYS = {"timezone", "base_currency", "fx_alias"}
+_LEDGER_KEYS = {"timezone", "base_currency", "fx_alias", "reconcile_days"}
 _DIVIDEND_KEYS = {"book", "account", "partners"}
 _PARTNER_KEYS = {"name", "payee", "share", "offset"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
@@ -124,6 +124,7 @@ class Config:
     fx_alias: dict = None       # 折算时视同另一币种取汇率，如 {"USDT": "USD"}
     dividend: Dividend = None   # 按月利润分配；未配置为 None
     naming: Naming = None       # 对方与摘要写法规则；未配置为 None
+    reconcile_days: int = 35    # 有余额的账户超过这么多天没核对，doctor 就提醒；0 为不提醒
 
 
 def config_path():
@@ -223,10 +224,15 @@ def parse(data):
             for k, v in fx_alias.items()):
         raise ConfigError(f"[ledger] fx_alias 写成 {{ USDT = \"USD\" }}（大写币种代码），收到：{fx_alias!r}")
 
+    reconcile_days = ledger.get("reconcile_days", 35)
+    if isinstance(reconcile_days, bool) or not isinstance(reconcile_days, int) or reconcile_days < 0:
+        raise ConfigError(f"[ledger] reconcile_days 应为天数（整数，0 为不提醒），收到：{reconcile_days!r}")
+
     dividend = _parse_dividend(data.get("dividend"), books)
     naming = _parse_naming(data.get("naming"), books)
     return Config(books=books, mirrors=tuple(mirrors), timezone=timezone, base_currency=base,
-                  fx_alias=dict(fx_alias), dividend=dividend, naming=naming)
+                  fx_alias=dict(fx_alias), dividend=dividend, naming=naming,
+                  reconcile_days=reconcile_days)
 
 
 def _str_list(value, where, allow_empty=True):
