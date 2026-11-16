@@ -58,6 +58,16 @@ def test_AGENTS里有引导章节时提示指过去(empty_root, capsys):
     assert "按 AGENTS.md「首次使用」，问清用户的账户和余额" in capsys.readouterr().out
 
 
+def test_引导章节在_docs_里时优先指到那里(empty_root, capsys):
+    (empty_root / "AGENTS.md").write_text("# 须知\n\n## 按情况查阅\n\n首次使用见 docs。\n", encoding="utf-8")
+    (empty_root / "docs").mkdir()
+    (empty_root / "docs" / "AI-SETUP.md").write_text("# 建账\n\n## 首次使用（doctor 提示未初始化）\n", encoding="utf-8")
+    assert newbook.cmd_new_book("personal") == 0
+    capsys.readouterr()
+    cli.main(["doctor"])
+    assert "按 docs/AI-SETUP.md「首次使用」，问清用户的账户和余额" in capsys.readouterr().out
+
+
 def test_账本有错时报_FAIL_且退出码非零(ledger, capsys):
     j = ledger / "personal" / "journal" / "2026-09.beancount"
     j.write_text(j.read_text(encoding="utf-8") +

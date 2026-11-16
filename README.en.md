@@ -13,10 +13,11 @@ A plain-text double-entry ledger template built on [Beancount](https://github.co
 
 ## Files that drive the agent
 
-- `CATEGORIES.md`: the bookkeeping rules — which account each payment method maps to, how expenses are categorized, how payees and narrations are written, loans, credit and investments. **Edit it to match your habits**; the agent follows whatever it says.
+- `CATEGORIES.md`: the bookkeeping rules — which account each payment method maps to, how expenses are categorized, how payees and narrations are written, cross-book transfers, tags and timestamps. **Edit it to match your habits**; the agent follows whatever it says.
+- `ACCOUNTING.md`: rules for less common topics (loans, funds and stocks, gold, foreign-currency valuation, books shared with others). The agent reads it only when the topic comes up; your own rare conventions go here too.
 - `CLASSIFY.md`: a lookup table from common items and merchants to accounts, why the categories are what they are, plus "what the user said → how it is booked" examples.
 - `STATE.md`: short-lived context such as an ongoing trip or a temporary default payment account; deleted when it no longer applies.
-- `AGENTS.md` (referenced by `CLAUDE.md` and `GEMINI.md`): operating rules for the agent, picked up automatically by common coding agents.
+- `AGENTS.md` (referenced by `CLAUDE.md` and `GEMINI.md`): operating rules for the agent, picked up automatically by common coding agents. It covers only the three steps of booking one entry and the hard rules; setup, storage, corrections, reconciliation and other occasional tasks live in `docs/AI-SETUP.md` and `docs/AI-TASKS.md`, read on demand.
 
 ## Example
 
@@ -40,7 +41,7 @@ What ends up in the journal (`time` is injected by the script at entry time, nev
 
 ## Getting started
 
-Any AI that can read files and run commands will do. Store the ledger wherever you can: a **private Git repository** (GitHub, Gitee, …) is best, otherwise back it up to a cloud drive; the AI picks per `AGENTS.md` ("账本存哪"). The AI runs the commands below; doing it yourself needs Python 3.9 or later and Git.
+Any AI that can read files and run commands will do. Store the ledger wherever you can: a **private Git repository** (GitHub, Gitee, …) is best, otherwise back it up to a cloud drive; the AI picks per `docs/AI-SETUP.md` ("账本存哪"). The AI runs the commands below; doing it yourself needs Python 3.9 or later and Git.
 
 1. **Create a private repository.** Click **Use this template** → **Create a new repository**, choose **Private**, and clone it. With the [GitHub CLI](https://cli.github.com/):
 
@@ -77,7 +78,8 @@ python3 scripts/ledger.py --root examples/demo networth
 beancount-ai-ledger/
 ├── personal.beancount          # entry file of the personal book
 ├── ledger.toml                 # books, cross-book mirrors, timezone, base currency, profit split
-├── CATEGORIES.md               # bookkeeping rules
+├── CATEGORIES.md               # bookkeeping rules (daily)
+├── ACCOUNTING.md               # topic rules (read on demand)
 ├── CLASSIFY.md                 # category reasoning and examples
 ├── STATE.md                    # short-lived context
 ├── AGENTS.md                   # agent operating rules
@@ -102,6 +104,7 @@ beancount-ai-ledger/
 The full list is in `python3 scripts/ledger.py --help`; details in [Commands and configuration](docs/REFERENCE.md) (Chinese).
 
 ```bash
+python3 scripts/ledger.py brief                        # one page before booking: date, short-lived context, recurring entries due, usable accounts
 python3 scripts/ledger.py check                        # validate all books + cross-book reconciliation
 python3 scripts/ledger.py recent personal              # last 10 entries, each with an [id]
 python3 scripts/ledger.py find personal lunch 18       # search entries by keyword

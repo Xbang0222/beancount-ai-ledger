@@ -9,7 +9,7 @@ import re
 import sys
 from decimal import Decimal
 
-from . import __version__, config, entry, env
+from . import __version__, config, entry, env, recurring
 from .books import balances, load_book, transactions
 from .query import last_summary
 
@@ -29,14 +29,20 @@ NO_REMOTE_SECTION = "没有远程仓库时"
 FIRST_USE_SECTION = "首次使用"
 
 
+# 引导章节可能在的文件，先找详细的那份；老账套的引导还写在 AGENTS.md 里
+GUIDE_FILES = ("docs/AI-SETUP.md", "AGENTS.md")
+
+
 def _guide(section):
-    """AGENTS.md 里有这一节才指过去：模板带着引导章节，用户自己的账套不一定留着。"""
-    try:
-        with open(os.path.join(config.ROOT, "AGENTS.md"), encoding="utf-8") as f:
-            found = re.search(rf"^#+ .*{re.escape(section)}", f.read(), re.M)
-    except OSError:
-        found = None
-    return f"按 AGENTS.md「{section}」，" if found else ""
+    """账套里有这一节才指过去：模板带着引导章节，用户自己的账套不一定留着。"""
+    for name in GUIDE_FILES:
+        try:
+            with open(os.path.join(config.ROOT, *name.split("/")), encoding="utf-8") as f:
+                if re.search(rf"^#+ .*{re.escape(section)}", f.read(), re.M):
+                    return f"按 {name}「{section}」，"
+        except OSError:
+            continue
+    return ""
 
 
 class _Report:
@@ -157,6 +163,10 @@ def _books(r):
                    f"（最久 {stale[0][0]}，{stale[0][1]} 天）",
                    f"请用户报出 {name} 这些账户现在的实际余额，逐个用 balance 断言核对，对不上的查明后更正："
                    + "、".join(acc for acc, _ in stale))
+        for rule, days in recurring.pending(cfg, {name: entries}, entry.now_local().date()):
+            r.warn(f"{name}：周期事项「{rule.name}」有 {len(days)} 天没记（最早 {days[0]}，最近 {days[-1]}）",
+                   f"运行 python3 scripts/ledger.py brief {name} 看「{rule.name}」该补的日期和现成分录，"
+                   "确认确实发生后逐笔入账")
         if txns == 0 and checks == 0 and pads == 0:
             r.warn(f"{name} 还没有期初余额，也没有任何交易",
                    f"第一次使用：{_guide(FIRST_USE_SECTION)}问清用户的账户和余额，初始化 {name}")

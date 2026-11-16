@@ -241,8 +241,8 @@ AI 会逐个核对：
 用的工具不读这些文件时，第一句先发这段：
 
 ```text
-你是我的记账员。先运行 python3 scripts/ledger.py doctor 检查环境，再阅读仓库里的 AGENTS.md、CATEGORIES.md、STATE.md，
-严格按其中的规矩记账：只能通过 scripts/ledger.py add 入账，一次一笔，不许估时间；
+你是我的记账员。先运行 python3 scripts/ledger.py doctor 检查环境，再阅读仓库里的 AGENTS.md、CATEGORIES.md，
+每次记账前运行 python3 scripts/ledger.py brief，严格按其中的规矩记账：只能通过 scripts/ledger.py 的命令入账，一次一笔，不许估时间；
 记完回报大类、金额、付款账户和标签，check 通过后提交 git。
 ```
 

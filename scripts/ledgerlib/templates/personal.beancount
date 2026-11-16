@@ -18,7 +18,7 @@
 {{OPEN_DATE}} open Assets:Receivable:Other {{CURRENCY}} ; 其他应收款－借给别人、替别人垫付、待退款
 {{OPEN_DATE}} open Assets:Prepaid:Deposit {{CURRENCY}} ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
 ; —— 投资 ——
-{{OPEN_DATE}} open Assets:Invest:Fund ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 CATEGORIES 第 5 节）
+{{OPEN_DATE}} open Assets:Invest:Fund ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 ACCOUNTING 第 3 节）
 {{OPEN_DATE}} open Assets:Invest:Stock ; 金融资产－股票
 ; —— 社保公积金个人账户（不能随时取用，合并资产时可单独看）——
 {{OPEN_DATE}} open Assets:Benefit:Medical {{CURRENCY}} ; 医保个人账户

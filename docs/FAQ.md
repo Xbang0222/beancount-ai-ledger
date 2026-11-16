@@ -35,4 +35,4 @@ python3 -m pytest tests/ -q && python3 scripts/ledger.py check
 git commit -m "chore: 同步上游脚本"
 ```
 
-`AGENTS.md`、`CATEGORIES.md` 里可能有你自己改过的规则，请对照[更新日志](../CHANGELOG.md)手动合并。让 AI 来做的话，说一句"帮我升级记账项目"。
+`AGENTS.md`、`CATEGORIES.md` 里可能有你自己改过的规则，请对照[更新日志](../CHANGELOG.md)手动合并；要换成新版 `AGENTS.md` 的，把 `docs` 一起取下来（新版把不常用的章节放在 `docs/AI-SETUP.md`、`docs/AI-TASKS.md`）。让 AI 来做的话，说一句"帮我升级记账项目"。

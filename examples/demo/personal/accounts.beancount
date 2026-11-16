@@ -19,7 +19,7 @@
 2026-08-01 open Assets:Receivable:Other CNY       ; 其他应收款－借给别人、替别人垫付、待退款
 2026-08-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
 ; —— 投资 ——
-2026-08-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 CATEGORIES 第 5 节）
+2026-08-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 ACCOUNTING 第 3 节）
 2026-08-01 open Assets:Invest:Stock               ; 金融资产－股票
 
 ; ===== 负债 Liabilities（余额为负数表示欠款）=====

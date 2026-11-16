@@ -3,6 +3,8 @@
 - [命令](#命令)
 - [多本账](#多本账)
 - [利润分配](#利润分配)
+- [周期事项](#周期事项)
+- [写法规则](#写法规则)
 - [目录结构](#目录结构)
 
 ## 命令
@@ -13,7 +15,9 @@
 |---|---|
 | `doctor` | 检查依赖、各账本状态（含有余额却久未核对的账户）、提交前自动检查是否启用，以及 Git 远程仓库是否私有 |
 | `check [--no-reconcile]` | 校验全部账本，有往来镜像时连带对账 |
-| `add <账本> [--file 文件]` | 从标准输入或文件写入一笔分录，校验失败整笔回滚 |
+| `brief [账本]` | 入账前的一页现场信息：今天日期时间、`STATE.md` 当前内容、该补的周期分录、可用科目（带中文说明和摘要开头）、写法规则、最近几笔范例 |
+| `add <账本> [--file 文件]` | 从标准输入或文件写入一笔分录，校验失败整笔回滚；分录用到账本之间的往来科目会被拒绝并提示改用 `pair`（补平已有差额才加 `--one-sided`） |
+| `pair [--file 文件]` | 账本之间的往来两边一起录：输入两段，每段首行是 `[账本名]`、下面是这本账的一笔分录；任何一边不合规或两边金额对不上，两本账都不改动 |
 | `find <账本> <关键词...>` | 按关键词找分录并显示编号，对方、摘要、科目、金额、标签都能搜 |
 | `amend <账本> <编号> [--file 文件]` | 更正一笔：用新分录整笔替换，校验失败自动还原 |
 | `void <账本> <编号>` | 作废一笔：从序时簿删除 |
@@ -23,7 +27,7 @@
 | `balances <账本>` | 科目余额表 |
 | `tag <账本> <标签> [YYYY-MM]` | 按标签汇总明细 |
 | `networth [--rate 代码=价格] [--offline]` | 合并资产负债：抵销账本之间的往来，外币、金银、基金、股票现拉当天价格折合本位币；`[dividend]` 标了 `owner` 时再扣掉合伙人还没分走的利润，给出扣后净资产 |
-| `quote <代码...> [--date YYYY-MM-DD]` | 现拉价格：`USD`、`USDT`、`AU`（每克）、`F161226`、`SH600519`、`HK00700`、`US.AAPL`，写法见 CATEGORIES 第 5 节 |
+| `quote <代码...> [--date YYYY-MM-DD]` | 现拉价格：`USD`、`USDT`、`AU`（每克）、`F161226`、`SH600519`、`HK00700`、`US.AAPL`，写法见 ACCOUNTING 第 5 节 |
 | `reconcile` | 核对账本之间的往来 |
 | `dividend YYYY-MM [--rate 币种=汇率] [--recalc]` | 按月利润分配：算当月净利润（外币现拉汇率折算），按 `[dividend]` 比例拆分；月份过完之后发过分红的视为结清，见[利润分配](#利润分配) |
 | `fmt [--check] [账本]` | 整理序时簿格式、按日期时间排序，不改金额 |
@@ -125,9 +129,30 @@ partners = [
   Assets:Bank:Main
 ```
 
+## 周期事项
+
+到日子就该有一笔的账（每周定投、每月房租、每月还贷），在 `ledger.toml` 里配 `[[recurring]]`，`brief` 和 `doctor` 会列出哪几天还没记，`brief` 同时给出现成分录。**只提醒，不自动入账**：扣款有没有真的发生，脚本不知道。
+
+```toml
+[[recurring]]
+book = "personal"
+name = "每月房租"
+every = 5                    # "daily"、星期几的英文（"monday"）、或每月几号（当月没有这一天取月末）
+since = 2026-10-05           # 从哪天起算
+match = "房租"               # 当天已有对方或摘要含这个词的交易，就算记过
+confirm = true               # 可省略。false 表示约定好到日子直接补记，不用先问用户（自动扣款这类）
+entry = '''
+{date} * "房东" "居住-房租"
+  Expenses:Housing:Rent  1800.00 CNY
+  Assets:Bank:Main
+'''
+```
+
+`entry` 可省略，省略时只提醒不给分录。一条规则最多列最近 31 个漏记的日子。
+
 ## 写法规则
 
-`ledger.toml` 的 `[naming]` 是对方与摘要写法的唯一来源，`ledger.py rules [账本]` 把它打印成对照表。配了就由 `add` / `amend` 拦截、`check` 扫全账；整段删掉就不做写法检查。
+`ledger.toml` 的 `[naming]` 是对方与摘要写法的唯一来源，`ledger.py rules [账本]` 把它打印成对照表。配了就由 `add` / `pair` / `amend` 拦截、`check` 扫全账；整段删掉就不做写法检查。
 
 | 键 | 作用 |
 |---|---|
@@ -154,9 +179,12 @@ partners = [
 ├── common/                  币种声明、汇率与净值
 ├── AGENTS.md                给 AI 的操作规范
 ├── CLAUDE.md, GEMINI.md     让 Claude Code、Gemini CLI 载入 AGENTS.md
-├── CATEGORIES.md            分类与核算规则
+├── CATEGORIES.md            日常记账规则
+├── ACCOUNTING.md            专题规则（贷款、投资、折现等，遇到才读）
 ├── STATE.md                 临时状态，如进行中的行程
 ├── docs/GUIDE.md            使用指南
+├── docs/AI-SETUP.md         给 AI：第一次接手、账本存哪、没有远程仓库时、建账
+├── docs/AI-TASKS.md         给 AI：更正、对账、导入账单、升级等常见请求
 ├── examples/                分录范例与示例账本
 ├── scripts/                 ledger.py、bootstrap.py 及实现
 └── tests/                   pytest 用例

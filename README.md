@@ -11,10 +11,11 @@
 ## 文档约定
 
 - `CATEGORIES.md`：记账规则，涵盖付款渠道对应账户、科目归类、摘要写法、往来、信贷与投资，是记账口径的唯一依据。**建账后按你的习惯改**，AI 的记法跟着变。
+- `ACCOUNTING.md`：不常遇到的专题规则（贷款、基金股票、黄金、外币折现、与他人共有的账本），AI 遇到才读；你自己定的少见口径也写这里。
 - `CLASSIFY.md`：分类速查词典（常见东西、商家平台直接对到科目）、分类的参考依据与「用户原话 → 怎么记」对照示例。
 - `STATE.md`：进行中的行程、临时默认付款账户等会过期的临时上下文，事项结束即删除。
-- `AGENTS.md`（`CLAUDE.md`、`GEMINI.md` 引用它）：给 AI 的操作规范，主流 AI 编程助手打开仓库就会读到。
-- 稳定规则只写进 CATEGORIES，易变情况只写进 STATE，两者不混放；冲突时以 CATEGORIES 为准。
+- `AGENTS.md`（`CLAUDE.md`、`GEMINI.md` 引用它）：给 AI 的操作规范，主流 AI 编程助手打开仓库就会读到。只写记一笔账的三步和硬规矩；建账、存放、更正、对账等不常做的事在 `docs/AI-SETUP.md`、`docs/AI-TASKS.md`，AI 遇到才读。
+- 稳定规则只写进 CATEGORIES（日常）和 ACCOUNTING（专题），易变情况只写进 STATE，不混放；冲突时以 CATEGORIES 为准。
 
 ## 记账示例
 
@@ -60,7 +61,7 @@ $ python3 scripts/ledger.py report personal 2026-09
 | 在自己电脑上用 Claude Code、Codex 等 AI 编程助手，会用 Git | [快速开始：用 Git 保存账本](docs/QUICKSTART.md) |
 | 只用豆包这类 AI，不会用 Git | [不用 Git：只用豆包记账](docs/NO-GIT.md) |
 
-任何能读文件、跑命令的 AI 都能用。账本存哪按你手里有什么来：**私有 Git 仓库**（GitHub、Gitee 等）最好，没有就备份到云盘，AI 按 `AGENTS.md`「账本存哪」自己判断。下面的命令也由 AI 来跑；自己动手的，前提是本机已有 Python 3.9+ 和 git，依赖装在仓库自己的 `.venv` 里，不动系统 Python：
+任何能读文件、跑命令的 AI 都能用。账本存哪按你手里有什么来：**私有 Git 仓库**（GitHub、Gitee 等）最好，没有就备份到云盘，AI 按 `docs/AI-SETUP.md`「账本存哪」自己判断。下面的命令也由 AI 来跑；自己动手的，前提是本机已有 Python 3.9+ 和 git，依赖装在仓库自己的 `.venv` 里，不动系统 Python：
 
 ```bash
 python3 scripts/bootstrap.py                 # 建 .venv、装依赖、校验账本
@@ -76,7 +77,8 @@ python3 scripts/ledger.py doctor             # 环境、账本、Git 远程仓�
 beancount-ai-ledger/
 ├── personal.beancount          # 个人账入口
 ├── ledger.toml                 # 账套配置：账本清单、往来镜像、时区、本位币、利润分配
-├── CATEGORIES.md               # 记账规则（记账口径依据）
+├── CATEGORIES.md               # 日常记账规则（每次记账前读）
+├── ACCOUNTING.md               # 专题规则（遇到才读）
 ├── CLASSIFY.md                 # 分类速查词典、参考依据与对照示例
 ├── STATE.md                    # 当前临时状态（失效即删）
 ├── AGENTS.md                   # AI 操作规范（CLAUDE.md / GEMINI.md 引用它）
@@ -105,8 +107,8 @@ beancount-ai-ledger/
 ## 记账流程
 
 1. 用口语描述收支：金额、事由、付款方式，没说的按 `CATEGORIES.md` 的默认规则补全；
-2. AI 查看 `CATEGORIES.md` 与 `STATE.md`，把口语转成规范分录：必填日期、金额、科目、付款账户，标签按需；归类由 AI 自己定，**不反复问你"记在哪"**，只有金额、日期、是不是借出/代垫这类事实缺失才问；
-3. 经 `ledger.py add` 入账，一次一笔：借贷不平衡、科目未开立、未来日期、疑似重复时整笔回滚；
+2. AI 先跑 `ledger.py brief` 看现场（今天几号、`STATE.md` 当前情况、该补的周期分录、能用的科目），再按 `CATEGORIES.md` 把口语转成规范分录：必填日期、金额、科目、付款账户，标签按需；归类由 AI 自己定，**不反复问你"记在哪"**，只有金额、日期、是不是借出/代垫这类事实缺失才问；
+3. 经 `ledger.py add` 入账，一次一笔：借贷不平衡、科目未开立、未来日期、疑似重复时整笔回滚，并用中文说明该怎么改；两本账之间的往来用 `ledger.py pair` 两边一起记；
 4. AI 回报大类、金额、付款账户与标签，记错了一句话就能改（`amend` / `void`，不手改账本文件）；
 5. 每次改动立即提交并推送到你的私有仓库（没有远程仓库的按 [NO-GIT](docs/NO-GIT.md) 备份到云盘）。
 
@@ -115,6 +117,7 @@ beancount-ai-ledger/
 完整清单与参数以 `python3 scripts/ledger.py --help` 为准，详细说明见 [命令与配置](docs/REFERENCE.md)：
 
 ```bash
+python3 scripts/ledger.py brief                        # 入账前一页现场信息：日期、临时状态、该补的周期分录、可用科目
 python3 scripts/ledger.py check                        # 校验全部账本 + 跨账本往来对账
 python3 scripts/ledger.py recent personal              # 最近 10 笔（行首 [编号]）
 python3 scripts/ledger.py find personal 午餐 18        # 按关键词找分录
