@@ -161,7 +161,8 @@ def cmd_networth(overrides=None, today=None, offline=False):
     live = _Live(base, not offline)
     held = {cur for kind in rows.values() for _, _, cur, _ in kind}
     estimates = {}   # (book, acc) -> (代码, 数量 或 None, 失败原因)
-    for book, acc, cur, _ in rows["Assets"] + rows["Restricted"]:   # 元数据按这一行自己所在的账本取：别的账本有同名科目不算
+    # 元数据按这一行自己所在的账本取：别的账本有同名科目不算
+    for book, acc, cur, _ in rows["Assets"] + rows["Restricted"]:
         code = str(meta[book].get(acc, {}).get("estimate", "")).upper()
         if code and cur == base and (book, acc) not in estimates:
             qty, why = _estimate(books[book], acc, code, base, live)
@@ -205,7 +206,8 @@ def cmd_networth(overrides=None, today=None, offline=False):
             if est and est[1] is not None and est[0] in rates:
                 code, qty = est[0], est[1]
                 value = qty * rates[code][0]
-                line += f"  ≈ {value:>10.2f} {base}（现值；左列为买入成本，约 {qty:.3f} {code}，按每笔当天价格折算数量）"
+                line += (f"  ≈ {value:>10.2f} {base}"
+                         f"（现值；左列为买入成本，约 {qty:.3f} {code}，按每笔当天价格折算数量）")
             elif est:
                 line += f"  （买入成本；估算现值失败：{est[2] or '缺少当天价格'}）"
                 value = shown
