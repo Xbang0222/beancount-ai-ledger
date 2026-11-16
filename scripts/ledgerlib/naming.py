@@ -170,6 +170,46 @@ def scan(book, entries):
     return found
 
 
+def heads_of(book, account):
+    """这本账里 account 的摘要开头（元组）；没配返回空元组。"""
+    naming = config.load().naming
+    table = (naming.prefix.get(book) or {}) if naming else {}
+    key = _best(account, table)
+    return table[key] if key else ()
+
+
+def print_patterns(naming, book):
+    """一本账的固定场景写法。"""
+    pats = [p for p in naming.patterns if p.book == book]
+    if pats:
+        print(f"\n----- {book}：固定场景 -----")
+    for p in pats:
+        print(f"  {p.name}")
+        print(f"    分录只涉及：{' / '.join(p.when + p.with_)}（且含 {' / '.join(p.when)} 之一）")
+        print(f"    对方只能写：{' / '.join(p.payees)}")
+        if p.narrations:
+            print(f"    摘要开头：{' / '.join(p.narrations)}")
+        if p.hint:
+            print(f"    说明：{p.hint}")
+
+
+def print_general(naming):
+    """各本账通用的写法：找不到分类时怎么办、摘要格式、固定标记、不许用的词。"""
+    if naming.fallback:
+        print("\n----- 找不到分类时 -----")
+        for i, step in enumerate(naming.fallback, 1):
+            print(f"  {i}. {step}")
+    print("\n----- 通用 -----")
+    print("  摘要格式：「大类简称-具体事项」，只用一个“-”，详细情况写进 note:")
+    print(f"  括号里只许出现的固定标记：{' '.join(f'（{m}）' for m in naming.markers) or '（无）'}")
+    if naming.refund_suffix:
+        print(f"  退款/退回（费用冲回、收入冲减）摘要末尾：{' / '.join(naming.refund_suffix)}")
+    if naming.banned_payees:
+        print(f"  不能当对方的空泛词：{'、'.join(naming.banned_payees)}")
+    if naming.vague_items:
+        print(f"  不能当事项的笼统词：{'、'.join(naming.vague_items)}")
+
+
 def cmd_rules(book=None):
     """把 [naming] 打印成对照表：给人看，也给 AI 入账前查。"""
     from .display import pad
@@ -187,28 +227,6 @@ def cmd_rules(book=None):
             print("  （未配置）")
         for acc, heads in table.items():
             print(f"  {pad(acc, 28)}{' / '.join(heads)}")
-        pats = [p for p in naming.patterns if p.book == b]
-        if pats:
-            print(f"\n----- {b}：固定场景 -----")
-        for p in pats:
-            print(f"  {p.name}")
-            print(f"    分录只涉及：{' / '.join(p.when + p.with_)}（且含 {' / '.join(p.when)} 之一）")
-            print(f"    对方只能写：{' / '.join(p.payees)}")
-            if p.narrations:
-                print(f"    摘要开头：{' / '.join(p.narrations)}")
-            if p.hint:
-                print(f"    说明：{p.hint}")
-    if naming.fallback:
-        print("\n----- 找不到分类时 -----")
-        for i, step in enumerate(naming.fallback, 1):
-            print(f"  {i}. {step}")
-    print("\n----- 通用 -----")
-    print("  摘要格式：「大类简称-具体事项」，只用一个“-”，详细情况写进 note:")
-    print(f"  括号里只许出现的固定标记：{' '.join(f'（{m}）' for m in naming.markers) or '（无）'}")
-    if naming.refund_suffix:
-        print(f"  退款/退回（费用冲回、收入冲减）摘要末尾：{' / '.join(naming.refund_suffix)}")
-    if naming.banned_payees:
-        print(f"  不能当对方的空泛词：{'、'.join(naming.banned_payees)}")
-    if naming.vague_items:
-        print(f"  不能当事项的笼统词：{'、'.join(naming.vague_items)}")
+        print_patterns(naming, b)
+    print_general(naming)
     return 0

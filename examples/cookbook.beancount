@@ -128,7 +128,18 @@ option "operating_currency" "CNY"
 ;   2026-05-08 * "某供应商" "主营业务成本-进货（股东垫付）"
 ;     Expenses:COGS          800.00 CNY
 ;     Liabilities:OwnerLoan
-; 记完两边跑 ledger.py reconcile，两侧余额相加必须为 0。
+; 两边用 pair 一次录入（add 遇到往来科目会拒绝）。任何一边不合规、或两边金额对不上，两本账都不改动：
+;   python3 scripts/ledger.py pair <<'EOF'
+;   [personal]
+;   2026-05-08 * "商店" "代垫商店采购款-某供应商（股东往来）"
+;     Assets:Receivable:Shop  800.00 CNY
+;     Assets:Bank:Main
+;   [shop]
+;   2026-05-08 * "某供应商" "主营业务成本-进货（股东垫付）"
+;     Expenses:COGS          800.00 CNY
+;     Liabilities:OwnerLoan
+;   EOF
+; 更正、作废往来分录后跑 ledger.py reconcile，两侧余额相加必须为 0。
 
 ; ---------- 12. 余额断言：对账时写一条，对不上 check 会报差额 ----------
 2026-05-10 balance Assets:Receivable:Xiaowang  0.00 CNY

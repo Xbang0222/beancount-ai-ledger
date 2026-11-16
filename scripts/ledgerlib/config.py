@@ -6,6 +6,7 @@ ledger.toml 的写法见 docs/REFERENCE.md「多本账」。每次调用 load() 
 import os
 import re
 from dataclasses import dataclass
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 try:
@@ -35,7 +36,7 @@ BOOK_NAME_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 ACCOUNT_RE = re.compile(r"^(Assets|Liabilities|Equity|Income|Expenses)(:[^:\s]+)+$")
 CURRENCY_RE = re.compile(r"^[A-Z][A-Z0-9'._-]{0,22}[A-Z0-9]$")
 
-_TOP_KEYS = {"ledger", "books", "mirrors", "dividend", "naming"}
+_TOP_KEYS = {"ledger", "books", "mirrors", "dividend", "naming", "recurring"}
 _LEDGER_KEYS = {"timezone", "base_currency", "fx_alias", "reconcile_days"}
 _DIVIDEND_KEYS = {"book", "account", "partners"}
 _PARTNER_KEYS = {"name", "payee", "share", "offset", "owner"}
@@ -44,6 +45,9 @@ _MIRROR_KEYS = {"name", "currency", "accounts"}
 _NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "note_required", "fallback",
                 "prefix", "patterns"}
 _PATTERN_KEYS = {"book", "name", "when", "with", "payee", "narration", "hint"}
+_RECURRING_KEYS = {"book", "name", "every", "since", "match", "entry", "confirm"}
+
+WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
 class ConfigError(Exception):
@@ -117,6 +121,19 @@ class Naming:
 
 
 @dataclass(frozen=True)
+class Recurring:
+    """到日子就该有一笔的周期事项（每周定投、每月房租）：brief / doctor 列出哪几天还没记。只提醒，不自动入账。"""
+    book: str
+    name: str
+    kind: str          # daily / weekly / monthly
+    day: int           # weekly：星期几（周一为 0）；monthly：每月几号；daily 不用
+    since: date        # 从哪天起算
+    match: str         # 当天已有对方或摘要含这个词的交易，就算记过
+    entry: str = ""    # 分录模板，{date} 换成该补的日期；没写就只提醒不给现成分录
+    confirm: bool = True   # 补记前要不要先跟用户确认真的发生了；自动扣款这类约定好直接补的写 false
+
+
+@dataclass(frozen=True)
 class Config:
     books: dict        # 账本名 -> Book，保持 ledger.toml 中的书写顺序
     mirrors: tuple     # Mirror 元组
@@ -126,6 +143,7 @@ class Config:
     dividend: Dividend = None   # 按月利润分配；未配置为 None
     naming: Naming = None       # 对方与摘要写法规则；未配置为 None
     reconcile_days: int = 35    # 有余额的账户超过这么多天没核对，doctor 就提醒；0 为不提醒
+    recurring: tuple = ()       # Recurring 元组；未配置为空
 
 
 def config_path():
@@ -231,9 +249,10 @@ def parse(data):
 
     dividend = _parse_dividend(data.get("dividend"), books)
     naming = _parse_naming(data.get("naming"), books)
+    recurring = _parse_recurring(data.get("recurring", []), books)
     return Config(books=books, mirrors=tuple(mirrors), timezone=timezone, base_currency=base,
                   fx_alias=dict(fx_alias), dividend=dividend, naming=naming,
-                  reconcile_days=reconcile_days)
+                  reconcile_days=reconcile_days, recurring=recurring)
 
 
 def _str_list(value, where, allow_empty=True):
@@ -299,6 +318,52 @@ def _parse_naming(raw, books):
                             _str_list(raw.get("note_required", []), f"{where} note_required")),
         fallback=_str_list(raw.get("fallback", []), f"{where} fallback"),
         prefix=prefix, patterns=tuple(patterns))
+
+
+def _parse_recurring(raw, books):
+    if not isinstance(raw, list):
+        raise ConfigError("recurring 要写成 [[recurring]]（数组表），每个周期事项一段")
+    out = []
+    for i, r in enumerate(raw, 1):
+        where = f"第 {i} 个 [[recurring]]"
+        if not isinstance(r, dict):
+            raise ConfigError(f"{where} 应为一个表（table）")
+        _no_unknown(r, _RECURRING_KEYS, where)
+        if r.get("book") not in books:
+            raise ConfigError(f"{where} book 应为已声明的账本，收到：{r.get('book')!r}；已声明：{' / '.join(books)}")
+        name = r.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ConfigError(f"{where} 缺少 name（事项说明，如 \"每周定投\"）")
+        every = r.get("every")
+        if every == "daily":
+            kind, day = "daily", 0
+        elif isinstance(every, str) and every.lower() in WEEKDAYS:
+            kind, day = "weekly", WEEKDAYS.index(every.lower())
+        elif isinstance(every, int) and not isinstance(every, bool) and 1 <= every <= 31:
+            kind, day = "monthly", every
+        else:
+            raise ConfigError(f"{where}（{name}）every 写 \"daily\"、星期几的英文（如 \"monday\"）"
+                              f"或每月几号（1 到 31 的整数），收到：{every!r}")
+        since = r.get("since")
+        if isinstance(since, str):
+            try:
+                since = date.fromisoformat(since)
+            except ValueError:
+                since = None
+        if not isinstance(since, date) or isinstance(since, datetime):
+            raise ConfigError(f"{where}（{name}）since 写起算日期 YYYY-MM-DD，收到：{r.get('since')!r}")
+        match = r.get("match")
+        if not isinstance(match, str) or not match.strip():
+            raise ConfigError(f"{where}（{name}）match 写用来认出这笔账的词（对方或摘要里含它就算记过）")
+        entry = r.get("entry", "")
+        if not isinstance(entry, str):
+            raise ConfigError(f"{where}（{name}）entry 应为分录模板文本，日期处写 {{date}}")
+        confirm = r.get("confirm", True)
+        if not isinstance(confirm, bool):
+            raise ConfigError(f"{where}（{name}）confirm 写 true（补记前先跟用户确认）或 false（直接补记）")
+        out.append(Recurring(book=r["book"], name=name.strip(), kind=kind, day=day, since=since,
+                             match=match.strip(), entry=entry.strip("\n"), confirm=confirm))
+    return tuple(out)
 
 
 def _parse_dividend(raw, books):

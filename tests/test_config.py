@@ -94,3 +94,40 @@ def test_不是合法_TOML_时报错(tmp_path, monkeypatch):
 def test_未知账本名列出可选项(ledger):
     with pytest.raises(ConfigError, match="personal / shop"):
         config.get_book("family")
+
+
+def _recurring(**kw):
+    r = {"book": "shop", "name": "每周定投", "every": "monday", "since": "2026-09-07", "match": "定投"}
+    r.update(kw)
+    return r
+
+
+def test_周期事项三种周期都能解析():
+    from datetime import date
+
+    cfg = parse(_with(recurring=[_recurring(), _recurring(every="daily", since=date(2026, 9, 1)),
+                                 _recurring(every=31, entry="\n{date} * \"房东\" \"居住-房租\"\n")]))
+    weekly, daily, monthly = cfg.recurring
+    assert (weekly.kind, weekly.day, weekly.since) == ("weekly", 0, date(2026, 9, 7))
+    assert (daily.kind, daily.since) == ("daily", date(2026, 9, 1))
+    assert (monthly.kind, monthly.day) == ("monthly", 31)
+    assert monthly.entry == '{date} * "房东" "居住-房租"'
+    assert weekly.confirm is True
+    assert parse(_with(recurring=[_recurring(confirm=False)])).recurring[0].confirm is False
+    assert parse(BASE).recurring == ()
+
+
+@pytest.mark.parametrize("kw, expect", [
+    ({"book": "nope"}, "已声明的账本"),
+    ({"every": "everyday"}, "every 写"),
+    ({"every": 0}, "every 写"),
+    ({"every": True}, "every 写"),
+    ({"since": "9月7日"}, "since 写起算日期"),
+    ({"match": ""}, "match 写"),
+    ({"name": ""}, "缺少 name"),
+    ({"confirm": "no"}, "confirm 写"),
+    ({"times": 3}, "不认识的键"),
+])
+def test_周期事项写错时报错(kw, expect):
+    with pytest.raises(ConfigError, match=expect):
+        parse(_with(recurring=[_recurring(**kw)]))

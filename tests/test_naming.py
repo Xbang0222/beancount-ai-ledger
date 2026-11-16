@@ -49,7 +49,8 @@ def named(ledger):
 
 
 def _add(block, book="personal"):
-    return add.cmd_add(book, stream=io.StringIO(block))
+    # 这里只测写法：往来分录单边入账的拦截由 test_add / test_pair 覆盖，一律放行
+    return add.cmd_add(book, stream=io.StringIO(block), one_sided=True)
 
 
 def _txn(head, *legs):

@@ -77,23 +77,38 @@ def commit(book, changes):
     原因，entries 为 None；通过时调用方若还有别的检查不满意，可以再调 rollback() 撤销。
     还原按字节进行：原来不存在的文件会被删掉，不留空壳。
     """
-    originals = {p: _read_bytes(p) for p in changes}
+    loaded, rollback = commit_many({book: changes})
+    return (None if loaded is None else loaded[book]), rollback
+
+
+def commit_many(changes_by_book):
+    """几本账的改动作为一个整体提交：{账本: {绝对路径: 新文本 | None}}，全部写盘后逐本校验。
+
+    返回 ({账本: entries}, rollback)。任何一本不过，所有文件原样还原，第一项为 None。
+    往来两边一起录（pair）靠它保证“要么两本账都记上，要么都不动”。
+    """
+    originals = {p: _read_bytes(p) for changes in changes_by_book.values() for p in changes}
 
     def rollback():
         for p, data in originals.items():
             _put(p, data)
 
+    loaded = {}
     try:
-        for p, text in changes.items():
-            _put(p, None if text is None else _encode(text, originals[p]))
-        entries, errors, _ = load_book(book)
+        for changes in changes_by_book.values():
+            for p, text in changes.items():
+                _put(p, None if text is None else _encode(text, originals[p]))
+        for book in changes_by_book:
+            entries, errors, _ = load_book(book)
+            if errors:
+                rollback()
+                many = f"（{book} 账）" if len(changes_by_book) > 1 else ""
+                print(f"[FAIL] 未通过校验{many}，已回滚，账本未被改动：")
+                print_error_lines(errors, entries)
+                return None, rollback
+            loaded[book] = entries
     except Exception as ex:
         rollback()
         print(f"[FAIL] 校验过程异常，已回滚：{ex}")
         return None, rollback
-    if errors:
-        rollback()
-        print("[FAIL] 未通过校验，已回滚，账本未被改动：")
-        print_error_lines(errors)
-        return None, rollback
-    return entries, rollback
+    return loaded, rollback

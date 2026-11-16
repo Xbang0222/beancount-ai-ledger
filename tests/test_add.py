@@ -115,10 +115,24 @@ def test_当天手写_time_早于此刻照常入账且不被覆盖(ledger):
     assert '  time: "21:30"' not in text
 
 
-def test_触及往来科目时提醒记另一边(ledger, capsys):
-    assert _add(MIRROR) == 0
+def test_往来分录单边入账被拒并给出_pair_写法(ledger, capsys):
+    before = _journal(ledger).read_bytes()
+    assert _add(MIRROR) == 1
+    out = capsys.readouterr().out
+    assert "改用 pair" in out and "shop 账 Liabilities:OwnerLoan" in out
+    assert "[personal]" in out and "[shop]" in out
+    assert _journal(ledger).read_bytes() == before
+
+
+def test_补平差额时可以单边入账并报出镜像差额(ledger, capsys):
+    assert add.cmd_add("personal", stream=io.StringIO(MIRROR), one_sided=True) == 0
     out = capsys.readouterr().out
     assert "[提示]" in out and "shop 账的 Liabilities:OwnerLoan" in out
+    assert "两侧相加现在是 50.00（不一致" in out
+
+
+def test_往来科目的余额断言不算单边入账(ledger):
+    assert _add("2026-09-23 balance Assets:Receivable:Shop  100.00 CNY") == 0
 
 
 def test_普通分录不出往来提醒(ledger, capsys):
@@ -310,3 +324,37 @@ def test_原文件是_LF_时不引入_CRLF(ledger):
     journal.write_bytes(journal.read_bytes().replace(b"\r\n", b"\n"))
     assert _add(GOOD) == 0
     assert b"\r" not in journal.read_bytes()
+
+
+def test_未开科目的报错是中文并列出相近科目(ledger, capsys):
+    block = GOOD.replace("Expenses:Food:Dining", "Expenses:Food:Lunch")
+    assert _add(block) == 1
+    out = capsys.readouterr().out
+    assert "科目 Expenses:Food:Lunch 没有开立" in out
+    assert "Expenses:Food:Dining" in out
+    assert "Invalid reference" not in out
+
+
+def test_停用科目被拒并打印科目表备注(ledger, capsys):
+    accounts = ledger / "personal" / "accounts.beancount"
+    text = accounts.read_text(encoding="utf-8").replace(
+        "open Assets:Wechat CNY", "open Assets:Wechat CNY  ; 已停用，改用 Assets:Alipay")
+    accounts.write_text(text + "2026-09-10 close Assets:Wechat\n", encoding="utf-8")
+    before = _journal(ledger).read_bytes()
+    assert _add(GOOD.replace("Assets:Alipay", "Assets:Wechat")) == 1
+    out = capsys.readouterr().out
+    assert "已停用" in out and "科目表备注：已停用，改用 Assets:Alipay" in out
+    assert _journal(ledger).read_bytes() == before
+
+
+def test_借贷不平和币种不符的报错是中文(ledger, capsys):
+    assert _add(UNBALANCED) == 1
+    assert "借贷不平" in capsys.readouterr().out
+    assert _add(GOOD.replace("30.00 CNY", "30.00 USD")) == 1
+    assert "不收 USD" in capsys.readouterr().out
+
+
+def test_余额断言不符的报错是中文(ledger, capsys):
+    assert _add("2026-09-23 balance Assets:Alipay  999.00 CNY") == 1
+    out = capsys.readouterr().out
+    assert "余额断言不符" in out and "Balance failed" not in out

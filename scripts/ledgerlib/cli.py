@@ -13,9 +13,11 @@ from .entry import parse_ym
 EPILOG = """\
 示例：
   python3 scripts/ledger.py doctor                       检查环境与账套状态（第一次用先跑它）
+  python3 scripts/ledger.py brief                        入账前先看这一页（日期、临时状态、可用科目、写法、范例）
   python3 scripts/ledger.py check                        校验全部账本（有往来镜像时连带对账）
   python3 scripts/ledger.py add personal <<'EOF'         从 stdin 录一笔，分录写在 heredoc 里，以 EOF 结束
   python3 scripts/ledger.py add personal --file entry.tmp   从 UTF-8 文件录一笔（PowerShell 等没有 heredoc 时用）
+  python3 scripts/ledger.py pair <<'EOF'                 往来两边一起录：[账本名] 一段一笔，共两段
   python3 scripts/ledger.py recent personal              最近 10 笔（核对刚才记上没有；行首 [编号] 供更正/作废用）
   python3 scripts/ledger.py find personal 午餐 39.02     按关键词找分录并显示编号
   python3 scripts/ledger.py amend personal <编号> <<'EOF'   用新分录替换这一笔（自动校验，失败自动回滚）
@@ -35,6 +37,7 @@ EPILOG = """\
 
 约定：
   - 一次 add 只录一笔交易，多笔请分多次；
+  - 账本之间的往来用 pair 两边一起录，add 遇到往来科目会拒绝；
   - 改账一律用 amend / void，不要手动编辑序时簿；
   - 查询类命令在账本存在加载错误时直接报错、不出报告，请先 check 修复。
 """
@@ -99,6 +102,13 @@ def build_parser():
                    help="从 UTF-8 文本文件读取分录，不读 stdin（Windows PowerShell 管道会弄坏中文时用）")
     a.add_argument("--allow-duplicate", action="store_true",
                    help="账上已有内容相同的一笔时仍然入账（确实是两笔才用）")
+    a.add_argument("--one-sided", action="store_true",
+                   help="分录用到往来科目时仍然只记这一本账（只在补平已有往来差额时用，平时用 pair）")
+
+    pr = sub.add_parser("pair", help="往来两边一起录：两本账各一笔，一起校验，任一边不过就都不写")
+    pr.add_argument("-f", "--file", metavar="PATH", help="从 UTF-8 文本文件读取，不读 stdin")
+    pr.add_argument("--allow-duplicate", action="store_true",
+                    help="账上已有内容相同的一笔时仍然入账（确实是两笔才用）")
 
     fd = sub.add_parser("find", help="按关键词找分录并显示编号（对方、摘要、科目、金额、标签都能搜）")
     fd.add_argument("book")
@@ -161,6 +171,9 @@ def build_parser():
 
     sub.add_parser("books", help="列出 ledger.toml 中的账本与往来镜像")
 
+    br = sub.add_parser("brief", help="入账前先看这一页：今天几号、临时状态、该补的周期分录、可用科目、写法、最近几笔")
+    br.add_argument("book", nargs="?", help="只看某本账，默认全部")
+
     ru = sub.add_parser("rules", help="对方与摘要的写法对照表（ledger.toml 的 [naming]，入账前查它）")
     ru.add_argument("book", nargs="?", help="只看某本账，默认全部")
 
@@ -196,7 +209,7 @@ def cmd_check(no_reconcile=False):
         entries, errors, _ = load_book(book)
         if errors:
             ok = False
-            print_errors(book, errors)
+            print_errors(book, errors, entries)
         else:
             print(f"[OK] {book}: 校验通过，共 {len(entries)} 条指令")
             ok = _check_naming(book, entries) and ok
@@ -302,6 +315,10 @@ def _dispatch(args):
             print("[FAIL] commit-msg 要给提交信息文件，或用 --range A..B 检查已有的提交。")
             return 1
         return commitmsg.cmd_commit_msg(args.file)
+    if args.cmd == "brief":
+        from .brief import cmd_brief
+
+        return cmd_brief(args.book)
     if args.cmd == "rules":
         from .naming import cmd_rules
 
@@ -313,7 +330,12 @@ def _dispatch(args):
     if args.cmd == "add":
         from .add import cmd_add
 
-        return _remind_hooks(cmd_add(args.book, path=args.file, allow_duplicate=args.allow_duplicate))
+        return _remind_hooks(cmd_add(args.book, path=args.file, allow_duplicate=args.allow_duplicate,
+                                     one_sided=args.one_sided))
+    if args.cmd == "pair":
+        from .pair import cmd_pair
+
+        return _remind_hooks(cmd_pair(path=args.file, allow_duplicate=args.allow_duplicate))
     if args.cmd in ("find", "void", "amend"):
         from . import edit
 

@@ -27,6 +27,33 @@ def mirror_books(cfg):
     return [b for b in cfg.books if b in used]
 
 
+def mirror_diffs(cfg, bals):
+    """每对镜像两侧余额之和：[(Mirror, 差额)]；bals 是 {账本: books.balances(...)}，缺的账本按 0 算。"""
+    out = []
+    for m in cfg.mirrors:
+        (lb, la), (rb, ra) = m.sides()
+        left = bals[lb][la][m.currency] if lb in bals else Decimal(0)
+        right = bals[rb][ra][m.currency] if rb in bals else Decimal(0)
+        out.append((m, left + right))
+    return out
+
+
+def current_diffs(accounts=None):
+    """现在账上各对镜像的差额：[(Mirror, 差额)]；给了 accounts（{(账本, 科目)}）只看触及的那几对。
+
+    有账本加载出错时返回 None（差额算不准，不如不说）。
+    """
+    cfg = config.load()
+    bals = {}
+    for book in mirror_books(cfg):
+        entries, errors, _ = load_book(book)
+        if errors:
+            return None
+        bals[book] = balances(entries)
+    return [(m, d) for m, d in mirror_diffs(cfg, bals)
+            if accounts is None or any(side in accounts for side in m.sides())]
+
+
 def cmd_reconcile():
     cfg = config.load()
     print("\n===== 跨账套往来对账 =====")

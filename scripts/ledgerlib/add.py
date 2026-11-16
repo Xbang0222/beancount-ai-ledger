@@ -4,6 +4,7 @@
 """
 import os
 import sys
+from decimal import Decimal
 
 from . import config, journal, naming
 from .books import transactions
@@ -67,12 +68,14 @@ def precheck(block, book=None):
     return ymd
 
 
-def cmd_add(book, stream=None, path=None, allow_duplicate=False):
+def cmd_add(book, stream=None, path=None, allow_duplicate=False, one_sided=False):
     block = read_block(stream, path)
     if block is None:
         return 1
     ymd = precheck(block, book)
     if ymd is None:
+        return 1
+    if not one_sided and count_transactions(block) == 1 and _reject_one_sided(book, block):
         return 1
     block = inject_time(block)
     ym = f"{ymd[0]}-{ymd[1]}"
@@ -181,8 +184,8 @@ def _write(book, ym, block, allow_duplicate=False):
     return 0
 
 
-def mirror_hint(book, block, action="登记"):
-    """本笔触及跨账本往来科目时，提醒去另一本账处理镜像分录——只动单边 check 是发现不了的。"""
+def _mirrors_of(book):
+    """这本账的往来科目 -> [(对侧账本, 对侧科目, 币种)]。"""
     mine = {}
     for m in config.load().mirrors:
         (lb, la), (rb, ra) = m.sides()
@@ -190,7 +193,44 @@ def mirror_hint(book, block, action="登记"):
             mine.setdefault(la, []).append((rb, ra, m.currency))
         if rb == book:
             mine.setdefault(ra, []).append((lb, la, m.currency))
-    for acc in touched_accounts(block, mine):
+    return mine
+
+
+def _reject_one_sided(book, block):
+    """交易触及跨账本往来科目时拒绝单边入账并给出 pair 的写法；没触及返回 False。
+
+    往来只记一边，beancount 发现不了，差额要到 reconcile 才暴露——干脆不让单边记。
+    """
+    mine = _mirrors_of(book)
+    touched = touched_accounts(block, mine)
+    if not touched:
+        return False
+    print("[FAIL] 这笔用到了往来科目，往来必须两本账一起记，改用 pair（本次未写入）：")
+    others = []
+    for acc in touched:
+        for ob, oacc, cur in mine[acc]:
+            others.append(ob)
+            print(f"   - {book} 账 {acc}（{cur}）对应 {ob} 账 {oacc}：两边金额相同、方向相反（一边借、一边贷）")
+    other = others[0]
+    print(f"\npython3 scripts/ledger.py pair <<'EOF'\n[{book}]\n{block}\n[{other}]\n"
+          f"<{other} 账的对应分录>\nEOF")
+    print("\n只在补平已有的往来差额时才加 --one-sided 单边入账。")
+    return True
+
+
+def mirror_hint(book, block, action="登记"):
+    """本笔触及跨账本往来科目时，提醒去另一本账处理镜像分录，并报出这几对镜像现在的差额。"""
+    mine = _mirrors_of(book)
+    touched = touched_accounts(block, mine)
+    for acc in touched:
         for ob, oacc, cur in mine[acc]:
             print(f"\n[提示] 本笔触及往来科目 {acc}（{cur}），其镜像是 {ob} 账的 {oacc}："
                   f"请在 {ob} 账{action}对应分录，然后运行 reconcile 确认两侧相加为 0。")
+    if not touched:
+        return
+    from .reconcile import current_diffs
+
+    diffs = current_diffs({(book, acc) for acc in touched})
+    for m, diff in diffs or []:
+        state = "一致" if abs(diff) < Decimal(config.EPSILON) else "不一致，另一本账还没处理"
+        print(f"   {m.name}（{m.currency}）两侧相加现在是 {diff:.2f}（{state}）")
