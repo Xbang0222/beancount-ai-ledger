@@ -43,8 +43,10 @@ _PARTNER_KEYS = {"name", "payee", "share", "offset", "owner"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
 _MIRROR_KEYS = {"name", "currency", "accounts"}
 _NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "two_way", "note_required", "fallback",
-                "prefix", "patterns"}
+                "prefix", "patterns", "forbidden"}
 _PATTERN_KEYS = {"book", "name", "when", "with", "payee", "narration", "hint"}
+_FORBIDDEN_KEYS = {"field", "name", "pattern", "hint"}
+FORBIDDEN_FIELDS = ("narration", "payee")
 _RECURRING_KEYS = {"book", "name", "every", "since", "match", "entry", "confirm"}
 
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
@@ -102,9 +104,19 @@ class Pattern:
     name: str
     when: tuple        # 出现其中任一科目即可能命中（前缀匹配）
     with_: tuple       # 其余科目只能是这些（前缀匹配）；有别的科目就不算这个场景
-    payees: tuple      # 允许的对方名称
+    payees: tuple      # 允许的对方名称；空表示不限
     narrations: tuple  # 允许的摘要开头；空表示不限
     hint: str = ""
+
+
+@dataclass(frozen=True)
+class Forbidden:
+    """对方或摘要里不许出现的写法：正则命中即拒绝，例如摘要里夹带的日期、时刻。"""
+    field: str         # narration：查摘要；payee：查对方
+    name: str          # 这类写法叫什么，报错与 rules 对照表里用
+    pattern: str       # 正则原文
+    regex: object      # 编译好的正则
+    hint: str = ""     # 被拒时给出的改法
 
 
 @dataclass(frozen=True)
@@ -119,6 +131,7 @@ class Naming:
     fallback: tuple       # 找不到分类时的处理步骤，rules 原样打印
     prefix: dict          # 账本名 -> {科目前缀: (允许的摘要开头, ...)}
     patterns: tuple       # Pattern 元组
+    forbidden: tuple = ()  # Forbidden 元组
 
 
 @dataclass(frozen=True)
@@ -305,11 +318,13 @@ def _parse_naming(raw, books):
         name = p.get("name") or f"场景{i}"
         when = tuple(_account_prefix(a, pw) for a in _str_list(p.get("when"), f"{pw} when", False))
         with_ = tuple(_account_prefix(a, pw) for a in _str_list(p.get("with", []), f"{pw} with"))
+        payees = _str_list(p.get("payee", []), f"{pw} payee")
+        narrations = _str_list(p.get("narration", []), f"{pw} narration")
+        if not payees and not narrations:
+            raise ConfigError(f"{pw} 至少要写 payee（允许的对方）或 narration（允许的摘要开头）之一")
         patterns.append(Pattern(
             book=p["book"], name=str(name), when=when, with_=with_,
-            payees=_str_list(p.get("payee"), f"{pw} payee", allow_empty=False),
-            narrations=_str_list(p.get("narration", []), f"{pw} narration"),
-            hint=str(p.get("hint", ""))))
+            payees=payees, narrations=narrations, hint=str(p.get("hint", ""))))
     return Naming(
         markers=_str_list(raw.get("markers", []), f"{where} markers"),
         banned_payees=_str_list(raw.get("banned_payees", []), f"{where} banned_payees"),
@@ -320,7 +335,35 @@ def _parse_naming(raw, books):
         note_required=tuple(_account_prefix(a, where) for a in
                             _str_list(raw.get("note_required", []), f"{where} note_required")),
         fallback=_str_list(raw.get("fallback", []), f"{where} fallback"),
-        prefix=prefix, patterns=tuple(patterns))
+        prefix=prefix, patterns=tuple(patterns),
+        forbidden=_parse_forbidden(raw.get("forbidden", [])))
+
+
+def _parse_forbidden(raw):
+    if not isinstance(raw, list):
+        raise ConfigError("forbidden 要写成 [[naming.forbidden]]（数组表），每类写法一段")
+    out = []
+    for i, f in enumerate(raw, 1):
+        where = f"第 {i} 个 [[naming.forbidden]]"
+        if not isinstance(f, dict):
+            raise ConfigError(f"{where} 应为一个表（table）")
+        _no_unknown(f, _FORBIDDEN_KEYS, where)
+        field = f.get("field", "narration")
+        if field not in FORBIDDEN_FIELDS:
+            raise ConfigError(f"{where} field 应为 {' / '.join(FORBIDDEN_FIELDS)} 之一，收到：{field!r}")
+        name = f.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ConfigError(f"{where} 缺少 name（这类写法的名称，如 \"具体日期\"）")
+        pattern = f.get("pattern")
+        if not isinstance(pattern, str) or not pattern:
+            raise ConfigError(f"{where} 缺少 pattern（正则表达式）")
+        try:
+            regex = re.compile(pattern)
+        except re.error as e:
+            raise ConfigError(f"{where} pattern 不是合法的正则表达式：{pattern!r}（{e}）") from None
+        out.append(Forbidden(field=field, name=name.strip(), pattern=pattern, regex=regex,
+                             hint=str(f.get("hint", ""))))
+    return tuple(out)
 
 
 def _parse_recurring(raw, books):

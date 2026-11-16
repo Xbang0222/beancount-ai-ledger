@@ -197,11 +197,108 @@ def test_rules_没配_naming_时说明(ledger, capsys):
     assert "没有配置 [naming]" in capsys.readouterr().out
 
 
+FORBIDDEN = """
+[[naming.forbidden]]
+name = "具体日期"
+pattern = '\\d{1,2}月\\d{1,2}[日号]|(?<!\\d)\\d{1,2}号(?![线楼电汽])|昨天'
+hint = "所属期间可以保留，其余日期信息写入 note:"
+
+[[naming.forbidden]]
+name = "具体时刻"
+pattern = '(?<!\\d)\\d{1,2}[:：]\\d{2}(?!\\d)|(?<!\\d)\\d{1,2}点(?![券卡])'
+hint = "交易时刻写入 time: 元数据"
+
+[[naming.forbidden]]
+field = "payee"
+name = "注册全称"
+pattern = '有限公司|个体工商户|收单'
+hint = "对方写店名简称或业务描述"
+
+[[naming.patterns]]
+book = "personal"
+name = "自有账户之间的划转"
+when = ["Assets:Alipay", "Assets:Wechat"]
+narration = ["银行转账-", "银行取现"]
+hint = "对方写转出机构"
+"""
+
+
+@pytest.fixture
+def strict(named):
+    with open(named / "ledger.toml", "a", encoding="utf-8") as f:
+        f.write(FORBIDDEN)
+    return named
+
+
+@pytest.mark.parametrize("head,expect", [
+    ('2026-09-23 * "客运站" "餐饮-9月21日成都到重庆"', "含具体日期「9月21日」"),
+    ('2026-09-23 * "客运站" "餐饮-19号21点30成都到重庆"', "含具体日期「19号」"),
+    ('2026-09-23 * "客运站" "餐饮-19号21点30成都到重庆"', "含具体时刻「21点」"),
+    ('2026-09-23 * "客运站" "餐饮-重庆到成都20:10"', "含具体时刻「20:10」"),
+    ('2026-09-23 * "食堂" "餐饮-昨天午餐"', "含具体日期「昨天」"),
+    ('2026-09-23 * "成都某某餐饮管理有限公司" "餐饮-午餐"', "对方「成都某某餐饮管理有限公司」含注册全称「有限公司」"),
+])
+def test_摘要夹带日期时刻与对方写注册全称被拒(strict, capsys, head, expect):
+    path = strict / "personal" / "journal" / "2026-09.beancount"
+    before = path.read_bytes()
+    assert _add(_txn(head, "Expenses:Food:Dining  30.00 CNY", "Assets:Alipay")) == 1
+    out = capsys.readouterr().out
+    assert "写法不合规" in out and expect in out
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("payee,narr", [
+    ("房东", "餐饮-9月伙食费"),          # 所属期间不是具体日期
+    ("地铁", "餐饮-1号线站内便当"),      # 线路编号
+    ("便利店", "餐饮-5号电池赠饮"),      # 型号
+    ("加油站", "餐饮-92号汽油赠水"),
+    ("游戏平台", "餐饮-60点券兑换饮料"),
+    ("保险公司", "餐饮-午餐"),           # 「公司」不等于注册全称
+    ("食堂", "餐饮-2026年9月餐费"),
+])
+def test_期间编号型号不被日期时刻规则误拦(strict, payee, narr):
+    assert _add(_txn(f'2026-09-23 * "{payee}" "{narr}"', "Expenses:Food:Dining  30.00 CNY", "Assets:Alipay")) == 0
+
+
+def test_check_按禁止写法扫描既有分录(strict, capsys):
+    path = strict / "personal" / "journal" / "2026-09.beancount"
+    path.write_text(path.read_text(encoding="utf-8").replace('"餐饮-午餐"', '"餐饮-2号午餐"'), encoding="utf-8")
+    assert cli.main(["check"]) == 1
+    assert "含具体日期「2号」" in capsys.readouterr().out
+
+
+def test_rules_打印禁止写法(strict, capsys):
+    assert cli.main(["rules", "personal"]) == 0
+    out = capsys.readouterr().out
+    assert "摘要不得出现具体日期：所属期间可以保留" in out
+    assert "对方不得出现注册全称：对方写店名简称或业务描述" in out
+
+
+def test_固定场景可以只限定摘要开头(strict, capsys):
+    legs = ("Assets:Alipay  100.00 CNY", "Assets:Wechat")
+    assert _add(_txn('2026-09-23 * "微信" "微信提现到支付宝"', *legs)) == 1
+    out = capsys.readouterr().out
+    assert "「自有账户之间的划转」摘要以「银行转账-」或「银行取现」开头：对方写转出机构" in out
+    assert "对方写「" not in out
+    # 对方不限：写哪家机构都可以
+    assert _add(_txn('2026-09-23 * "微信" "银行转账-微信转支付宝"', *legs)) == 0
+    assert cli.main(["rules", "personal"]) == 0
+    out = capsys.readouterr().out
+    assert "自有账户之间的划转" in out and "对方只能写" not in out.split("自有账户之间的划转")[1]
+
+
 @pytest.mark.parametrize("extra,msg", [
     ('[naming]\nmarkers = "x"\nfoo = 1\n', "不认识的键"),
     ('[naming.prefix.nobook]\n"Expenses:Food" = "餐饮-"\n', "未声明的账本"),
     ('[naming.prefix.personal]\n"Food" = "餐饮-"\n', "科目名不合法"),
     ('[[naming.patterns]]\nbook = "shop"\nwhen = []\npayee = "股东"\n', "when"),
+    ('[[naming.patterns]]\nbook = "shop"\nwhen = ["Liabilities:OwnerLoan"]\n', "payee（允许的对方）或 narration"),
+    ('[[naming.forbidden]]\nname = "日期"\npattern = "(未闭合"\n', "不是合法的正则表达式"),
+    ('[[naming.forbidden]]\npattern = "x"\n', "缺少 name"),
+    ('[[naming.forbidden]]\nname = "日期"\n', "缺少 pattern"),
+    ('[[naming.forbidden]]\nname = "日期"\npattern = "x"\nfield = "note"\n', "field 应为"),
+    ('[[naming.forbidden]]\nname = "日期"\npattern = "x"\nwhere = "摘要"\n', "不认识的键"),
+    ('[naming]\nforbidden = "x"\n', "数组表"),
 ])
 def test_naming_配置写错直接报错(ledger, extra, msg):
     with open(ledger / "ledger.toml", "a", encoding="utf-8") as f:

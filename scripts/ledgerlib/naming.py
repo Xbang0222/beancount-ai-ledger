@@ -91,15 +91,23 @@ def problems(book, txn, naming):
     if item in naming.vague_items:
         out.append(f"摘要事项「{item}」太笼统：写清具体是什么东西（如「购物-小米音箱」）")
 
+    for f in naming.forbidden:
+        label, text = ("对方", payee) if f.field == "payee" else ("摘要", narr)
+        m = f.regex.search(text)
+        if m:
+            out.append(f"{label}「{text}」含{f.name}「{m.group(0)}」" + (f"：{f.hint}" if f.hint else ""))
+
     pat = _pattern_of(txn, [p for p in naming.patterns if p.book == book])
     if pat is not None:
-        bad_payee = payee not in pat.payees
+        bad_payee = pat.payees and payee not in pat.payees
         bad_narr = pat.narrations and not narr.startswith(pat.narrations)
         if bad_payee or bad_narr:
-            want = f"对方写「{_quote(pat.payees)}」"
+            want = []
+            if pat.payees:
+                want.append(f"对方写「{_quote(pat.payees)}」")
             if pat.narrations:
-                want += f"，摘要以「{_quote(pat.narrations)}」开头"
-            out.append(f"「{pat.name}」{want}" + (f"：{pat.hint}" if pat.hint else ""))
+                want.append(f"摘要以「{_quote(pat.narrations)}」开头")
+            out.append(f"「{pat.name}」{'，'.join(want)}" + (f"：{pat.hint}" if pat.hint else ""))
 
     if not str((txn.meta or {}).get("note", "")).strip():
         for p in txn.postings:
@@ -188,8 +196,10 @@ def print_patterns(naming, book):
         print(f"\n----- {book}：固定场景 -----")
     for p in pats:
         print(f"  {p.name}")
-        print(f"    分录只涉及：{' / '.join(p.when + p.with_)}（且含 {' / '.join(p.when)} 之一）")
-        print(f"    对方只能写：{' / '.join(p.payees)}")
+        print(f"    分录只涉及：{' / '.join(p.when + p.with_)}"
+              + (f"（且含 {' / '.join(p.when)} 之一）" if p.with_ else ""))
+        if p.payees:
+            print(f"    对方只能写：{' / '.join(p.payees)}")
         if p.narrations:
             print(f"    摘要开头：{' / '.join(p.narrations)}")
         if p.hint:
@@ -197,7 +207,7 @@ def print_patterns(naming, book):
 
 
 def print_general(naming):
-    """各本账通用的写法：找不到分类时怎么办、摘要格式、固定标记、不许用的词。"""
+    """各本账通用的写法：找不到分类时怎么办、摘要格式、固定标记、不许用的词与不许出现的写法。"""
     if naming.fallback:
         print("\n----- 找不到分类时 -----")
         for i, step in enumerate(naming.fallback, 1):
@@ -213,6 +223,9 @@ def print_general(naming):
         print(f"  不能当对方的空泛词：{'、'.join(naming.banned_payees)}")
     if naming.vague_items:
         print(f"  不能当事项的笼统词：{'、'.join(naming.vague_items)}")
+    for f in naming.forbidden:
+        label = "对方" if f.field == "payee" else "摘要"
+        print(f"  {label}不得出现{f.name}" + (f"：{f.hint}" if f.hint else ""))
 
 
 def cmd_rules(book=None):
