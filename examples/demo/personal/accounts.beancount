@@ -1,22 +1,22 @@
 ; ============================================================
 ; 个人账本（示例） · 会计科目表（Chart of Accounts）
-; 用法：按自己的情况增删——用不到的科目删掉，缺的照格式补上；银行卡建议按银行细分，
-;       如 Assets:Bank:CMB（招商）、Assets:Bank:ICBC（工商），改完跑一次 check。
-; 规则：科目名用英文（beancount 要求每段首字母大写），行尾中文注释写清核算范围；
+; 用法：按实际情况增删科目，不使用的删除，缺少的按相同格式补充；银行卡建议按银行细分，
+;       例如 Assets:Bank:CMB（招商）、Assets:Bank:ICBC（工商）。修改后执行 check。
+; 规则：科目名使用英文，每段首字母大写；行尾的中文注释写明核算范围。
 ;       层级为「一级大类 : 二级明细」，报表按前两级汇总。
-; 开户日期统一写 2026-08-01，只是为了任何日期的分录都能记；期初余额在 opening.beancount 登记。
+; 开户日期统一为 2026-08-01，使任何日期的分录均可入账；期初余额在 opening.beancount 登记。
 ; ============================================================
 
 ; ===== 资产 Assets =====
 ; —— 货币资金 ——
 2026-08-01 open Assets:Cash CNY                   ; 库存现金
-2026-08-01 open Assets:Bank:Main CNY              ; 银行存款－主力银行卡（建议改成具体银行，如 Assets:Bank:CMB）
+2026-08-01 open Assets:Bank:Main CNY              ; 银行存款－主力银行卡（建议改为具体银行，例如 Assets:Bank:CMB）
 2026-08-01 open Assets:Alipay CNY                 ; 其他货币资金－支付宝余额
 2026-08-01 open Assets:Alipay:Yuebao CNY          ; 其他货币资金－余额宝
 2026-08-01 open Assets:Wechat CNY                 ; 其他货币资金－微信零钱
 2026-08-01 open Assets:Bank:USD USD               ; 银行存款－美元储蓄（演示外币折算）
-; —— 应收与预付（债权；对象多了按 Assets:Receivable:<对象> 细分，如 Assets:Receivable:Xiaoming）——
-2026-08-01 open Assets:Receivable:Other CNY       ; 其他应收款－借给别人、替别人垫付、待退款
+; —— 应收与预付（债权；对象较多时按 Assets:Receivable:<对象> 细分，例如 Assets:Receivable:Xiaoming）——
+2026-08-01 open Assets:Receivable:Other CNY       ; 其他应收款－借出款、为他人垫付的款项、待退款
 2026-08-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
 ; —— 投资 ——
 2026-08-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 rules/investment.md）
@@ -27,9 +27,9 @@
 2026-08-01 open Liabilities:Huabei CNY            ; 消费信贷－蚂蚁花呗
 2026-08-01 open Liabilities:Baitiao CNY           ; 消费信贷－京东白条
 2026-08-01 open Liabilities:Loan CNY              ; 借款－房贷、车贷、助学贷款等（可细分）
-2026-08-01 open Liabilities:Payable:Other CNY     ; 其他应付款－向个人借的钱、别人替你垫付的钱
+2026-08-01 open Liabilities:Payable:Other CNY     ; 其他应付款－向个人的借款、他人代垫的款项
 
-; ===== 收入 Income（复式记账里收入记在贷方，余额显示为负数是正常的）=====
+; ===== 收入 Income（收入记在贷方，余额显示为负数属正常）=====
 2026-08-01 open Income:Salary CNY                 ; 工资薪金（按实发到账金额）
 2026-08-01 open Income:Bonus CNY                  ; 奖金、绩效
 2026-08-01 open Income:SideJob CNY                ; 兼职、劳务报酬
@@ -37,7 +37,7 @@
 2026-08-01 open Income:Invest:Interest CNY        ; 投资收益－利息（余额宝、存款）
 2026-08-01 open Income:Invest:Dividend CNY        ; 投资收益－分红
 2026-08-01 open Income:Invest:PnL CNY             ; 投资收益－买卖价差
-2026-08-01 open Income:Other CNY                  ; 其他收入（返现、奖励等；退款不算收入，冲减原支出）
+2026-08-01 open Income:Other CNY                  ; 其他收入（返现、奖励等；退款不确认收入，冲减原支出）
 
 ; ===== 支出 Expenses（一级大类 : 二级明细，与 rules/classification.md 一一对应）=====
 ; —— 餐饮 ——
@@ -45,7 +45,7 @@
 2026-08-01 open Expenses:Food:Snack CNY           ; 餐饮－饮品、咖啡、零食
 2026-08-01 open Expenses:Food:Grocery CNY         ; 餐饮－买菜、水果、食材
 ; —— 居住 ——
-2026-08-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不是费用，记 Assets:Prepaid:Deposit）
+2026-08-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不属于费用，记 Assets:Prepaid:Deposit）
 2026-08-01 open Expenses:Housing:Utilities CNY    ; 居住－水电燃气、话费宽带、物业
 2026-08-01 open Expenses:Housing:Daily CNY        ; 居住－日用品、清洁用品、家居小物
 ; —— 交通 ——
@@ -59,7 +59,7 @@
 2026-08-01 open Expenses:Entertainment:Subscription CNY ; 文娱－会员、订阅
 2026-08-01 open Expenses:Entertainment:Game CNY   ; 文娱－游戏充值
 2026-08-01 open Expenses:Entertainment:Other CNY  ; 文娱－电影、演出、KTV 等
-; —— 旅行（出游专项；旅行期间吃饭仍记 Food，整趟花费靠 #trip 标签归集，见 rules/tags.md）——
+; —— 旅行（出游专项；旅行期间的餐饮仍记 Food，整趟花费由 #trip 标签归集，见 rules/tags.md）——
 2026-08-01 open Expenses:Travel:Transport CNY     ; 旅行－城际交通（机票、火车票）
 2026-08-01 open Expenses:Travel:Lodging CNY       ; 旅行－酒店民宿
 2026-08-01 open Expenses:Travel:Ticket CNY        ; 旅行－门票、游玩项目
@@ -71,11 +71,11 @@
 2026-08-01 open Expenses:Insurance CNY            ; 保险－自付保费
 2026-08-01 open Expenses:Finance:Interest CNY     ; 财务费用－借款利息
 2026-08-01 open Expenses:Finance:Fee CNY          ; 财务费用－手续费、分期服务费
-2026-08-01 open Expenses:Other CNY                ; 其他（实在判断不了归哪类时的兜底）
+2026-08-01 open Expenses:Other CNY                ; 其他（无法判断类别时的兜底科目）
 
 ; ===== 权益 Equity =====
 2026-08-01 open Equity:OpeningBalances            ; 期初净资产（开账平衡科目，配合 opening.beancount 的 pad 使用）
-2026-08-01 open Equity:Adjustment                 ; 余额差异调整（账实不符时临时找平，查明原因后冲回）
+2026-08-01 open Equity:Adjustment                 ; 余额差异调整（账实不符时临时调平，查明原因后冲回）
 
 ; —— 与网店（示例）（shop 账本）的往来：双边镜像登记，见 ledger.toml [[mirrors]] ——
 2026-08-01 open Assets:Receivable:Shop CNY        ; 其他应收款－网店（示例）（本人垫付/借给该账本、尚未收回的款项）

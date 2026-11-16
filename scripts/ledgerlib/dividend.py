@@ -1,6 +1,6 @@
 """按月利润分配：算出指定月份的净利润（外币按汇率折成本位币），按 ledger.toml [dividend] 的比例拆分。
 
-外币汇率默认现拉（见 fxrate），也可用 --rate 指定；fx_alias 里的币种按别名取汇率（如 USDT 视同 USD）。
+外币汇率默认联网取得（见 fxrate），也可用 --rate 指定；fx_alias 里的币种按别名取汇率（如 USDT 视同 USD）。
 分红分录用 `period: "YYYY-MM"` 元数据标明属于哪个月的利润，按对方名称（payee）归到各方，
 算出「应得 − 已分配 = 还差多少」：发完分红后又补记了当月收支，差额会自动显出来。
 配了 offset 的一方，再把该科目当前余额（对方欠账本的钱，如多发的分红）从差额里扣掉，得出本次实付。
@@ -105,7 +105,7 @@ def outstanding(entries, cfg, rate_of):
 
 
 def _resolve_rates(currencies, cfg, overrides):
-    """{币种: (汇率, 说明)}；拉不到时抛 fxrate.RateError。"""
+    """{币种: (汇率, 说明)}；无法取得时抛 fxrate.RateError。"""
     rates = {}
     for cur in currencies:
         if cur == cfg.base_currency:

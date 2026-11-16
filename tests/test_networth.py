@@ -9,7 +9,7 @@ from ledgerlib import networth, quote
 
 @pytest.fixture(autouse=True)
 def no_network(monkeypatch):
-    """默认当作数据源里查不到，测试不联网；要现拉价的用例自己换掉 quote.price。"""
+    """默认当作数据源里查不到，测试不联网；需要联网取价的用例自己换掉 quote.price。"""
     def nothing(code, base, day=None):
         raise quote.NoRate(code)
 
@@ -93,12 +93,12 @@ def _accounts(root):
     return root / "personal" / "accounts.beancount"
 
 
-def test_默认现拉当天价格_优先于账内旧价格(ledger, capsys, monkeypatch):
+def test_默认联网取价_优先于账内旧价格(ledger, capsys, monkeypatch):
     _append(_personal_journal(ledger), USD_INCOME + USD_PRICE)
     monkeypatch.setattr(quote, "price", lambda code, base, day=None: (Decimal("7.2"), "2026-09-23", "测试源"))
     out = _run(capsys)
     assert "≈     720.00 CNY" in out
-    assert "现拉，测试源" in out
+    assert "联网取价，测试源" in out
 
 
 def test_offline不联网只用账内价格(ledger, capsys, monkeypatch):

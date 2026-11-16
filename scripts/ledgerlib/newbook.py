@@ -28,14 +28,14 @@ CURRENCY_NAMES = {"CNY": "人民币", "USD": "美元", "HKD": "港币", "EUR": "
 
 CONFIG_HEADER = f"""\
 # ============================================================
-# 账套配置：有哪些账本、账本之间的往来怎么对账
-# 说明见 docs/REFERENCE.md「多本账」。新增账本请用：
+# 账套配置：账本清单与账本之间的往来镜像
+# 写法见 docs/REFERENCE.md「多本账」。新增账本使用：
 #   python3 scripts/ledger.py new-book <名称> [--template personal|business|minimal] [--link <已有账本>]
 # ============================================================
 
 [ledger]
-{'timezone = "' + DEFAULT_TIMEZONE + '"':<32}# 记账时区：自动注入的 time、未来日期/时间校验都按它
-{{base_line}}# 本位币：networth 折算合计的目标币种
+{'timezone = "' + DEFAULT_TIMEZONE + '"':<32}# 记账时区：注入 time、校验日期与时间是否晚于当前时刻均以此为准
+{{base_line}}# 本位币：networth 折算的目标币种
 """
 
 
@@ -278,7 +278,7 @@ def _link(ch, cfg, name, title, link, base, open_date, owner_accounts, notes):
               + open_line("Assets:Receivable:Owner", f"其他应收款－{owner.title}（本账本资金由其代收/占用）") + "\n")
 
     return (
-        f"\n# {link} ⇄ {name} 往来（new-book --link 生成）：每对两侧余额相加必须为 0，reconcile 自动核对\n"
+        f"\n# {link} ⇄ {name} 往来镜像，由 new-book --link 生成：每对两侧余额合计必须为 0，由 reconcile 核对\n"
         f"[[mirrors]]\nname = {_toml_str(f'{link} 垫付 {name}')}\ncurrency = \"{base}\"\n"
         f"accounts = {{ {link} = \"{recv}\", {name} = \"Liabilities:OwnerLoan\" }}\n"
         f"\n[[mirrors]]\nname = {_toml_str(f'{link} 代收/占用 {name} 资金')}\ncurrency = \"{base}\"\n"

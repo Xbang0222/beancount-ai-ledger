@@ -1,11 +1,11 @@
-"""现拉行情：账本里能折现的东西（外币、加密币、金银、基金、股票）统一在这里取价，折成本位币。
+"""联网取价：账本里能折现的东西（外币、加密币、金银、基金、股票）统一在这里取价，折成本位币。
 
 代码约定（也是账本里 commodity 的写法）：
 - 外币、加密币：ISO 代码，如 USD、HKD、USDT、BTC；黄金、白银按克：AU、AG（见 fxrate）。
 - 场外基金：F + 6 位基金代码，如 F161226，取天天基金公布的单位净值。
 - 股票：交易所前缀 + 代码，如 SH600519、SZ000001、BJ430047、HK00700、US.AAPL，取腾讯行情最新价，
-  港股、美股的价格再按现拉汇率折成本位币。
-都是现拉现用，不写入账本；拉不到时由调用方决定改用账内 price 还是报错。
+  港股、美股的价格再按联网取得的汇率折成本位币。
+均为即取即用，不写入账本；无法取得时由调用方决定改用账内 price 还是报错。
 """
 import json
 import re
@@ -32,7 +32,7 @@ def _fund(code, day):
         data = json.loads(fxrate.http_get(FUND_URL.format(code=code, start=start, end=end), FUND_HEADERS))
         rows = (data.get("Data") or {}).get("LSJZList") or []
     except Exception as ex:
-        raise RateError(f"拉取基金 {code} 净值失败：{ex}") from None
+        raise RateError(f"取得基金 {code} 净值失败：{ex}") from None
     if not rows:
         raise NoRate(f"天天基金查不到基金 {code} 的净值")
     return Decimal(rows[0]["DWJZ"]), rows[0]["FSRQ"]
@@ -44,7 +44,7 @@ def _stock(market, code):
     try:
         text = fxrate.http_get(STOCK_URL.format(code=sym)).decode("gbk", "replace")
     except Exception as ex:
-        raise RateError(f"拉取股票 {market}{code} 行情失败：{ex}") from None
+        raise RateError(f"取得股票 {market}{code} 行情失败：{ex}") from None
     fields = text.split('"', 2)[1].split("~") if '"' in text else []
     if len(fields) < 31 or not fields[3]:
         raise NoRate(f"腾讯行情查不到股票 {market}{code}")

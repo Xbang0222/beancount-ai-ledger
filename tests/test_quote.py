@@ -1,4 +1,4 @@
-"""现拉行情：按代码分派到汇率、基金、股票数据源，金银按克换算；全程替换网络请求，不联网。"""
+"""联网取价：按代码分派到汇率、基金、股票数据源，金银按克换算；全程替换网络请求，不联网。"""
 import json
 from datetime import date
 from decimal import Decimal

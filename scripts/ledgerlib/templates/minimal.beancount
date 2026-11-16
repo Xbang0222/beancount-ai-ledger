@@ -1,6 +1,6 @@
 ; ============================================================
 ; {{TITLE}} · 会计科目表（最小模板）
-; 适合家庭共同账、多人 AA 的活动经费、替父母代管的账户等：先放最少的科目，用到再加。
+; 适用于家庭共同账、多人 AA 的活动经费、代管他人的账户等：只开立最少的科目，需要时再补充。
 ; ============================================================
 
 {{OPEN_DATE}} open Assets:Cash {{CURRENCY}} ; 库存现金
@@ -8,5 +8,5 @@
 {{OPEN_DATE}} open Assets:Receivable:Other {{CURRENCY}} ; 其他应收款
 {{OPEN_DATE}} open Liabilities:Payable:Other {{CURRENCY}} ; 其他应付款
 {{OPEN_DATE}} open Income:Other {{CURRENCY}} ; 收入
-{{OPEN_DATE}} open Expenses:Other {{CURRENCY}} ; 支出（用多了就细分，如 Expenses:Food、Expenses:Travel）
+{{OPEN_DATE}} open Expenses:Other {{CURRENCY}} ; 支出（业务增多后细分，例如 Expenses:Food、Expenses:Travel）
 {{OPEN_DATE}} open Equity:OpeningBalances ; 期初平衡科目

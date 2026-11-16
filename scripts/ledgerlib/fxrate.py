@@ -1,8 +1,8 @@
-"""现拉汇率与贵金属价：开源数据集 fawazahmed0/exchange-api（npm 包 @fawazahmed0/currency-api）。
+"""联网取得汇率与贵金属价格：开源数据集 fawazahmed0/exchange-api（npm 包 @fawazahmed0/currency-api）。
 
 选它是因为云端会话只放行 npm / GitHub / PyPI 等域名；每天北京时间中午前后发布新版，历史每天一版。
 覆盖法币、主流加密币（USDT、BTC 等）和金银铂钯。数据集里的 XAU、XAG 是每金衡盎司的价格；
-账本里黄金、白银按克记（AU、AG），这里换算成每克。汇率现拉现用，不写入账本。
+账本里黄金、白银按克记（AU、AG），这里换算成每克。汇率即取即用，不写入账本。
 """
 import io
 import json
@@ -21,7 +21,7 @@ _cache = {}
 
 
 class RateError(Exception):
-    """拉不到汇率。消息面向用户，直接打印即可。"""
+    """无法取得汇率。消息面向用户，直接打印即可。"""
 
 
 class NoRate(RateError):
@@ -77,7 +77,7 @@ def fetch(cur, base, day=None):
     except RateError:
         raise
     except Exception as ex:  # 网络、格式、币种缺失统一报给用户
-        raise RateError(f"拉取 {cur.upper()}/{base.upper()} 汇率失败：{ex}") from None
+        raise RateError(f"取得 {cur.upper()}/{base.upper()} 汇率失败：{ex}") from None
     if cur.upper() in GRAM_UNITS:
         rate /= TROY_OUNCE_GRAMS
     return rate, date

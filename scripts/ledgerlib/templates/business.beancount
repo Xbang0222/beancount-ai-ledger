@@ -1,9 +1,9 @@
 ; ============================================================
 ; {{TITLE}} · 会计科目表（经营账：店铺、工作室、公司）
-; 独立会计主体：与个人账分开记，经营收支与利润单独核算。
-; 与个人账之间的资金往来（你替店里垫付、店里的钱进了你的个人账户）按双边镜像登记，
-; 科目用 new-book --link 生成的 Liabilities:OwnerLoan / Assets:Receivable:Owner。
-; 注意：这是内部管理账，不能替代税法要求的正式账簿与纳税申报。
+; 独立会计主体：与个人账分开核算，经营收支与利润单独列示。
+; 与个人账之间的资金往来（个人为店铺垫付、店铺款项进入个人账户）按双边镜像登记，
+; 使用 new-book --link 生成的科目 Liabilities:OwnerLoan / Assets:Receivable:Owner。
+; 本账本为内部管理账，不能替代税法要求的正式账簿与纳税申报。
 ; ============================================================
 
 ; ===== 资产 =====
@@ -16,13 +16,13 @@
 {{OPEN_DATE}} open Assets:Prepaid {{CURRENCY}} ; 预付账款－预付货款、押金
 
 ; ===== 负债 =====
-{{OPEN_DATE}} open Liabilities:Payable:Supplier {{CURRENCY}} ; 应付账款－欠供应商的货款
+{{OPEN_DATE}} open Liabilities:Payable:Supplier {{CURRENCY}} ; 应付账款－应付供应商货款
 {{OPEN_DATE}} open Liabilities:Payable:Other {{CURRENCY}} ; 其他应付款
 {{OPEN_DATE}} open Liabilities:Tax {{CURRENCY}} ; 应交税费
 
 ; ===== 权益 =====
 {{OPEN_DATE}} open Equity:OwnerCapital {{CURRENCY}} ; 实收资本－出资人投入
-{{OPEN_DATE}} open Equity:Distributions {{CURRENCY}} ; 利润分配－分给出资人/合伙人的利润（ledger.py dividend）
+{{OPEN_DATE}} open Equity:Distributions {{CURRENCY}} ; 利润分配－已分配给出资人、合伙人的利润（ledger.py dividend）
 {{OPEN_DATE}} open Equity:OpeningBalances ; 期初平衡科目
 
 ; ===== 收入 =====

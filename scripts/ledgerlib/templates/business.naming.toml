@@ -1,5 +1,5 @@
 
-# {{NAME}} 账本的摘要开头（new-book 按经营模板生成）；一笔有几个收支科目时按金额最大的那个
+# {{NAME}} 账本的摘要开头，由 new-book 按经营模板生成；一笔分录有多个收支科目时按金额最大者确定
 [naming.prefix.{{NAME}}]
 "Expenses:COGS" = "主营业务成本-"
 "Expenses:Shipping" = "销售费用-"

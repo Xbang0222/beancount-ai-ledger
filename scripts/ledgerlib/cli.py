@@ -12,35 +12,35 @@ from .entry import parse_ym
 
 EPILOG = """\
 示例：
-  python3 scripts/ledger.py doctor                       检查环境与账套状态（第一次用先跑它）
-  python3 scripts/ledger.py brief                        入账前先看这一页（日期、临时状态、可用科目、写法、范例）
-  python3 scripts/ledger.py lookup 猫粮 拼多多            按关键词查该记哪个科目、规则写在哪一节
-  python3 scripts/ledger.py check                        校验全部账本（有往来镜像时连带对账）
-  python3 scripts/ledger.py add personal <<'EOF'         从 stdin 录一笔，分录写在 heredoc 里，以 EOF 结束
-  python3 scripts/ledger.py add personal --file entry.tmp   从 UTF-8 文件录一笔（PowerShell 等没有 heredoc 时用）
-  python3 scripts/ledger.py pair <<'EOF'                 往来两边一起录：[账本名] 一段一笔，共两段
-  python3 scripts/ledger.py recent personal              最近 10 笔（核对刚才记上没有；行首 [编号] 供更正/作废用）
-  python3 scripts/ledger.py find personal 午餐 39.02     按关键词找分录并显示编号
-  python3 scripts/ledger.py amend personal <编号> <<'EOF'   用新分录替换这一笔（自动校验，失败自动回滚）
-  python3 scripts/ledger.py void personal <编号>         作废（删除）这一笔
+  python3 scripts/ledger.py doctor                       检查环境与账套状态，首次使用时先执行
+  python3 scripts/ledger.py brief                        入账所需的现场信息：日期、临时状态、可用科目、写法、范例
+  python3 scripts/ledger.py lookup 猫粮 拼多多            按关键词检索应记的科目与规则所在章节
+  python3 scripts/ledger.py check                        校验全部账本；配置了往来镜像时同时对账
+  python3 scripts/ledger.py add personal <<'EOF'         从标准输入入账一笔，分录写在 heredoc 中，以 EOF 结束
+  python3 scripts/ledger.py add personal --file entry.tmp   从 UTF-8 文件入账一笔，用于不支持 heredoc 的终端
+  python3 scripts/ledger.py pair <<'EOF'                 往来在两本账同时登记：每段首行为 [账本名]，共两段
+  python3 scripts/ledger.py recent personal              最近 10 笔，行首 [编号] 用于更正与作废
+  python3 scripts/ledger.py find personal 午餐 39.02     按关键词查找分录并显示编号
+  python3 scripts/ledger.py amend personal <编号> <<'EOF'   更正：以新分录整笔替换，校验失败时还原
+  python3 scripts/ledger.py void personal <编号>         作废：删除该笔
   python3 scripts/ledger.py summary personal 2026-09     按一级大类汇总
   python3 scripts/ledger.py balances personal            科目余额表
-  python3 scripts/ledger.py tag personal trip 2026-09    按标签查明细（一次一个标签）
-  python3 scripts/ledger.py report personal 2026-09      月度收支 / 储蓄率分析
-  python3 scripts/ledger.py networth                     资产负债汇总（多本账时抵销账本间往来）
-  python3 scripts/ledger.py networth --rate USD=7.1      临时指定汇率试算
-  python3 scripts/ledger.py quote AU USD F161226         现拉金价（每克）、汇率、基金净值
-  python3 scripts/ledger.py dividend 2026-10             按月利润分配（汇率现拉，按 ledger.toml [dividend] 比例拆分）
+  python3 scripts/ledger.py tag personal trip 2026-09    按标签汇总明细，一次一个标签
+  python3 scripts/ledger.py report personal 2026-09      月度报告：收支与储蓄率
+  python3 scripts/ledger.py networth                     合并资产负债，抵销账本之间的往来
+  python3 scripts/ledger.py networth --rate USD=7.1      指定汇率试算
+  python3 scripts/ledger.py quote AU USD F161226         联网查询每克金价、汇率、基金净值
+  python3 scripts/ledger.py dividend 2026-10             按月利润分配，按 ledger.toml 的 [dividend] 比例拆分
   python3 scripts/ledger.py new-book shop --template business --link personal
-  python3 scripts/ledger.py backup                       把整个账套连同 Git 历史打成压缩包（没有远程仓库时存云盘、网盘）
-  python3 scripts/ledger.py backup --daily               同上，今天已经备份过就跳过
-  python3 scripts/ledger.py --root examples/demo check   对另一个目录里的账套操作
+  python3 scripts/ledger.py backup                       将整个账套连同 Git 历史打包，供没有远程仓库时存入云盘
+  python3 scripts/ledger.py backup --daily               同上，当日已备份时跳过
+  python3 scripts/ledger.py --root examples/demo check   操作其他目录中的账套
 
 约定：
-  - 一次 add 只录一笔交易，多笔请分多次；
-  - 账本之间的往来用 pair 两边一起录，add 遇到往来科目会拒绝；
-  - 改账一律用 amend / void，不要手动编辑序时簿；
-  - 查询类命令在账本存在加载错误时直接报错、不出报告，请先 check 修复。
+  - 一次 add 只入账一笔交易，多笔分多次入账；
+  - 账本之间的往来使用 pair 在两本账同时登记，add 遇到往来科目会拒绝；
+  - 更正与作废一律使用 amend / void，不得手工编辑序时簿；
+  - 账本存在加载错误时，查询类命令直接报错、不输出报告，须先执行 check 并修复。
 """
 
 
@@ -84,124 +84,124 @@ def _positive_int(value):
 def build_parser():
     p = argparse.ArgumentParser(
         prog="ledger.py",
-        description="Beancount 复式记账账套的统一入口：入账、校验、查询、对账",
+        description="Beancount 复式账套的统一入口：入账、更正、校验、查询、对账",
         epilog=EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("--root", metavar="DIR", help="账套根目录（ledger.toml 所在目录），默认为本仓库根目录")
+    p.add_argument("--root", metavar="DIR", help="账套根目录，即 ledger.toml 所在目录；默认为本仓库根目录")
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = p.add_subparsers(dest="cmd", metavar="命令")
 
-    sub.add_parser("doctor", help="检查运行环境、各账本状态和 Git 远程仓库是否安全")
+    sub.add_parser("doctor", help="检查运行环境、各账本状态、Git 远程仓库是否私有")
 
-    c = sub.add_parser("check", help="校验全部账本（有往来镜像时默认连带对账）")
-    c.add_argument("--no-reconcile", action="store_true", help="跳过跨账本往来对账")
+    c = sub.add_parser("check", help="校验全部账本；配置了往来镜像时同时对账")
+    c.add_argument("--no-reconcile", action="store_true", help="跳过账本之间的往来对账")
 
-    a = sub.add_parser("add", help="追加一笔分录（从 stdin 或 --file 读取；自动校验，失败自动回滚）")
+    a = sub.add_parser("add", help="入账一笔分录：从标准输入或 --file 读取，校验失败时回滚")
     a.add_argument("book")
     a.add_argument("-f", "--file", metavar="PATH",
-                   help="从 UTF-8 文本文件读取分录，不读 stdin（Windows PowerShell 管道会弄坏中文时用）")
+                   help="从 UTF-8 文本文件读取分录，不读标准输入；用于 Windows PowerShell 管道损坏中文的情形")
     a.add_argument("--allow-duplicate", action="store_true",
-                   help="账上已有内容相同的一笔时仍然入账（确实是两笔才用）")
+                   help="账上已有内容相同的分录时仍然入账，仅用于确属两笔独立交易的情形")
     a.add_argument("--one-sided", action="store_true",
-                   help="分录用到往来科目时仍然只记这一本账（只在补平已有往来差额时用，平时用 pair）")
+                   help="分录用到往来科目时仍只登记本账本，仅用于补平既有的往来差额；其余情形使用 pair")
 
-    pr = sub.add_parser("pair", help="往来两边一起录：两本账各一笔，一起校验，任一边不过就都不写")
-    pr.add_argument("-f", "--file", metavar="PATH", help="从 UTF-8 文本文件读取，不读 stdin")
+    pr = sub.add_parser("pair", help="往来在两本账同时登记：两本账各一笔，一并校验，任一边未通过则均不写入")
+    pr.add_argument("-f", "--file", metavar="PATH", help="从 UTF-8 文本文件读取，不读标准输入")
     pr.add_argument("--allow-duplicate", action="store_true",
-                    help="账上已有内容相同的一笔时仍然入账（确实是两笔才用）")
+                    help="账上已有内容相同的分录时仍然入账，仅用于确属两笔独立交易的情形")
 
-    fd = sub.add_parser("find", help="按关键词找分录并显示编号（对方、摘要、科目、金额、标签都能搜）")
+    fd = sub.add_parser("find", help="按关键词查找分录并显示编号；对方、摘要、科目、金额、标签均可检索")
     fd.add_argument("book")
-    fd.add_argument("keyword", nargs="+", help="关键词，多个要同时出现")
-    fd.add_argument("--month", type=_ym, metavar="YYYY-MM", help="只在这个月里找")
+    fd.add_argument("keyword", nargs="+", help="关键词；给出多个时须同时出现")
+    fd.add_argument("--month", type=_ym, metavar="YYYY-MM", help="只在该月份内查找")
     fd.add_argument("-n", type=_positive_int, default=20, metavar="N", help="最多显示最近 N 笔，默认 20")
 
-    vd = sub.add_parser("void", help="作废一笔分录（从序时簿删除，自动校验，失败自动回滚）")
+    vd = sub.add_parser("void", help="作废一笔分录：从序时簿删除，校验失败时回滚")
     vd.add_argument("book")
     vd.add_argument("id", help="分录编号，见 find / recent 输出行首的 [编号]")
 
-    am = sub.add_parser("amend", help="更正一笔分录：用 stdin 或 --file 传入的新分录替换它")
+    am = sub.add_parser("amend", help="更正一笔分录：以标准输入或 --file 传入的新分录整笔替换")
     am.add_argument("book")
     am.add_argument("id", help="分录编号，见 find / recent 输出行首的 [编号]")
-    am.add_argument("-f", "--file", metavar="PATH", help="从 UTF-8 文本文件读取新分录，不读 stdin")
+    am.add_argument("-f", "--file", metavar="PATH", help="从 UTF-8 文本文件读取新分录，不读标准输入")
     am.add_argument("--allow-duplicate", action="store_true",
-                    help="更正后与账上另一笔内容相同时仍然写入")
+                    help="更正后与账上另一笔分录内容相同时仍然写入")
 
-    rc = sub.add_parser("recent", help="按发生时间列出最近几笔交易")
+    rc = sub.add_parser("recent", help="按发生时间列出最近的交易")
     rc.add_argument("book")
     rc.add_argument("-n", type=_positive_int, default=10, metavar="N", help="显示笔数，默认 10")
 
-    s = sub.add_parser("summary", help="按一级大类汇总支出/收入")
+    s = sub.add_parser("summary", help="按一级大类汇总支出与收入")
     s.add_argument("book")
     s.add_argument("ym", nargs="?", type=_ym, metavar="YYYY-MM")
 
-    b = sub.add_parser("balances", help="各账户余额")
+    b = sub.add_parser("balances", help="科目余额表")
     b.add_argument("book")
 
-    t = sub.add_parser("tag", help="按标签查账（一次只支持一个标签）")
+    t = sub.add_parser("tag", help="按标签汇总明细，一次一个标签")
     t.add_argument("book")
     t.add_argument("tag")
     t.add_argument("ym", nargs="?", type=_ym, metavar="YYYY-MM")
 
-    r = sub.add_parser("report", help="月度财务分析报告")
+    r = sub.add_parser("report", help="月度报告：收入、支出占比、结余与储蓄率")
     r.add_argument("book")
     r.add_argument("ym", nargs="?", type=_ym, metavar="YYYY-MM")
 
-    sub.add_parser("reconcile", help="跨账本往来对账（每对镜像科目两侧余额必须相加为 0）")
+    sub.add_parser("reconcile", help="核对账本之间的往来：每对镜像科目两侧余额合计须为 0")
 
-    n = sub.add_parser("networth", help="资产负债汇总：合并各账本、抵销账本间往来，外币折合本位币")
+    n = sub.add_parser("networth", help="合并资产负债：合并各账本、抵销账本之间的往来，按当日价格折合本位币")
     n.add_argument("--rate", type=_rate, action="append", metavar="币种=汇率",
-                   help="临时指定汇率（如 USD=7.1，可重复），只用于本次试算、不写入账本")
-    n.add_argument("--offline", action="store_true", help="不联网取价，只用账内 price")
+                   help="指定汇率，如 USD=7.1，可重复；只用于本次试算，不写入账本")
+    n.add_argument("--offline", action="store_true", help="不联网取价，只使用账内 price")
 
-    qt = sub.add_parser("quote", help="现拉价格：外币、加密币、金银（按克）、基金、股票折合本位币")
+    qt = sub.add_parser("quote", help="联网查询价格：外币、加密货币、金银（每克）、基金、股票，折合本位币")
     qt.add_argument("code", nargs="+", metavar="代码", help="USD、USDT、AU、AG、F161226、SH600519、HK00700、US.AAPL")
-    qt.add_argument("--date", type=_date, metavar="YYYY-MM-DD", help="取那一天的历史价（股票只有最新价）")
+    qt.add_argument("--date", type=_date, metavar="YYYY-MM-DD", help="查询该日的历史价格；股票只有最新价")
 
-    dv = sub.add_parser("dividend", help="按月利润分配：算当月净利润（外币现拉汇率折算），按 [dividend] 比例拆分")
+    dv = sub.add_parser("dividend", help="按月利润分配：计算当月净利润，外币联网取汇率折算，按 [dividend] 比例拆分")
     dv.add_argument("ym", type=_ym, metavar="YYYY-MM")
     dv.add_argument("--rate", type=_rate, action="append", metavar="币种=汇率",
-                    help="指定汇率（如 USDT=6.69），不指定则现拉当天汇率")
+                    help="指定汇率，如 USDT=6.69；未指定时联网取得当日汇率")
     dv.add_argument("--recalc", action="store_true",
-                    help="已发过分红的往月也重新计算应得与差额（默认视为结清，只列实发）")
+                    help="已发放分红的月份也重新计算应得与差额；默认视为已结清，只列实发金额")
 
-    f = sub.add_parser("fmt", help="序时簿排版规范化（分录间空行、按日期时间重排）")
-    f.add_argument("--check", action="store_true", help="只检测不写入，未格式化则退出码 1")
+    f = sub.add_parser("fmt", help="整理序时簿排版：分录间空行、按日期与时间排序")
+    f.add_argument("--check", action="store_true", help="只检查不写入；排版不合规时退出码为 1")
     f.add_argument("book", nargs="?")
 
     sub.add_parser("books", help="列出 ledger.toml 中的账本与往来镜像")
 
-    br = sub.add_parser("brief", help="入账前先看这一页：今天几号、临时状态、该补的周期分录、可用科目、写法、最近几笔")
-    br.add_argument("book", nargs="?", help="只看某本账，默认全部")
+    br = sub.add_parser("brief", help="入账所需的现场信息：日期、临时状态、待补记的周期分录、可用科目、写法、范例")
+    br.add_argument("book", nargs="?", help="只输出该账本，默认全部")
 
     lk = sub.add_parser("lookup", help="按关键词检索分类表、速查词典、规则文档和科目说明")
-    lk.add_argument("words", nargs="+", metavar="关键词", help="东西、商家平台或业务名，可给多个，逐个检索")
+    lk.add_argument("words", nargs="+", metavar="关键词", help="物品、商家或平台、业务名称；可给出多个，逐个检索")
 
-    ru = sub.add_parser("rules", help="对方与摘要的写法对照表（ledger.toml 的 [naming]，入账前查它）")
-    ru.add_argument("book", nargs="?", help="只看某本账，默认全部")
+    ru = sub.add_parser("rules", help="对方与摘要的写法对照表，取自 ledger.toml 的 [naming]")
+    ru.add_argument("book", nargs="?", help="只输出该账本，默认全部")
 
-    cm = sub.add_parser("commit-msg", help="检查提交信息（commit-msg 钩子调用；--range 检查已有的提交）")
+    cm = sub.add_parser("commit-msg", help="检查提交信息：由 commit-msg 钩子调用；--range 检查已有的提交")
     cm.add_argument("file", nargs="?", help="git 传入的提交信息文件")
     cm.add_argument("--range", dest="rev_range", metavar="A..B",
-                    help="改为检查这个范围里已有的提交，如 origin/main..HEAD")
+                    help="改为检查该范围内已有的提交，如 origin/main..HEAD")
 
-    nb = sub.add_parser("new-book", help="新建账本（生成科目表模板并登记到 ledger.toml）")
-    nb.add_argument("name", help="账本名：小写字母开头，可含数字、- 和 _（如 personal、shop、family）")
+    nb = sub.add_parser("new-book", help="新建账本：生成科目表并登记到 ledger.toml")
+    nb.add_argument("name", help="账本名：小写字母开头，可含数字、- 和 _，如 personal、shop、family")
     nb.add_argument("--template", choices=("personal", "business", "minimal"), default="personal",
-                    help="科目表模板：personal 个人（默认）/ business 经营 / minimal 最小")
+                    help="科目表模板：personal 个人（默认）、business 经营、minimal 最小")
     nb.add_argument("--title", help="账本标题，如 \"家庭共同账\"")
     nb.add_argument("--kind", choices=config.KINDS,
-                    help="账本性质：personal 算储蓄率 / business 看经营结余；默认随模板")
-    nb.add_argument("--link", metavar="BOOK", help="与已有账本建立往来（生成双边往来科目与 [[mirrors]]）")
+                    help="账本性质：personal 的月度报告计算储蓄率，business 计算经营结余；默认随模板")
+    nb.add_argument("--link", metavar="BOOK", help="与已有账本建立往来：生成双边往来科目与 [[mirrors]]")
     nb.add_argument("--open-date", metavar="YYYY-MM-DD", help="科目开户日期，默认 1970-01-01")
     nb.add_argument("--no-consolidate", action="store_true",
-                    help="不并入 networth 合并资产负债（与他人共有的账本，如家庭共同账）")
+                    help="不并入 networth 的合并资产负债，用于与他人共有的账本，如家庭共同账")
 
-    bk = sub.add_parser("backup", help="把整个账套连同 Git 历史打成一个压缩包（没有远程仓库时存到云盘、网盘）")
+    bk = sub.add_parser("backup", help="将整个账套连同 Git 历史打包为一个压缩包，供没有远程仓库时存入云盘")
     bk.add_argument("-o", "--out", metavar="DIR",
-                    help="压缩包放到哪个目录，默认账套根目录下的 backups/（只留最新一份）")
-    bk.add_argument("--daily", action="store_true", help="今天已经备份过就跳过，用于每天存一份")
+                    help="压缩包的存放目录；默认为账套根目录下的 backups/，只保留最新一份")
+    bk.add_argument("--daily", action="store_true", help="当日已备份时跳过，用于每日备份一次")
 
     return p
 

@@ -86,7 +86,7 @@ def test_外币按指定汇率折算后按比例拆分(shop, capsys):
     assert "应得     232.50" in _line(out, "合伙人")
 
 
-def test_不给汇率时按别名现拉(shop, capsys, monkeypatch):
+def test_不给汇率时按别名联网取价(shop, capsys, monkeypatch):
     text = (shop / "ledger.toml").read_text(encoding="utf-8")
     (shop / "ledger.toml").write_text(
         text.replace('base_currency = "CNY"', 'base_currency = "CNY"\nfx_alias = { USDT = "USD" }'),
@@ -98,9 +98,9 @@ def test_不给汇率时按别名现拉(shop, capsys, monkeypatch):
     assert "1 USDT = 7.1235 CNY" in out and "按 USD 汇率" in out and "2026-09-30" in out
 
 
-def test_拉不到汇率时报错提示用rate(shop, capsys, monkeypatch):
+def test_无法取得汇率时报错提示用rate(shop, capsys, monkeypatch):
     def boom(cur, base):
-        raise fxrate.RateError("拉取 USDT/CNY 汇率失败：断网")
+        raise fxrate.RateError("取得 USDT/CNY 汇率失败：断网")
 
     monkeypatch.setattr(fxrate, "fetch", boom)
     assert dividend.cmd_dividend("2026-09", None) == 1

@@ -1,9 +1,9 @@
 ; ============================================================
 ; 网店（示例） · 会计科目表（经营账：店铺、工作室、公司）
-; 独立会计主体：与个人账分开记，经营收支与利润单独核算。
-; 与个人账之间的资金往来（你替店里垫付、店里的钱进了你的个人账户）按双边镜像登记，
-; 科目用 new-book --link 生成的 Liabilities:OwnerLoan / Assets:Receivable:Owner。
-; 注意：这是内部管理账，不能替代税法要求的正式账簿与纳税申报。
+; 独立会计主体：与个人账分开核算，经营收支与利润单独列示。
+; 与个人账之间的资金往来（个人为店铺垫付、店铺款项进入个人账户）按双边镜像登记，
+; 使用 new-book --link 生成的科目 Liabilities:OwnerLoan / Assets:Receivable:Owner。
+; 本账本为内部管理账，不能替代税法要求的正式账簿与纳税申报。
 ; ============================================================
 
 ; ===== 资产 =====
@@ -16,7 +16,7 @@
 2026-08-01 open Assets:Prepaid CNY                ; 预付账款－预付货款、押金
 
 ; ===== 负债 =====
-2026-08-01 open Liabilities:Payable:Supplier CNY  ; 应付账款－欠供应商的货款
+2026-08-01 open Liabilities:Payable:Supplier CNY  ; 应付账款－应付供应商货款
 2026-08-01 open Liabilities:Payable:Other CNY     ; 其他应付款
 2026-08-01 open Liabilities:Tax CNY               ; 应交税费
 

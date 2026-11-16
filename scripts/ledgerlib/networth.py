@@ -5,8 +5,8 @@
 必须按 [[mirrors]] 成对剔除，否则资产与负债会同时虚增。只有两侧账本都参与合并时才抵销；
 一侧不参与合并（consolidate = false）时，那笔往来就是真实的对外债权债务，照常列示。
 
-外币、加密币、金银、基金、股票默认现拉当天价格折算（见 quote）；--rate 币种=汇率 临时覆盖，
---offline 或拉不到时改用账内最新一条 `price <代码> ... <本位币>`。
+外币、加密币、金银、基金、股票默认按联网取得的当日价格折算（见 quote）；--rate 币种=汇率 临时覆盖，
+--offline 或无法取得价格时改用账内最新一条 `price <代码> ... <本位币>`。
 
 配了 [dividend] 且所有者那一方标了 owner = true 时，其余各方在未结清月份里还没分走的利润
 （见 dividend.outstanding）不是所有者的钱：折合净资产之后单列一行，再给出扣后的净资产。
@@ -41,7 +41,7 @@ def _ledger_rates(entries, base):
 
 
 class _Live:
-    """现拉价格；第一次网络失败后不再重试，提示一次改用账内价格。"""
+    """联网取价；第一次网络失败后不再重试，提示一次改用账内价格。"""
 
     def __init__(self, base, enabled):
         self.base, self.enabled, self.failed = base, enabled, None
@@ -59,7 +59,7 @@ class _Live:
 
 
 def _rates(entries, base, currencies, live, overrides=None, alias=None):
-    """{代码: (价格, 日期, 来源说明)}；优先级：--rate > 现拉 > 账内 price。本位币恒为 1。"""
+    """{代码: (价格, 日期, 来源说明)}；优先级：--rate > 联网取价 > 账内 price。本位币恒为 1。"""
     from datetime import date as _date
 
     known = _ledger_rates(entries, base)
@@ -75,7 +75,7 @@ def _rates(entries, base, currencies, live, overrides=None, alias=None):
             if code != cur:
                 src = f"按 {code} 价格，{src}"
             day = _date.fromisoformat(str(d)[:10]) if d and len(str(d)) >= 10 and str(d)[4] == "-" else None
-            rates[cur] = (px, day, f"现拉，{src}，数据时间 {d}")
+            rates[cur] = (px, day, f"联网取价，{src}，数据时间 {d}")
         elif cur in known:
             rates[cur] = known[cur]
     return rates
@@ -228,7 +228,7 @@ def cmd_networth(overrides=None, today=None, offline=False):
     for cur, (r, d, src) in sorted(rates.items()):
         if cur == base or cur not in used:
             continue
-        if d is None or "现拉" in src:
+        if d is None or "联网取价" in src:
             note = src
         elif d >= today:
             note = f"{d} {src}，当日价格"

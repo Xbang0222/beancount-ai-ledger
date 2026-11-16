@@ -1,68 +1,69 @@
 # ============================================================
-# 账套配置：有哪些账本、账本之间的往来怎么对账
-# 说明见 docs/REFERENCE.md「多本账」。新增账本请用：
+# 账套配置：账本清单与账本之间的往来镜像
+# 写法见 docs/REFERENCE.md「多本账」。新增账本使用：
 #   python3 scripts/ledger.py new-book <名称> [--template personal|business|minimal] [--link <已有账本>]
 # ============================================================
 
 [ledger]
-timezone = "Asia/Shanghai"      # 记账时区：自动注入的 time、未来日期/时间校验都按它
-base_currency = "CNY"           # 本位币：networth 折算合计的目标币种
-# reconcile_days = 35           # 有余额的账户超过这么多天没用 balance 核对，doctor 就提醒（默认 35，0 为不提醒）
+timezone = "Asia/Shanghai"      # 记账时区：注入 time、校验日期与时间是否晚于当前时刻均以此为准
+base_currency = "CNY"           # 本位币：networth 折算的目标币种
+# reconcile_days = 35           # 有余额的账户超过该天数未经 balance 核对时，doctor 给出提醒；默认 35，0 为不提醒
 
 [books.personal]
 title = "个人账本"
 kind = "personal"
 
 # ------------------------------------------------------------
-# 还有别的会计主体？比如店铺/工作室、家庭共同账、多人 AA 的活动经费——用命令新建最省事：
+# 其他会计主体（店铺、工作室、家庭共同账、多人 AA 的活动经费）使用 new-book 新建：
 #   python3 scripts/ledger.py new-book shop --template business --title "我的小店" --link personal
-# 它会追加类似下面的配置（手写也可以）：
+# 该命令追加如下配置，也可手工编写：
 #
 # [books.shop]
 # title = "我的小店"
-# kind = "business"          # business：月报看经营结余；personal：月报算储蓄率
-# consolidate = true         # 是否并入 networth 合并资产负债（默认 true；与别人共有的账本可设 false）
+# kind = "business"          # business 的月度报告计算经营结余；personal 计算储蓄率
+# consolidate = true         # 是否并入 networth 的合并资产负债；默认 true，与他人共有的账本设为 false
 #
-# [[mirrors]]                # 一对往来镜像科目：同一笔钱两本账各记一边，两侧余额相加必须为 0
+# [[mirrors]]                # 一对往来镜像科目：同一笔业务在两本账各登记一边，两侧余额合计必须为 0
 # name = "personal 垫付 shop"
 # currency = "CNY"
 # accounts = { personal = "Assets:Receivable:Shop", shop = "Liabilities:OwnerLoan" }
 #
-# 店铺和别人合伙、按月分利润？配 [dividend]（ledger.py dividend YYYY-MM，写法见 docs/REFERENCE.md「利润分配」）：
+# 店铺与他人合伙、按月分配利润时配置 [dividend]，命令为 ledger.py dividend YYYY-MM，写法见 docs/REFERENCE.md「利润分配」：
 #
 # [dividend]
 # book = "shop"
 # partners = [
-#   { name = "我", payee = "股东", share = 0.6, owner = true },   # owner = true 标出你自己：networth 会把
-#   { name = "合伙人小王", share = 0.4 },                         # 其余各方还没分走的利润从净资产里扣掉
+#   { name = "我", payee = "股东", share = 0.6, owner = true },   # owner = true 标注账本所有者本人：networth 将
+#   { name = "合伙人小王", share = 0.4 },                         # 其余各方尚未分配的利润从净资产中扣除
 # ]
 #
-# 有到日子就该记的账（每周定投、每月房租）？配 [[recurring]]，brief / doctor 会提醒哪几天漏记（写法见 docs/REFERENCE.md「周期事项」）：
+# 按固定周期发生的业务（每周定投、每月房租）配置 [[recurring]]，brief 与 doctor 列出漏记的日期，写法见 docs/REFERENCE.md「周期事项」：
 #
 # [[recurring]]
 # book = "personal"
 # name = "每月房租"
-# every = 5                  # "daily"、"monday" 这类星期几、或每月几号
+# every = 5                  # "daily"、星期的英文（"monday"）或每月几号
 # since = 2026-10-05
 # match = "房租"
 #
-# 只是想单独看某件事（一次旅行、装修、婚礼）花了多少钱？不用新建账本，打标签就行（rules/tags.md）。
+# 只统计某一事项（一次旅行、装修、婚礼）的花费时不必新建账本，使用标签即可，见 rules/tags.md。
 # ------------------------------------------------------------
 
 # ============================================================
-# 对方与摘要的写法规则：只在这里写一份，`python3 scripts/ledger.py rules` 打印成对照表（brief 也会带出）。
-# add / pair / amend 不合规直接拒绝并提示正确写法，check 扫全账。整段删掉就不做写法检查。
+# 对方与摘要的写法规则：本节为唯一来源，`python3 scripts/ledger.py rules` 将其输出为对照表，brief 同时输出。
+# add / pair / amend 拒绝不合规的分录并提示正确写法，check 检查全部账目。整段删除即不做写法检查。
+# 各键的作用见 docs/REFERENCE.md「写法规则」，补充规定见 rules/naming.md。
 # ============================================================
 [naming]
-# 摘要括号里只许出现这些固定标记，其他补充说明一律写进 note: 元数据
+# 摘要括号内只允许下列固定标记；其他补充说明一律写入 note: 元数据
 markers = ["测试", "按利息处理", "按手续费处理"]
-# 不许单独用作对方名称的空泛词
+# 不得单独用作对方名称的空泛词
 banned_payees = ["个人", "测试", "银行", "供应商", "商家", "商户", "未知"]
-# 钱退回来（费用冲回、收入冲减）时摘要必须以这些结尾，如「餐饮-燕麦退款」「销售退回」
+# 费用冲回、收入冲减时，摘要必须以下列词结尾，例如「餐饮-燕麦退款」「销售退回」
 refund_suffix = ["退款", "退回"]
-# 记到兜底科目必须写 note: 说明是什么、为什么现有分类都对不上
+# 记入兜底科目时必须写 note:，说明具体事项以及现有分类均不适用的原因
 note_required = ["Expenses:Other"]
-# 找不到分类时的处理顺序（rules 原样打印）
+# 找不到分类时的处理顺序，rules 原样输出
 fallback = [
   "先执行 ledger.py lookup <关键词> 检索速查词典与分类表：先按物品查，未命中再按商家或平台查",
   "大类定得下、小类对不上：记该大类的「其他」小类（Shopping:Other、Entertainment:Other、Travel:Other），没有「其他」小类的挑最接近的",
@@ -70,11 +71,11 @@ fallback = [
   "实在判断不了：记 Expenses:Other，摘要写「其他-<具体东西>」，note: 写清是什么，回报时告诉用户；不问用户记哪类",
   "连是消费、借出还是代垫都不清楚：先挂往来，不记费用（只有这类事实才问用户）",
 ]
-# 「大类-事项」里不许单独当事项的笼统词
+# 「大类-事项」中不得单独用作事项的笼统词
 vague_items = ["日用品", "消费", "支出", "杂项", "商品", "东西", "购物", "其他"]
 
-# 摘要开头按记账科目固定；一笔有几个收支科目时按金额最大的那个。
-# 新开收支科目要在这里配上开头，否则 check 报错；new-book 建的账本会自动追加自己的一段。
+# 摘要开头由记账科目决定；一笔分录有多个收支科目时，按金额最大者确定。
+# 新开的收支科目须在此配置摘要开头，否则 check 报错；new-book 新建的账本自动追加各自的一段。
 [naming.prefix.personal]
 "Expenses:Food" = "餐饮-"
 "Expenses:Housing" = "居住-"
@@ -105,7 +106,7 @@ vague_items = ["日用品", "消费", "支出", "杂项", "商品", "东西", "�
 "Income:Benefit" = "社保入账-"
 "Income:Other" = "其他收入-"
 
-# 固定场景（可选）：分录只涉及这些科目时，对方和摘要只能这样写。例如个人账与店铺账之间的往来：
+# 固定场景（可选）：分录只涉及下列科目时，对方与摘要只能按此书写。例如个人账与店铺账之间的往来：
 # [[naming.patterns]]
 # book = "personal"
 # name = "个人账与店铺之间的往来"
@@ -113,4 +114,4 @@ vague_items = ["日用品", "消费", "支出", "杂项", "商品", "东西", "�
 # with = ["Assets:Bank", "Assets:Wechat", "Assets:Alipay"]       # 其余科目只能是这些
 # payee = ["店铺"]
 # narration = ["代垫店铺款-", "代收店铺款-"]
-# hint = "个人账里不写店铺的经营收支"
+# hint = "个人账不登记店铺的经营收支"
