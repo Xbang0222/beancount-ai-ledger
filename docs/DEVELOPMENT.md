@@ -27,7 +27,7 @@ python3 scripts/ledger.py doctor                            # 检查环境、账
 | 层 | 内容 |
 |---|---|
 | 命令内 | `add` / `pair` / `amend` / `void` / `fmt` 写盘后校验整本账，未通过即还原 |
-| 提交前 | `scripts/hooks/pre-commit` 执行 `check` 与 `fmt --check`；改动脚本或测试时加跑 ruff 与 pytest；`commit-msg` 检查提交信息 |
+| 提交前 | `scripts/hooks/pre-commit` 执行 `check` 与 `fmt --check`；改动脚本或测试时另执行 ruff 与 pytest；`commit-msg` 检查提交信息 |
 
 推送后没有云端检查。每台设备、每个克隆都须启用钩子，`doctor` 会检查是否启用；未启用时入账命令会在末尾提示。
 

@@ -1,38 +1,38 @@
 # 常见问题
 
-**支持哪些 AI 工具？**
-能读取仓库文件、能执行命令的 AI 编程助手都可以。Claude Code 和 Gemini CLI 通过 `CLAUDE.md`、`GEMINI.md` 载入规则，Codex、Cursor、GitHub Copilot 等直接读取 `AGENTS.md`。其他工具的用法见[使用指南第九节](GUIDE.md#九在其他-ai-工具里用)。
+- 适用对象：用户。
+- 相关文档：[使用指南](GUIDE.md)、[命令与配置](REFERENCE.md)。
 
-**Windows 能用吗？**
-能。命令里的 `python3` 换成 `python` 或 `py`。PowerShell 没有 heredoc，手动入账时先把分录存成 UTF-8 文件，再用 `add <账本> --file <文件>`。
+## 1 工具与环境
 
-**在 Claude Code 网页版、Codex 云端这类云环境里呢？**
-每次会话都是新环境，AI 会按 `AGENTS.md` 先运行 `bootstrap.py` 安装依赖，然后照常记账。
+| 问题 | 回答 |
+|---|---|
+| 支持哪些 AI 工具 | 能读取仓库文件并执行命令的 AI 编程助手均可。Claude Code 与 Gemini CLI 通过 `CLAUDE.md`、`GEMINI.md` 载入规则；Codex、Cursor、GitHub Copilot 等直接读取 `AGENTS.md`。其他工具的用法见[使用指南第 9 节](GUIDE.md#9-其他-ai-工具) |
+| 是否支持 Windows | 支持。命令中的 `python3` 换为 `python` 或 `py`。PowerShell 不支持 heredoc，手动入账时先将分录保存为 UTF-8 文件，再执行 `add <账本> --file <文件>` |
+| Claude Code 网页版、Codex 云端等云环境 | 每次会话均为新环境，AI 按 `AGENTS.md` 先执行 `bootstrap.py` 安装依赖，随后照常记账 |
+| 不使用 Git 时账本存放在哪里 | 存放在豆包这类 AI 的云电脑中，每日向用户自己的云盘备份一份，做法见[不使用 Git：通过豆包记账](NO-GIT.md) |
+| 是否可以不使用 AI | 可以。全部功能均为命令行脚本，命令见[命令与配置](REFERENCE.md) |
+| 是否可以查看图表 | 可使用 [Fava](https://github.com/beancount/fava)：执行 `pip install fava && fava personal.beancount`，然后访问 http://localhost:5000 |
 
-**不会用 Git 能用吗？账本存在哪？**
-能。账本放在豆包这类 AI 的云电脑里，每天往你自己的云盘备份一份，做法见[不用 Git：只用豆包记账](NO-GIT.md)。
+## 2 数据与校验
 
-**多台设备同时记账会冲突吗？**
-AI 每次开始前会先 `git pull --ff-only`。同一台机器上 `add` 带文件锁，并发写入不会互相覆盖。
+| 问题 | 回答 |
+|---|---|
+| 多台设备同时记账是否冲突 | AI 每次开始前先执行 `git pull --ff-only`。同一台机器上 `add` 带文件锁，并发写入不会相互覆盖 |
+| 推送后是否有云端检查 | 没有，校验在本地完成：命令写盘后校验整本账；提交前由钩子执行 `check`、`fmt --check` 并检查提交信息。因此每台设备、每个克隆均须启用一次钩子（`git config core.hooksPath scripts/hooks`），`doctor` 检查是否已启用。自建 CI 时，在流水线中执行 `check`、`fmt --check`，再以 `commit-msg --range A..B` 检查推送的提交 |
 
-**能看图表吗？**
-可以用 [Fava](https://github.com/beancount/fava)：`pip install fava && fava personal.beancount`，然后打开 http://localhost:5000 。
+## 3 升级
 
-**不用 AI 可以吗？**
-可以，所有功能都是命令行脚本。
-
-**推送后有云端检查吗？**
-没有。把关在本地：命令写盘后整本校验，提交前由钩子跑 `check`、`fmt --check` 并核对提交信息，所以每台设备、每个克隆都要启用一次钩子（`git config core.hooksPath scripts/hooks`），`doctor` 会查有没有启用。想自己接 CI 的，在流水线里跑 `check`、`fmt --check`，再用 `commit-msg --range A..B` 检查推上来的提交即可。
-
-**模板更新后怎么升级？**
-只同步脚本和测试，账本数据不动：
+模板更新后，只同步脚本、测试与说明文档，不改动账本数据：
 
 ```bash
 git remote add upstream https://github.com/Xbang0222/beancount-ai-ledger.git   # 只需一次
 git fetch upstream
-git checkout upstream/main -- scripts tests requirements.txt requirements-dev.txt pyproject.toml
+git checkout upstream/main -- scripts tests docs AGENTS.md requirements.txt requirements-dev.txt pyproject.toml
 python3 -m pytest tests/ -q && python3 scripts/ledger.py check
 git commit -m "chore: 同步上游脚本"
 ```
 
-`AGENTS.md` 和你自己的规则文件（`rules/`，旧版为 `CATEGORIES.md`）里可能有你改过的内容：规则文件不要覆盖，`AGENTS.md` 请对照[更新日志](../CHANGELOG.md)手动合并；要换成新版 `AGENTS.md` 的，把 `docs` 一起取下来（新版把不常用的章节放在 `docs/AI-SETUP.md`、`docs/AI-TASKS.md`）。让 AI 来做的话，说一句"帮我升级记账项目"。
+- 规则文件（`rules/`，旧版为根目录的 `CATEGORIES.md` 等）、`STATE.md`、`ledger.toml` 与各账本目录属于用户数据，不得覆盖。
+- 修改过 `AGENTS.md` 的，先对照[更新日志](../CHANGELOG.md)确认差异；需要保留自己的修改时，从上述命令中去掉 `AGENTS.md` 后手动合并。新版 `AGENTS.md` 依赖 `docs/` 下的文档，两者须一并更新。
+- 交由 AI 处理时，说明「帮我升级记账项目」即可，AI 按 `docs/AI-TASKS.md`「升级工具」执行。

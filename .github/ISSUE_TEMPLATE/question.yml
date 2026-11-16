@@ -1,20 +1,20 @@
 name: 使用问题
-description: 不知道怎么用、怎么记某一类账
+description: 用法或某类业务的记法
 title: "[Question]: "
 labels: ["question"]
 body:
   - type: markdown
     attributes:
       value: |
-        先看看[使用指南](https://github.com/Xbang0222/beancount-ai-ledger/blob/main/docs/GUIDE.md)和[分录范例](https://github.com/Xbang0222/beancount-ai-ledger/blob/main/examples/cookbook.beancount)，很多记法那里都有。
+        提问前请先查阅[使用指南](https://github.com/Xbang0222/beancount-ai-ledger/blob/main/docs/GUIDE.md)和[分录范例](https://github.com/Xbang0222/beancount-ai-ledger/blob/main/examples/cookbook.beancount)，常见业务的记法均有说明。
   - type: textarea
     id: question
     attributes:
-      label: 你的问题
-      description: 举例时请用假数据。
+      label: 问题
+      description: 举例时使用虚拟数据。
     validations:
       required: true
   - type: textarea
     id: tried
     attributes:
-      label: 已经试过的办法
+      label: 已尝试的办法

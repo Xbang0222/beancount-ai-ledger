@@ -1,70 +1,66 @@
 # 更新日志
 
-这里记录每个版本中值得注意的改动。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
+本文件记录各版本中用户可感知的改动。格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
 ## [Unreleased]
 
+### 升级说明
+
+- 升级只替换 `scripts`、`tests`、`docs`、`AGENTS.md` 与依赖清单；`rules/`、`STATE.md`、`ledger.toml`、各账本目录属于用户数据，不被覆盖。步骤见 `docs/AI-TASKS.md`「升级工具」。
+- 旧布局账本（规则位于根目录的 `CATEGORIES.md`、`CLASSIFY.md`）升级后照常可用：脚本与 `lookup` 同时支持两种布局，新版 `AGENTS.md` 第 6.1 节给出新旧文件的对应关系。迁移到 `rules/` 布局为可选操作，步骤见 `docs/AI-TASKS.md`「旧布局迁移」。
+- 下列功能依赖用户数据中的配置，升级后须手动启用：写法检查须将模板 `ledger.toml` 的 `[naming]` 段复制到自己的配置，再执行 `check` 并按提示更正既有分录；新增的科目（见「新增」中的分类条目）须对照模板的 `personal/accounts.beancount` 自行开立，并在 `[naming.prefix.<账本>]` 配置摘要开头；新的分类、标签与估值规则须对照模板 `rules/` 下的对应文件自行合并。
+- 已执行过 `git config core.hooksPath scripts/hooks` 的仓库，升级后提交信息检查自动生效。仓库中已有的 `.github/workflows/ci.yml` 不会被删除，可自行决定保留或删除。
+
 ### 新增
 
-- `brief [账本]`：入账前要看的信息一条命令列完——今天几号星期几、现在几点，`STATE.md` 当前生效的情况，该补的周期分录，每本账能用的科目（带中文说明和摘要开头，已停用的不列），写法规则，最近几笔范例。能力弱一些的模型不用再自己翻几个文件拼信息，`AGENTS.md` 的第一步就是跑它。
-- `pair`：两本账之间的往来一次录入。标准输入分 `[账本名]` 两段各写一笔，同一把锁内写两本账、各自整本校验、判重，再核对每对往来镜像的差额没有变；任何一步不过，两本账都原样还原。
-- 周期事项提醒：`ledger.toml` 新增 `[[recurring]]`（每天、每周几、每月几号），到日子没记的由 `brief` 和 `doctor` 列出来并给出现成分录；`confirm = false` 表示约定好直接补记，不用先问用户。只提醒，不代记。写法见 `docs/REFERENCE.md`「周期事项」。
-- 入账被拒时的报错改成中文并带下一步：科目没开的列出同一上级下已开的科目和拼写相近的科目；科目已停用的打印科目表里那一行的中文注释（可以把"该改用哪个科目"写在注释里）；借贷不平、币种不符、余额断言不符的写明差多少。
-- 规则文档改为按主题拆分的 `rules/` 目录，原 `CATEGORIES.md`、`CLASSIFY.md` 的内容全部迁入，根目录不再保留这两个文件：`daily.md`（日常入账，每次入账前读取）、`naming.md`、`tags.md`、`classification.md`、`dictionary.md`、`cases.md`、`credit.md`、`investment.md`、`valuation.md`、`shared-books.md`。除 `daily.md` 外均按需读取，AI 单次入账需要读取的规则由约 45KB 降到约 9KB。
-- `lookup <关键词...>`：按关键词检索规则文档与科目说明，输出命中的分类表行（附表头）、条款所在文件与章节、科目表中的说明。归类或业务处理不确定时查一个词即可，不必通读分类表。
-- `docs/COMMITS.md`（提交信息规范）、`docs/DEVELOPMENT.md`（环境初始化、模块职责、开发约束），原文自 `AGENTS.md` 迁出。
-- `docs/AI-SETUP.md`、`docs/AI-TASKS.md`：供 AI 读取的建账与账本存放（第一次接手、账本存放、没有远程仓库时、首次使用、引导新手）和常见请求的处理（更正与删除、余额核对、导入账单、行程与临时状态、修改规则、升级工具、新建账本、常用查询），原文从 `AGENTS.md` 搬出。
-- 提交信息写法由 `scripts/hooks/commit-msg` 把关（新命令 `ledger.py commit-msg`）：首行 `类型: 摘要`，英文类型、书面中文摘要、不带括号；改了账本只能用 `feat` / `fix` / `style`，摘要以登记、补记、更正、作废、对账、重排、新开、新建、初始化之一开头，并写明改到的账本（称呼取 `ledger.toml` 的 title）。写法见 `docs/COMMITS.md`。已执行过 `git config core.hooksPath scripts/hooks` 的仓库升级后自动生效。
-- `dividend` 对已结清的月份直接显示「已结清」，只列实发金额，不再按新汇率重算出几块钱的差额；确要重算加 `--recalc`。结清的口径是「这个月过完之后记过该月的分红」：月内预发时全月利润还没定，过了月仍按全月利润多退少补，补发那一笔记在月后才算结清。
-- `ledger.py commit-msg --range A..B`：逐条检查范围里已有的提交，各自按它改到的文件核对账本；范围取不出来（首次推送、强推）时只查最新一条。自己接 CI 时可以用它把推上来的提交再查一遍，没启用提交钩子的设备推上来的不合规提交也能被发现。
-- `add` / `amend` / `void` 成功后，这台设备要是没启用提交前自动检查（账套带了 `scripts/hooks`、又是 Git 仓库，却没执行过 `git config core.hooksPath scripts/hooks`），会打印一行提醒。
-- `doctor` 提醒有余额却久未核对的账户：资产负债科目有余额、超过 `[ledger] reconcile_days` 天（新配置项，默认 35，0 为不提醒）没用 `balance` 断言核对过的逐本账列出来；从没核对过的从第一笔发生额算起，账本间往来镜像由 `reconcile` 把关，不算在内。只是提醒，不影响退出码。
-- `[dividend]` 的 `partners` 新增可选 `owner = true`，标出账本所有者自己那一方。标了之后，其余各方在未结清月份里「应得 − 已分配」的利润不是所有者的钱：`networth` 在折合本位币的净资产之后单列「应付某某未分利润」，再给出「扣后净资产」；预支超过应得时加回。没标 `owner`、分红账本不并入 `networth` 时不扣。写法见 `docs/REFERENCE.md`「利润分配」。
-- 对方与摘要的写法由脚本把关：`ledger.toml` 新增 `[naming]`（摘要开头按科目、括号固定标记、空泛对方名、笼统事项词、退款结尾、固定场景），`add` / `amend` 不合规直接拒绝并提示正确写法，`check` 扫全账并报出没配摘要开头的收支科目；`rules [账本]` 打印对照表与「找不到分类时」的处理步骤；记到 `Expenses:Other` 必须写 `note:`。`new-book` 按模板自动补上新账本的摘要开头。写法见 `docs/REFERENCE.md`「写法规则」。**升级的用户**：`ledger.toml` 不会被覆盖，想启用请把模板的 `[naming]` 段复制过去，再跑 `check` 按提示更正老账。
-- `quote <代码...>`：现拉价格并折成本位币——外币、加密币（`USD`、`USDT`、`BTC`）、黄金白银每克（`AU`、`AG`）、场外基金净值（`F161226`）、A 股港股美股（`SH600519`、`HK00700`、`US.AAPL`）；`--date` 查历史价。
-- `networth` 默认自动现拉当天价格折算，不用再手动 `--rate`；拉不到时提示并改用账内 `price`，`--offline` 只用账内价格。
-- 科目元数据 `estimate: "AU"`：只记了金额的积存金按每笔当天金价折成克数，`networth` 按今天金价估算现值；`networth: FALSE`：养老保险、医保个人账户单独列示，不计入净资产。个人账模板新增 `Assets:Invest:Gold`，两个社保账户默认带上 `networth: FALSE`。**升级的用户**：`accounts.beancount`、`CATEGORIES.md` 不会被覆盖，想要请对照本条手动加上（CATEGORIES 第 5 节「黄金、白银」「折现」「不计入净资产的钱」）。
-- `doctor` 在用户自己的仓库里发现模板项目专用文件（`.github` 下的贡献指南、行为准则、安全说明、Issue 与 PR 模板、发版流程）时提醒删除；模板仓库本身不提醒。
-- `docs/AI-SETUP.md`「账本存放」：不绑定具体 AI 和存储，按用户手里有什么选——私有 Git 仓库（GitHub、Gitee 等）每次推送，只有云盘的打包备份，都没有的本地提交并提醒。`doctor` 能识别 `ssh.github.com:443` 形式的远程地址。
-- `dividend YYYY-MM`：合伙店铺按月利润分配。算出当月净利润（外币默认从 fawazahmed0/exchange-api 现拉汇率折算，也可 `--rate` 指定），按 `ledger.toml` 新增的 `[dividend]` 比例拆分；分红分录带 `period: "YYYY-MM"` 即可归集已分配，补记当月收支后自动显出差额；`offset` 可把对方欠款从差额里扣掉。写法见 `docs/REFERENCE.md`「利润分配」。
-- `ledger.toml` 的 `[ledger]` 新增可选 `fx_alias`（如 `{ USDT = "USD" }`），现拉汇率时按别名币种折算。
-- 经营账模板新增 `Equity:Distributions`（利润分配）科目。
-- `CLASSIFY.md`：分类的参考依据（统计局八大类、记账 App 通行做法）与「用户原话 → 怎么记」对照示例。
-- `CLASSIFY.md` 第 4 节速查词典：按东西、按商家平台、非消费三张表直接对到科目，一句话就能入账，不用再查。
-- `CATEGORIES.md` 0.1：详细情况写进 `note:` 元数据、摘要只写固定格式短句；摘要开头按科目固定的对照表；对方名称不写空泛词。**升级的用户**：`CATEGORIES.md`、`CLASSIFY.md` 不会被覆盖，想要新规则请对照本条手动合并。
-- 副业收支科目：有进货成本的个人小生意（代购、代充会员、摆摊倒卖）收款记 `Income:SideBiz`（摘要「副业收入-…」），进货款记 `Expenses:SideBiz`（摘要「副业成本-…」），两边相减就是这门副业赚了多少；没有进货成本的兼职、接私活（软件外包、稿费、讲课费）仍记 `Income:SideJob`。个人账模板、`new-book` 的个人模板、`[naming]` 摘要开头、`CATEGORIES.md` 第 1 节与 `CLASSIFY.md` 一并补上。**升级的用户**：`accounts.beancount`、`ledger.toml`、`CATEGORIES.md` 不会被覆盖，要用请手动加上这两个科目和对应的摘要开头。
+- 规则文档改为按主题拆分的 `rules/` 目录：`daily.md`（日常入账，每次入账前读取）、`naming.md`、`tags.md`、`classification.md`、`dictionary.md`、`cases.md`、`credit.md`、`investment.md`、`valuation.md`、`shared-books.md`。除 `daily.md` 外均按需读取，单次入账须读取的规则由约 45KB 降至约 9KB。原 `CATEGORIES.md` 的内容全部迁入，根目录不再保留该文件。
+- `brief [账本]`：一条命令输出入账所需的现场信息，包括当前日期、星期与时间，`STATE.md` 中生效的临时状态，待补记的周期分录，各账本的可用科目及其中文说明与摘要开头（已停用的科目不列出），写法规则，最近的分录范例。`AGENTS.md` 的作业流程以该命令为第一步。
+- `lookup <关键词...>`：按关键词检索规则文档与科目说明，输出命中的分类表行及表头、条款所在的文件与章节、科目表中的说明。
+- `pair`：账本之间的往来在两本账同时登记。标准输入分 `[账本名]` 两段，各写一笔；同一把锁内写入两本账、各自校验整本账并判重，再核对每对往来镜像的差额未发生变化；任一步未通过，两本账均还原。
+- 周期事项提醒：`ledger.toml` 新增 `[[recurring]]`，支持每日、每周某日、每月某日；到期未登记的日期由 `brief` 与 `doctor` 列出并给出分录。`confirm = false` 表示已约定到期直接补记。脚本只提醒，不自动入账。写法见 `docs/REFERENCE.md`「周期事项」。
+- 写法检查：`ledger.toml` 新增 `[naming]`，定义摘要开头与科目的对应关系、括号内的固定标记、空泛对方名、笼统事项词、退款结尾、固定场景。`add`、`pair`、`amend` 拒绝不合规的分录并提示正确写法；`check` 检查全部账目，并报出未配置摘要开头的收支科目；记入 `Expenses:Other` 时必须写 `note:`。`rules [账本]` 输出对照表与找不到分类时的处理步骤。`new-book` 按模板自动追加新账本的摘要开头。写法见 `docs/REFERENCE.md`「写法规则」。
+- 入账被拒时的报错改为中文并给出处理方法：科目未开立时列出同一上级下已开立的科目与拼写相近的科目；科目已停用时输出科目表中该科目的中文注释；借贷不平、币种不符、余额断言不符时写明差额。
+- 提交信息检查：新增 `scripts/hooks/commit-msg` 钩子与 `ledger.py commit-msg` 命令。首行为 `类型: 摘要`，类型为英文，摘要为书面中文且不带括号；改动账本的提交只能使用 `feat`、`fix`、`style`，摘要以登记、补记、更正、作废、对账、重排、新开、新建、初始化之一开头，并写明所涉账本。`commit-msg --range A..B` 逐条检查范围内已有的提交，可用于自建 CI。规范见 `docs/COMMITS.md`。
+- `add`、`amend`、`void` 成功后，本设备未启用提交前自动检查时输出一行提醒。
+- `doctor` 新增三项检查：有余额且超过 `[ledger] reconcile_days` 天（新配置项，默认 35，0 为不提醒）未经 `balance` 断言核对的资产负债科目（从未核对的自第一笔发生额起算，账本之间的往来镜像由 `reconcile` 核对，不在此列），仅提醒，不影响退出码；用户仓库中残留的模板项目专用文件（`.github` 下的贡献指南、行为准则、安全策略、Issue 与 PR 模板、发版流程）；`ssh.github.com:443` 形式的远程地址。
+- `quote <代码...>`：联网查询价格并折合本位币，支持外币与加密货币（`USD`、`USDT`、`BTC`）、每克黄金与白银（`AU`、`AG`）、场外基金净值（`F161226`）、A 股、港股、美股（`SH600519`、`HK00700`、`US.AAPL`）；`--date` 查询历史价格。
+- `networth` 默认按联网取得的当日价格折算，无需手动传入 `--rate`；无法取得价格时给出提示并改用账内 `price`，`--offline` 只使用账内价格。
+- 科目元数据 `estimate: "AU"`：只登记了金额的积存金按每笔发生当日的金价折算克数，`networth` 按当日金价估算现值。科目元数据 `networth: FALSE`：养老保险、医保个人账户单独列示，不计入净资产。个人账模板新增 `Assets:Invest:Gold`，两个社保账户默认标注 `networth: FALSE`。
+- `dividend YYYY-MM`：合伙店铺按月利润分配。计算当月净利润，外币默认从 fawazahmed0/exchange-api 取得汇率折算，也可用 `--rate` 指定；按 `ledger.toml` 新增的 `[dividend]` 比例拆分。分红分录以 `period: "YYYY-MM"` 标明所属月份，据此归集已分配金额；`offset` 将对方欠款从差额中扣抵。月份结束后登记过该月分红的视为已结清，只列实发金额，`--recalc` 强制重算；月内预发不构成结清。写法见 `docs/REFERENCE.md`「利润分配」。
+- `[dividend]` 的 `partners` 新增可选 `owner = true`，标注账本所有者本人。标注后，`networth` 在折合本位币的净资产之后单列其余各方在未结清月份中尚未分配的利润，并给出「扣后净资产」；预支超过应得时加回。
+- `[ledger]` 新增可选 `fx_alias`，例如 `{ USDT = "USD" }`，取汇率时按别名币种折算。经营账模板新增 `Equity:Distributions`。
+- 分类表补全：对照统计局居民消费支出八大类与常见记账 App 的默认分类，补全各小类的关键词；新增宠物 `Pet`、育儿 `Kids`、居住-装修维修 `Housing:Repair`、运动 `Fitness`、个护 `PersonalCare`、服务 `Service:Professional` 与 `Service:Life`、税费 `Tax`、交通-车辆 `Transport:Vehicle`；收入新增社保公积金个人账户入账 `Income:Benefit:Medical`、`Pension`、`HousingFund`，对应资产 `Assets:Benefit:*`。`rules/classification.md` 附常见记账 App 分类的对照表，`rules/dictionary.md` 提供按物品、按商家或平台、非消费业务三张速查表，`rules/cases.md` 提供典型业务的判例。
+- 副业收支科目：有进货成本的个人经营（代购、代充会员、摆摊）收款记 `Income:SideBiz`，进货款记 `Expenses:SideBiz`；没有进货成本的兼职与劳务（软件外包、稿费、讲课费）仍记 `Income:SideJob`。
+- 新增文档：`docs/AI-SETUP.md`（第一次接手、账本存放、没有远程仓库时、首次使用、引导新手）、`docs/AI-TASKS.md`（更正与删除、余额核对、导入账单、行程与临时状态、修改规则、升级工具、新建账本、常用查询）、`docs/COMMITS.md`（提交信息规范）、`docs/DEVELOPMENT.md`（环境初始化、模块职责、开发约束）。上述内容原在 `AGENTS.md`。
+- 账本存放不再绑定具体的 AI 与存储方式，按用户现有条件选择：有私有 Git 仓库（GitHub、Gitee 等）时每次推送；只有云盘时打包备份；两者均无时本地提交并提醒用户。见 `docs/AI-SETUP.md`「账本存放」。
 
 ### 变更
 
-- `AGENTS.md` 重写为作业规程：作业流程、强制约束、回报要求与文档索引，27KB 减到 11KB；建账、存放、更正、对账等章节迁至 `docs/AI-SETUP.md`、`docs/AI-TASKS.md`。`doctor` 的引导提示先到 `docs/AI-SETUP.md` 找章节。
-- 规则文档、`AGENTS.md`、`docs/AI-SETUP.md`、`docs/AI-TASKS.md`、`docs/REFERENCE.md` 统一为规范文体：条款化表述、章节编号、表格；出处与解释性旁白从规则正文移除。核算口径未变。
-- `brief` 输出的标题与操作提示改用规范措辞。
-- **升级的用户**：`rules/` 属于用户数据，升级不覆盖。旧布局账本（规则在根目录的 `CATEGORIES.md`、`CLASSIFY.md`）升级后照常可用，脚本与 `lookup` 同时支持两种布局，新版 `AGENTS.md` 第 6.1 节给出新旧文件的对应关系；迁移到 `rules/` 为可选操作，步骤见 `docs/AI-TASKS.md`「升级工具」。本节以下条目中出现的 `CATEGORIES.md`、`CLASSIFY.md` 均指旧布局文件。
-- `add` 碰到往来镜像科目直接拒绝，并给出 `pair` 的完整写法和另一本账该用的科目（原先只在入账后提示一句，要到 `check` 才拦得住）；补平已有的往来差额才用 `add --one-sided`。
-- `CATEGORIES.md` 4.5 标签规则改写：一个标签只表达一个意思（`#japan #visa`，不写 `#japanvisa`），多层意思并列打多个；标签分地点、跟谁、什么事三类；用户讲了时间线的按时间线推断每笔在哪儿花，能打的地点标签都打上。**升级的用户**：`CATEGORIES.md` 不会被覆盖，想要新规则请对照本条手动合并 4.5。
-- 归类改由 AI 自己定，不再问用户"记在哪"：分类固定为大类 + 小类两级，拿不准先查 `CLASSIFY.md` 和通行口径，必要时新开科目；只有金额、日期、记哪本账、是不是借出/代垫这类事实缺失才问。`AGENTS.md`、`CATEGORIES.md` 第 0、1 节相应改写。**升级的用户**：`CATEGORIES.md` 不会被覆盖，想要新规则请对照本条手动合并第 0 节第 5 条和第 1 节开头。
-- README 重写：补上文档约定、目录结构、记账流程、常用命令、核算要点与数据可靠性说明，中英文结构一致。
-- `CATEGORIES.md` 0.1：摘要要写清具体买了什么（「购物-蓝牙耳机」），不写「购物-日用品」这类笼统词。
-- 分类表补全：对照统计局八大类和钱迹、随手记默认分类，各小类关键词写全；新增宠物 `Pet`、育儿 `Kids`、居住-装修维修 `Housing:Repair`、运动 `Fitness`、个护 `PersonalCare`、服务 `Service:Professional` / `Service:Life`、税费 `Tax`、交通-车辆 `Transport:Vehicle`；`CLASSIFY.md` 新增「常见记账 App 分类 → 本表」对照，导入别的 App 账单时照表归类；收入新增社保公积金个人账户入账 `Income:Benefit:Medical` / `Pension` / `HousingFund`，对应资产 `Assets:Benefit:*`。**升级的用户**：`accounts.beancount` 和 `CATEGORIES.md` 不会被覆盖，要用新科目请照新模板手动补。
-
-- 云盘和本地 `backups/` 都只留最新一份备份（改动历史已经在压缩包里）。新的上传成功后才删旧的。
-- `AGENTS.md`：找不到云盘工具时先看 `~/vm/resource-loader/bin/`；还是没有就把压缩包发在对话里让用户自己保存，并明说没存到云盘。
-- `doctor` 的「没有远程仓库时」「首次使用」两处提示，账套的 `AGENTS.md` 里确有这一节才指过去，没有就只说怎么做（用模板建的账套不一定留着这些引导章节）。模板自带这两节，提示不变。
-- `scripts/ledger.py` 开头的说明不再另抄一份命令清单，以 `python3 scripts/ledger.py --help` 为准。
-- 脚本内部整理，命令用法不变：`books.print_error_lines`、`fxrate.http_get` 改为公开名；`env.run_command` 统一 `doctor`、`backup`、`commitmsg` 里跑外部命令的函数；`journal.rstrip_blank` 取代 `fmt` 里的重复函数；`entry.inject_time` 复用 `with_time_line`。
+- `AGENTS.md` 重写为作业规程，只保留作业流程、强制约束、回报要求与文档索引，篇幅由 27KB 减至约 11KB。`doctor` 的引导提示改为指向 `docs/AI-SETUP.md` 的对应章节。
+- 全部文档统一为规范文体：条款化表述、统一术语、章节编号、表格；出处与解释性旁白从规则正文移除。范围包括 `rules/`、`AGENTS.md`、`docs/` 下各文档、`README.md`、`.github/` 下的贡献指南与表单，以及 `ledger.toml`、科目表、建账模板中的注释。核算口径未变。
+- `ledger.py --help` 的命令说明、`brief` 输出的标题与操作提示改用规范措辞；价格来源的标注由「现拉」改为「联网取价」。命令与参数未变。
+- `add` 遇到往来镜像科目时拒绝入账，并给出 `pair` 的完整写法与另一本账应使用的科目；补平既有的往来差额时使用 `add --one-sided`。此前仅在入账后提示，须到 `check` 才能发现单边登记。
+- 归类改由 AI 决定，不再向用户询问记入哪一类：分类固定为大类与小类两级，不确定时先检索规则文档并参照通行口径，必要时新开科目；仅当金额、日期、资金归属、是否属于借出或代垫等事实缺失时才向用户确认。
+- 摘要须写明具体事项，例如「购物-蓝牙耳机」，不得使用「购物-日用品」等笼统表述；详细情况写入 `note:` 元数据。分类表与科目表注释中的「学习」统一为「教育」，摘要示例与 `[naming]` 的摘要开头一致。
+- 标签规则改写：一个标签只表达一项含义，例如 `#japan #visa`，不写 `#japanvisa`；标签分地点、交易对象、事项三类；用户说明了时间线的，按时间线推断各笔的发生地点并标注。见 `rules/tags.md`。
+- README 重写：补充文档约定、目录结构、记账流程、常用命令、核算要点与数据可靠性说明，中英文结构一致。
+- 云盘与本地 `backups/` 均只保留最新一份备份，新备份上传成功后才删除旧备份；改动历史已包含在压缩包内。
+- 找不到云盘工具时先查看 `~/vm/resource-loader/bin/`；仍然没有时将压缩包发送在对话中由用户自行保存，并明确说明未存入云盘。
+- `doctor` 的「没有远程仓库时」「首次使用」两处提示，仅当账套的文档中确有对应章节时才指向该章节，否则只说明处理方法。
+- `scripts/ledger.py` 开头的说明不再另列命令清单，以 `python3 scripts/ledger.py --help` 为准。
+- 脚本内部整理，命令用法未变：`books.print_error_lines`、`fxrate.http_get` 改为公开名；`env.run_command` 统一 `doctor`、`backup`、`commitmsg` 中执行外部命令的函数；`journal.rstrip_blank` 取代 `fmt` 中的重复函数；`entry.inject_time` 复用 `with_time_line`。
 
 ### 移除
 
-- 移除 CI（`.github/workflows/ci.yml`）：推送后不再有云端检查，把关只剩两道——命令写盘后的整本校验，和提交前的钩子（`check`、`fmt --check`、提交信息，改脚本时加跑 ruff 与 pytest）。每台设备、每个克隆都要启用一次钩子（`git config core.hooksPath scripts/hooks`），`doctor` 会查，`add` / `amend` / `void` 成功后也会提醒。发版流程 `release.yml` 不受影响，它自己会跑测试与校验。README 的 CI 徽章和各文档里「推送后 GitHub Actions 再跑一遍」的说法一并去掉。**升级的用户**：你仓库里已有的 `.github/workflows/ci.yml` 不会被删除，想继续用就留着，不想要自己删掉即可。
+- 移除 CI（`.github/workflows/ci.yml`）：推送后不再有云端检查，校验由两级承担，即命令写盘后的整本校验与提交前的钩子（`check`、`fmt --check`、提交信息，修改脚本时另执行 ruff 与 pytest）。每台设备、每个克隆均须启用一次钩子（`git config core.hooksPath scripts/hooks`），`doctor` 检查是否已启用。发版流程 `release.yml` 不受影响，其自身执行测试与校验。
 
 ### 修复
 
-- `fmt` 重排序时簿时拿互斥锁（`store.book_lock`）：以前另一个会话正好在入账时，重排会拿读到的旧内容把刚写进去的那一笔盖掉。`fmt --check` 只读，不拿锁。
-- `networth` 估值科目的 `estimate` 元数据按科目所在的账本取：以前别的账本开了同名科目并标了 `estimate`，会让本账本没标的科目也被拿去按金价估值。
-- 现拉汇率时，CDN 明确回 404 就直接报「数据集里没有这个代码」，不再下载整包确认；查不到的结果在本次运行内记住，不重复请求。
-- `quote` 取基金最新净值的截止日期按 `ledger.toml` 配置时区的今天，不用系统日期。
-- 提交信息检查不通过时的提示改指 `docs/COMMITS.md`，原先指向 README 里并不存在的章节。
-- 文档里的摘要示例与 `[naming]` 配的开头对齐：`CLASSIFY.md` 的「学习-书籍」「财务-分期手续费」改为「教育-书籍」「财务费用-分期手续费」（原写法照抄会被 `add` 拒绝），`CATEGORIES.md` 分类表和科目表注释里的「学习」统一为「教育」。
+- `fmt` 重排序时簿时持有互斥锁 `store.book_lock`：此前另一会话同时入账时，重排会以读到的旧内容覆盖刚写入的分录。`fmt --check` 只读，不持锁。
+- `networth` 估值科目的 `estimate` 元数据按科目所在的账本读取：此前其他账本开立了同名科目并标注 `estimate` 时，本账本未标注的科目也会被按金价估值。
+- 取汇率时，CDN 明确返回 404 即报告数据集中没有该代码，不再下载完整数据包确认；查询失败的结果在本次运行内缓存，不重复请求。
+- `quote` 取基金最新净值的截止日期按 `ledger.toml` 配置时区的当日计算，不使用系统日期。
+- 提交信息检查未通过时的提示改为指向 `docs/COMMITS.md`，此前指向 README 中并不存在的章节。
 
 ## [0.4.0] - 2026-10-04
 

@@ -60,10 +60,10 @@ $ python3 scripts/ledger.py report personal 2026-09
 
 ## 开始使用
 
-| 你的情况 | 看这篇 |
+| 使用场景 | 文档 |
 |---|---|
-| 在自己电脑上用 Claude Code、Codex 等 AI 编程助手，会用 Git | [快速开始：用 Git 保存账本](docs/QUICKSTART.md) |
-| 只用豆包这类 AI，不会用 Git | [不用 Git：只用豆包记账](docs/NO-GIT.md) |
+| 在本机使用 Claude Code、Codex 等 AI 编程助手，使用 Git | [快速开始：以 Git 保存账本](docs/QUICKSTART.md) |
+| 只使用豆包这类 AI，不使用 Git | [不使用 Git：通过豆包记账](docs/NO-GIT.md) |
 
 能读取文件、执行命令的 AI 均可使用。账本的存放方式取决于现有条件：首选**私有 Git 仓库**（GitHub、Gitee 等），没有时备份到云盘，由 AI 按 `docs/AI-SETUP.md`「账本存放」判断。下列命令通常由 AI 执行；手动执行须本机已安装 Python 3.9+ 与 git，依赖安装在仓库自带的 `.venv` 中，不影响系统 Python：
 

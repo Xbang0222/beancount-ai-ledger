@@ -1,12 +1,12 @@
-## 改了什么
+## 改动内容
 
-<!-- 一两句话说明这个 PR 做了什么。相关 Issue 写成 Fixes #123。 -->
+<!-- 以一两句话说明本 PR 的改动。关联的 Issue 写作 Fixes #123。 -->
 
-## 为什么改
+## 改动原因
 
 ## 检查清单
 
-- [ ] `python3 -m pytest tests/ -q` 通过
-- [ ] `python3 scripts/ledger.py check` 和 `fmt --check` 通过
-- [ ] 用户能感知到的改动已更新文档和 `CHANGELOG.md`
-- [ ] 没有提交任何真实的账本数据
+- [ ] `python3 -m ruff check scripts tests` 与 `python3 -m pytest tests/ -q` 通过
+- [ ] `python3 scripts/ledger.py check` 与 `fmt --check` 通过
+- [ ] 用户可感知的改动已同步更新文档与 `CHANGELOG.md`
+- [ ] 未提交任何真实的账本数据

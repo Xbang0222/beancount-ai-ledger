@@ -11,12 +11,18 @@ A plain-text double-entry ledger template built on [Beancount](https://github.co
 > [!NOTE]
 > The rules, account templates and user guide are written in Chinese and target users in mainland China (Alipay, WeChat Pay, Huabei and so on). The code is locale-agnostic: timezone and base currency are set in `ledger.toml`, and the account names are English.
 
-## Files that drive the agent
+## Documentation conventions
 
-- `rules/daily.md`: the rules for everyday entries — required fields, which book an entry belongs to, which account each payment method maps to, cross-book transfers, refunds, timestamps and tags. **Edit it to match your habits**; the agent follows whatever it says. The agent reads it before every entry.
-- The other files under `rules/`: one topic per file — payee and narration style, tags, the category table, a lookup dictionary from items and merchants to accounts, worked cases, and less common topics (credit and loans, investments, valuation, books shared with others). The agent reads them on demand, or searches them with `ledger.py lookup <keyword>`; your own rare conventions go here too.
-- `STATE.md`: short-lived context such as an ongoing trip or a temporary default payment account; deleted when it no longer applies.
-- `AGENTS.md` (referenced by `CLAUDE.md` and `GEMINI.md`): operating rules for the agent, picked up automatically by common coding agents. It covers the workflow for booking one entry, the hard constraints and an index of which document to read in which situation; setup, storage, corrections, reconciliation and other occasional tasks live in `docs/AI-SETUP.md` and `docs/AI-TASKS.md`, read on demand.
+| Document | Contents | When it is read |
+|---|---|---|
+| `AGENTS.md` | Operating procedure for the agent: workflow, hard constraints, reporting requirements and a document index. Referenced by `CLAUDE.md` and `GEMINI.md`, so common coding agents load it on opening the repository | At the start of a session |
+| `rules/daily.md` | Rules for everyday entries: required fields, which book an entry belongs to, the payment-method-to-account table, cross-book transfers, refunds, timestamps and tags. **Edit it to match your habits**; the agent follows whatever it says | Before every entry |
+| Other files under `rules/` | One topic per file: payee and narration style, tags, the category table, a lookup dictionary from items and merchants to accounts, worked cases, and special topics (credit, investments, valuation, shared books). Your own conventions go here too | On demand, via the index in `AGENTS.md` or `ledger.py lookup <keyword>` |
+| `STATE.md` | Short-lived context: an ongoing trip, a temporary default payment account | Printed by `ledger.py brief` |
+| `docs/AI-SETUP.md`, `docs/AI-TASKS.md` | Ledger setup and storage; handling of corrections, balance checks, statement imports, upgrades and other common requests | On demand, via the index in `AGENTS.md` |
+| `docs/COMMITS.md`, `docs/DEVELOPMENT.md` | Commit message convention; development rules | Before committing; when changing scripts |
+
+Long-lived rules go only in `rules/`, one topic per file; short-lived context goes only in `STATE.md`; when rules conflict, `rules/daily.md` prevails.
 
 ## Example
 
@@ -79,7 +85,7 @@ beancount-ai-ledger/
 ├── ledger.toml                 # books, cross-book mirrors, timezone, base currency, profit split
 ├── rules/                      # bookkeeping rules, one topic per file; daily.md is read before every entry
 ├── STATE.md                    # short-lived context
-├── AGENTS.md                   # agent operating rules
+├── AGENTS.md                   # operating procedure for the agent
 ├── common/                     # commodity declarations and prices
 ├── personal/
 │   ├── accounts.beancount      # chart of accounts
@@ -92,7 +98,7 @@ beancount-ai-ledger/
 │   ├── hooks/commit-msg        # commit message format check
 │   └── ledgerlib/              # implementation and account templates
 ├── examples/                   # cookbook of tricky entries and a full demo ledger
-├── docs/                       # quick start, user guide, reference, FAQ (Chinese)
+├── docs/                       # quick start, user guide, reference, FAQ; agent-facing setup, task, commit and development docs (Chinese)
 └── tests/                      # pytest suite (runs on temporary ledgers)
 ```
 
@@ -101,7 +107,8 @@ beancount-ai-ledger/
 The full list is in `python3 scripts/ledger.py --help`; details in [Commands and configuration](docs/REFERENCE.md) (Chinese).
 
 ```bash
-python3 scripts/ledger.py brief                        # one page before booking: date, short-lived context, recurring entries due, usable accounts
+python3 scripts/ledger.py brief                        # context for booking: date, short-lived context, recurring entries due, usable accounts
+python3 scripts/ledger.py lookup catfood               # search rules and account notes by keyword
 python3 scripts/ledger.py check                        # validate all books + cross-book reconciliation
 python3 scripts/ledger.py recent personal              # last 10 entries, each with an [id]
 python3 scripts/ledger.py find personal lunch 18       # search entries by keyword
@@ -122,17 +129,18 @@ python3 scripts/ledger.py backup --daily               # zip the whole ledger wi
 - **Two-level categories**: expenses are group + subcategory only (e.g. `Expenses:Food:Dining`); who and which trip go into tags (`#trip`, `#family`), and the narration names what was bought.
 - **Consumer credit**: spending on a credit card or Huabei creates a liability; repayments reduce it and are not counted as spending again.
 - **Refunds and advances**: refunds reduce the original expense; money lent or paid on someone's behalf is a receivable, not spending.
-- **Multiple currencies**: base currency CNY by default; other currencies are converted with `price` entries or `--rate`, and `dividend` can fetch the day's rate.
+- **Valuation**: base currency CNY by default. When computing total assets, foreign currencies, crypto, gold and silver, funds and stocks are converted at the day's price fetched online, falling back to `price` entries in the ledger; pension and medical-insurance personal accounts cannot be withdrawn and are excluded from net worth.
+- **Profit split**: for a shop run with partners, set the shares under `[dividend]` in `ledger.toml` and run `dividend` at the start of each month to get each partner's entitlement, amount already distributed and amount payable.
 - **Shop books are for internal management**: if the shop is a registered business, tax filing still follows the applicable accounting standards (an accountant can do it); these journals serve as the source records. Personal-only users can ignore this.
 
 ## Reliability
 
-1. **In every command**: `add` / `amend` / `void` / `fmt` validate the whole book after writing and restore the files if anything fails.
+1. **In every command**: `add` / `pair` / `amend` / `void` / `fmt` validate the whole book after writing and restore the files if anything fails.
 2. **Before each commit**: the pre-commit hook runs validation, reconciliation and formatting checks, plus ruff and pytest when scripts change; the commit-msg hook checks the commit message format.
 
 There is no cloud check after a push: enable the hooks once on every device and every clone (`git config core.hooksPath scripts/hooks`). `doctor` reports whether they are enabled, and `add` / `amend` / `void` remind you after a successful write.
 
-Entry guards also reject future dates, guessed times, missing payees or narrations, and exact duplicates.
+Entry commands also reject future dates, guessed times, missing payees or narrations, and exact duplicates. All changes are tracked in Git and can be traced, compared and rolled back.
 
 ## Documentation
 
