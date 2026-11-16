@@ -153,4 +153,4 @@ python3 scripts/bootstrap.py && git commit -q -m "chore: 同步上游脚本"
 
 - `networth` 联网取得外币、金银、基金、股票的当日价格并折算为本位币；回报时说明所用价格与数据时间。
 - 单独查询价格使用 `ledger.py quote <代码>`，代码写法见 `rules/valuation.md` 第 2 节。
-- 养老保险、医保个人账户标注了 `networth: FALSE`，不计入净资产。
+- 养老保险、医保个人账户标注了 `restricted: TRUE`，作为受限资产计入净资产；回报时同时给出净资产与可动用净资产。

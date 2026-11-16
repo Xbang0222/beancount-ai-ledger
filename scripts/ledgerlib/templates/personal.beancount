@@ -20,9 +20,11 @@
 ; —— 投资 ——
 {{OPEN_DATE}} open Assets:Invest:Fund ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 rules/investment.md）
 {{OPEN_DATE}} open Assets:Invest:Stock ; 金融资产－股票
-; —— 社保公积金个人账户（不能随时支取，合并资产时单独列示）——
+; —— 社保公积金个人账户（restricted: TRUE 为受限资产：计入净资产，退休前不能支取，单独列示）——
 {{OPEN_DATE}} open Assets:Benefit:Medical {{CURRENCY}} ; 医保个人账户
+  restricted: TRUE
 {{OPEN_DATE}} open Assets:Benefit:Pension {{CURRENCY}} ; 养老保险个人账户（退休前不可支取）
+  restricted: TRUE
 {{OPEN_DATE}} open Assets:Benefit:HousingFund {{CURRENCY}} ; 住房公积金
 
 ; ===== 负债 Liabilities（余额为负数表示欠款）=====

@@ -11,8 +11,10 @@
 配了 [dividend] 且所有者那一方标了 owner = true 时，其余各方在未结清月份里还没分走的利润
 （见 dividend.outstanding）不是所有者的钱：折合净资产之后单列一行，再给出扣后的净资产。
 
-两种账户元数据（写在 open 指令下面）：
-- `networth: FALSE`：退休前取不出来的钱（养老保险、医保个人账户），单独列示，不计入净资产。
+三种账户元数据（写在 open 指令下面）：
+- `restricted: TRUE`：受限资产，属于本人但在约定条件成就前不能支取（养老保险、医保个人账户）。
+  计入总资产与净资产，在「受限资产」中单列，折合本位币后另给出扣除受限资产的「可动用净资产」。
+- `networth: FALSE`：不属于本人或不应计入净资产的余额，单列于「不计入净资产」，不计入任何合计。
 - `estimate: "AU"`：按人民币金额记、没记克数的黄金（积存金等），按每笔发生当天的价格折成克数，
   再按今天的价格估算现值。代码写法同 quote，白银写 "AG"，基金写 "F161226"。
 """
@@ -139,7 +141,7 @@ def cmd_networth(overrides=None, today=None, offline=False):
 
         today = now_local().date()
 
-    rows = {"Assets": [], "Liabilities": []}
+    rows = {"Assets": [], "Restricted": [], "Liabilities": []}
     locked, eliminated = [], []
     meta = {book: _account_meta(entries) for book, entries in books.items()}
     for book, entries in books.items():
@@ -151,13 +153,15 @@ def cmd_networth(overrides=None, today=None, offline=False):
                     eliminated.append((book, acc, cur, v))
                 elif meta[book].get(acc, {}).get("networth") is False:
                     locked.append((book, acc, cur, v))
+                elif acc.startswith("Assets:") and meta[book].get(acc, {}).get("restricted") is True:
+                    rows["Restricted"].append((book, acc, cur, v))
                 else:
                     rows[acc.split(":")[0]].append((book, acc, cur, v))
 
     live = _Live(base, not offline)
     held = {cur for kind in rows.values() for _, _, cur, _ in kind}
     estimates = {}   # (book, acc) -> (代码, 数量 或 None, 失败原因)
-    for book, acc, cur, _ in rows["Assets"]:   # 元数据按这一行自己所在的账本取：别的账本有同名科目不算
+    for book, acc, cur, _ in rows["Assets"] + rows["Restricted"]:   # 元数据按这一行自己所在的账本取：别的账本有同名科目不算
         code = str(meta[book].get(acc, {}).get("estimate", "")).upper()
         if code and cur == base and (book, acc) not in estimates:
             qty, why = _estimate(books[book], acc, code, base, live)
@@ -173,8 +177,9 @@ def cmd_networth(overrides=None, today=None, offline=False):
     all_entries = [e for entries in books.values() for e in entries]
     rates = _rates(all_entries, base, held, live, overrides, cfg.fx_alias)
 
-    totals = {k: defaultdict(Decimal) for k in rows}
-    in_base = {k: Decimal(0) for k in rows}
+    totals = {k: defaultdict(Decimal) for k in ("Assets", "Liabilities")}
+    in_base = {k: Decimal(0) for k in ("Assets", "Liabilities")}
+    restricted_base = Decimal(0)
     missing = set()
     bw = max(len(b) for b in books) + 2
 
@@ -182,20 +187,25 @@ def cmd_networth(overrides=None, today=None, offline=False):
         print(f"\n===== 合并资产负债（{' + '.join(books)}，已抵销账本间往来） =====")
     else:
         print(f"\n===== 资产负债 · {members[0]} =====")
-    for kind, title in (("Assets", "资产"), ("Liabilities", "负债")):
+    sections = (("Assets", "资产"), ("Restricted", "受限资产（计入净资产；约定条件成就前不能支取）"),
+                ("Liabilities", "负债"))
+    for kind, title in sections:
+        if kind == "Restricted" and not rows[kind]:
+            continue
         print(f"\n【{title}】")
         if not rows[kind]:
             print("  （无）")
+        side = "Assets" if kind == "Restricted" else kind
         for book, acc, cur, v in rows[kind]:
             shown = -v if kind == "Liabilities" else v
-            totals[kind][cur] += shown
+            totals[side][cur] += shown
             line = f"  {pad(book, bw)}{acc:<36}{shown:>12.2f} {cur}"
             value = None
             est = estimates.get((book, acc))
             if est and est[1] is not None and est[0] in rates:
                 code, qty = est[0], est[1]
                 value = qty * rates[code][0]
-                line += f"  ≈ {value:>10.2f} {base}（买入成本；约 {qty:.3f} {code}，按每笔当天价格估算）"
+                line += f"  ≈ {value:>10.2f} {base}（现值；左列为买入成本，约 {qty:.3f} {code}，按每笔当天价格折算数量）"
             elif est:
                 line += f"  （买入成本；估算现值失败：{est[2] or '缺少当天价格'}）"
                 value = shown
@@ -207,10 +217,12 @@ def cmd_networth(overrides=None, today=None, offline=False):
             else:
                 missing.add(cur)
             if value is not None:
-                in_base[kind] += value
+                in_base[side] += value
+                if kind == "Restricted":
+                    restricted_base += value
             print(line)
 
-    print("\n【合计】")
+    print("\n【合计】（资产合计含受限资产）")
     net = defaultdict(Decimal)
     for kind, title in (("Assets", "资产"), ("Liabilities", "负债")):
         for cur, v in sorted(totals[kind].items()):
@@ -249,6 +261,10 @@ def cmd_networth(overrides=None, today=None, offline=False):
         print(f"  {pad('扣后净资产', 20)}{net_base:>12.2f} {base}")
     elif claims is None:
         print(f"  [!] 缺少 {', '.join(sorted(no_rate))} 的价格，算不出合伙人未分利润，上面的净资产没有计入这一项")
+    if rows["Restricted"]:
+        print(f"  {pad('其中：受限资产', 20)}{restricted_base:>12.2f} {base}")
+        print(f"  {pad('可动用净资产', 20)}{net_base - restricted_base:>12.2f} {base}"
+              f"（{'扣后' if claims else ''}净资产扣除受限资产）")
     if live.failed:
         print(f"  [!] 联网取价失败（{live.failed}），已改用账内价格")
     if missing:
@@ -257,7 +273,7 @@ def cmd_networth(overrides=None, today=None, offline=False):
               f"或用 --rate {sorted(missing)[0]}=汇率 临时指定")
 
     if locked:
-        print("\n【不计入净资产（退休前取不出来，open 指令标了 networth: FALSE）】")
+        print("\n【不计入净资产（open 指令标了 networth: FALSE）】")
         for book, acc, cur, v in locked:
             print(f"  {pad(book, bw)}{acc:<36}{v:>12.2f} {cur}")
     if len(books) > 1 or eliminated:

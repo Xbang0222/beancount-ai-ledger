@@ -122,6 +122,31 @@ def test_联网失败时提示并改用账内价格(ledger, capsys, monkeypatch)
     assert "联网取价失败（断网）" in out
 
 
+def test_标了restricted的受限资产计入净资产并给出可动用净资产(ledger, capsys):
+    _append(_accounts(ledger), "2026-08-31 open Assets:Benefit:Pension CNY\n  restricted: TRUE\n")
+    base = _run(capsys)
+    _append(_personal_journal(ledger), '''
+2026-09-10 * "社保局" "社保入账-养老保险"
+  time: "10:00"
+  Assets:Benefit:Pension  500.00 CNY
+  Income:Other
+''')
+    out = _run(capsys)
+    assert "Pension" not in _section(out, "【资产】")
+    assert "Assets:Benefit:Pension" in _section(out, "【受限资产")
+    assert "【不计入净资产" not in out
+
+    def number(text, label):
+        line = [x for x in text.splitlines() if x.strip().startswith(label)][0]
+        return Decimal(line.split()[1])
+
+    folded_before, folded = base.split("【折合", 1)[1], out.split("【折合", 1)[1]
+    assert number(folded, "净资产") - number(folded_before, "净资产") == Decimal("500.00")
+    assert number(folded, "其中：受限资产") == Decimal("500.00")
+    assert number(folded, "可动用净资产") == number(folded_before, "净资产")
+    assert "受限资产" not in folded_before
+
+
 def test_标了networth_FALSE的账户单列且不计入净资产(ledger, capsys):
     _append(_accounts(ledger), "2026-08-31 open Assets:Benefit:Pension CNY\n  networth: FALSE\n")
     _append(_personal_journal(ledger), '''
