@@ -33,6 +33,7 @@
 - 副业收支科目：有进货成本的个人经营（代购、代充会员、摆摊）收款记 `Income:SideBiz`，进货款记 `Expenses:SideBiz`；没有进货成本的兼职与劳务（软件外包、稿费、讲课费）仍记 `Income:SideJob`。
 - 新增文档：`docs/AI-SETUP.md`（第一次接手、账本存放、没有远程仓库时、首次使用、引导新手）、`docs/AI-TASKS.md`（更正与删除、余额核对、导入账单、行程与临时状态、修改规则、升级工具、新建账本、常用查询）、`docs/COMMITS.md`（提交信息规范）、`docs/DEVELOPMENT.md`（环境初始化、模块职责、开发约束）。上述内容原在 `AGENTS.md`。
 - 账本存放不再绑定具体的 AI 与存储方式，按用户现有条件选择：有私有 Git 仓库（GitHub、Gitee 等）时每次推送；只有云盘时打包备份；两者均无时本地提交并提醒用户。见 `docs/AI-SETUP.md`「账本存放」。
+- 写法检查新增 `two_way`（双向科目）：借贷两个方向均属正常发生额的科目，例如 `Income:Invest:PnL` 的收益与亏损，记在借方时不要求摘要以「退款」结尾。模板 `ledger.toml` 默认将 `Income:Invest:PnL` 列为双向科目；已有账本须将该行复制到自己的 `[naming]`。
 
 ### 变更
 

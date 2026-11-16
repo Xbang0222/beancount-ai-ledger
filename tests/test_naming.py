@@ -157,6 +157,15 @@ def test_退款摘要末尾要加退款(named, capsys):
     assert _add(_txn('2026-09-23 * "网店" "餐饮-燕麦退款"', "Assets:Alipay  23.65 CNY", "Expenses:Food:Dining")) == 0
 
 
+def test_双向科目借方发生额不按退款检查(ledger):
+    # 投资盈亏一类科目亏损时记在借方，属于正常发生额，不要求摘要以「退款」结尾
+    with open(ledger / "ledger.toml", "a", encoding="utf-8") as f:
+        f.write(NAMING.replace('refund_suffix = ["退款", "退回"]\n',
+                               'refund_suffix = ["退款", "退回"]\ntwo_way = ["Income:Other"]\n'))
+    assert config.load().naming.two_way == ("Income:Other",)
+    assert _add(_txn('2026-09-23 * "基金" "其他收入-基金浮亏"', "Income:Other  12.30 CNY", "Assets:Alipay")) == 0
+
+
 def test_退款结尾不看括号里的固定标记(named):
     assert _add(_txn('2026-09-23 * "商店" "餐饮-晚餐退款（股东往来）"',
                      "Assets:Wechat  5.00 CNY", "Expenses:Food:Dining  -5.00 CNY")) == 0

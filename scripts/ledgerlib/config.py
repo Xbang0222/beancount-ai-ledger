@@ -42,7 +42,7 @@ _DIVIDEND_KEYS = {"book", "account", "partners"}
 _PARTNER_KEYS = {"name", "payee", "share", "offset", "owner"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
 _MIRROR_KEYS = {"name", "currency", "accounts"}
-_NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "note_required", "fallback",
+_NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "two_way", "note_required", "fallback",
                 "prefix", "patterns"}
 _PATTERN_KEYS = {"book", "name", "when", "with", "payee", "narration", "hint"}
 _RECURRING_KEYS = {"book", "name", "every", "since", "match", "entry", "confirm"}
@@ -114,6 +114,7 @@ class Naming:
     banned_payees: tuple  # 不许用作对方名称的空泛词
     vague_items: tuple    # 摘要“大类-事项”里不许单独当事项用的笼统词
     refund_suffix: tuple  # 费用冲回、收入冲减（退款/退回）时摘要必须的结尾；空表示不查
+    two_way: tuple        # 双向科目：借贷两个方向均属正常发生额（如投资盈亏），不按退款检查
     note_required: tuple  # 记到这些科目（兜底科目）时必须写 note: 说明是什么、为什么没有合适分类
     fallback: tuple       # 找不到分类时的处理步骤，rules 原样打印
     prefix: dict          # 账本名 -> {科目前缀: (允许的摘要开头, ...)}
@@ -314,6 +315,8 @@ def _parse_naming(raw, books):
         banned_payees=_str_list(raw.get("banned_payees", []), f"{where} banned_payees"),
         vague_items=_str_list(raw.get("vague_items", []), f"{where} vague_items"),
         refund_suffix=_str_list(raw.get("refund_suffix", []), f"{where} refund_suffix"),
+        two_way=tuple(_account_prefix(a, where) for a in
+                      _str_list(raw.get("two_way", []), f"{where} two_way")),
         note_required=tuple(_account_prefix(a, where) for a in
                             _str_list(raw.get("note_required", []), f"{where} note_required")),
         fallback=_str_list(raw.get("fallback", []), f"{where} fallback"),

@@ -48,8 +48,10 @@ def _main_posting(txn, table):
     return best
 
 
-def _is_reversal(account, amount):
-    """费用记在贷方、或收入记在借方：钱退回来了，属于退款/退回。"""
+def _is_reversal(account, amount, two_way=()):
+    """费用记在贷方、或收入记在借方：钱退回来了，属于退款/退回。双向科目（如投资盈亏）不算。"""
+    if any(_match(account, a) for a in two_way):
+        return False
     return (_match(account, "Expenses") and amount < 0) or (_match(account, "Income") and amount > 0)
 
 
@@ -114,7 +116,8 @@ def problems(book, txn, naming):
         if not narr.startswith(allowed):
             out.append(f"科目 {account} 的摘要应以「{_quote(allowed)}」开头"
                        f"（多个收支科目按金额最大的那个定），收到「{narr}」")
-        if naming.refund_suffix and _is_reversal(account, amount) and not bare.endswith(naming.refund_suffix):
+        reversal = _is_reversal(account, amount, naming.two_way)
+        if naming.refund_suffix and reversal and not bare.endswith(naming.refund_suffix):
             out.append(f"这笔是钱退回来（{account} 冲回），摘要末尾加「{_quote(naming.refund_suffix)}」，"
                        "如「餐饮-燕麦退款」；不是退款的差额按规则另记收入或费用")
     return out
@@ -204,6 +207,8 @@ def print_general(naming):
     print(f"  括号里只许出现的固定标记：{' '.join(f'（{m}）' for m in naming.markers) or '（无）'}")
     if naming.refund_suffix:
         print(f"  退款/退回（费用冲回、收入冲减）摘要末尾：{' / '.join(naming.refund_suffix)}")
+    if naming.two_way:
+        print(f"  双向科目（借贷两个方向均属正常发生额，不按退款检查）：{'、'.join(naming.two_way)}")
     if naming.banned_payees:
         print(f"  不能当对方的空泛词：{'、'.join(naming.banned_payees)}")
     if naming.vague_items:
