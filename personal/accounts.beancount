@@ -18,9 +18,9 @@
 1970-01-01 open Assets:Receivable:Other CNY       ; 其他应收款－借给别人、替别人垫付、待退款
 1970-01-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
 ; —— 投资 ——
-1970-01-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 CATEGORIES 第 5 节）
+1970-01-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 ACCOUNTING 第 3 节）
 1970-01-01 open Assets:Invest:Stock               ; 金融资产－股票
-1970-01-01 open Assets:Invest:Gold "FIFO"         ; 金融资产－黄金（积存金、实物金；知道克数按 AU 记，只知道金额按 CNY 记，见 CATEGORIES 第 5 节）
+1970-01-01 open Assets:Invest:Gold "FIFO"         ; 金融资产－黄金（积存金、实物金；知道克数按 AU 记，只知道金额按 CNY 记，见 ACCOUNTING 第 4 节）
   estimate: "AU"
 ; —— 社保公积金个人账户（networth: FALSE 的退休前取不出来，不计入净资产，单独列示）——
 1970-01-01 open Assets:Benefit:Medical CNY       ; 医保个人账户
