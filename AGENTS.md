@@ -135,7 +135,7 @@ git add -A && git commit -q -m "feat: 登记个人账10月28日午餐支出18.00
 | 外币与各类资产折算、价格查询、净资产口径、报告资产 | `rules/valuation.md` |
 | 与他人共有的账本 | `rules/shared-books.md` |
 | 首次接手、`doctor` 报告问题、远程仓库为公开 | `docs/AI-SETUP.md`「第一次接手」 |
-| 账本存放位置与同步方式、没有远程仓库 | `docs/AI-SETUP.md`「账本存哪」「没有远程仓库时」 |
+| 账本存放位置与同步方式、没有远程仓库 | `docs/AI-SETUP.md`「账本存放」「没有远程仓库时」 |
 | 账本未初始化、用户要求建账、用户不熟悉记账 | `docs/AI-SETUP.md`「首次使用」「引导新手」 |
 | 更正与作废 | `docs/AI-TASKS.md`「更正与删除」 |
 | 用户报告账户余额 | `docs/AI-TASKS.md`「余额核对」 |
@@ -162,4 +162,4 @@ git add -A && git commit -q -m "feat: 登记个人账10月28日午餐支出18.00
 | `rules/dictionary.md`、`rules/cases.md`、`rules/classification.md` 的分类依据 | `CLASSIFY.md` |
 | `rules/credit.md`、`rules/investment.md`、`rules/valuation.md`、`rules/shared-books.md` | `CATEGORIES.md` 第 4、5 节 |
 
-旧布局迁移为新布局的步骤见 `docs/AI-TASKS.md`「升级工具」，须经用户同意后执行。
+旧布局迁移为新布局的步骤见 `docs/AI-TASKS.md`「旧布局迁移」，须经用户同意后执行。

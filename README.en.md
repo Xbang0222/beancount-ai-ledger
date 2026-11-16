@@ -40,7 +40,7 @@ What ends up in the journal (`time` is injected by the script at entry time, nev
 
 ## Getting started
 
-Any AI that can read files and run commands will do. Store the ledger wherever you can: a **private Git repository** (GitHub, Gitee, …) is best, otherwise back it up to a cloud drive; the AI picks per `docs/AI-SETUP.md` ("账本存哪"). The AI runs the commands below; doing it yourself needs Python 3.9 or later and Git.
+Any AI that can read files and run commands will do. Store the ledger wherever you can: a **private Git repository** (GitHub, Gitee, …) is best, otherwise back it up to a cloud drive; the AI picks per `docs/AI-SETUP.md` ("账本存放"). The AI runs the commands below; doing it yourself needs Python 3.9 or later and Git.
 
 1. **Create a private repository.** Click **Use this template** → **Create a new repository**, choose **Private**, and clone it. With the [GitHub CLI](https://cli.github.com/):
 

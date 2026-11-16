@@ -16,7 +16,7 @@
 | `rules/daily.md` | 日常入账规则：分录要素、账本判定、结算账户对照表、往来、退款、时间、标签。**建账后按你的习惯修改**，AI 的记法随之改变 | 每次入账前 |
 | `rules/` 其余文件 | 按主题划分的规则：对方与摘要、标签、分类表、速查词典、判例，以及信贷、投资、估值、共有账本等专题；自定的少见口径也写在这里 | 按 `AGENTS.md` 的索引按需读取，或用 `ledger.py lookup <关键词>` 检索 |
 | `STATE.md` | 会失效的临时上下文：进行中的行程、临时默认结算账户 | 由 `ledger.py brief` 输出 |
-| `docs/AI-SETUP.md`、`docs/AI-TASKS.md` | 建账、存放、更正、对账、导入账单、升级等不常做的事 | 遇到时 |
+| `docs/AI-SETUP.md`、`docs/AI-TASKS.md` | 建账与账本存放；更正、余额核对、导入账单、升级等常见请求的处理 | 按 `AGENTS.md` 的索引按需读取 |
 | `docs/COMMITS.md`、`docs/DEVELOPMENT.md` | 提交信息规范、开发规范 | 提交前、修改脚本时 |
 
 长期规则只写入 `rules/`，一个主题一个文件；临时上下文只写入 `STATE.md`；规则冲突时以 `rules/daily.md` 为准。
@@ -27,7 +27,7 @@
 >
 > AI：已记 2 笔：餐饮 18.00 元（微信零钱）；交通 32.00 元（花呗）。无标签。
 
-写入账本的分录（`time` 由脚本注入录入时刻，不靠 AI 估）：
+写入账本的分录如下，`time` 由脚本注入录入时刻，不由 AI 估算：
 
 ```beancount
 2026-09-26 * "面馆" "餐饮-牛肉面"
@@ -41,7 +41,7 @@
   Liabilities:Huabei
 ```
 
-月底问"这个月存下多少钱"，AI 运行月报（示例账本的输出）：
+月末询问「这个月存下多少钱」时，AI 执行月度报告。以下为示例账本的输出：
 
 ```text
 $ python3 scripts/ledger.py report personal 2026-09
@@ -65,15 +65,15 @@ $ python3 scripts/ledger.py report personal 2026-09
 | 在自己电脑上用 Claude Code、Codex 等 AI 编程助手，会用 Git | [快速开始：用 Git 保存账本](docs/QUICKSTART.md) |
 | 只用豆包这类 AI，不会用 Git | [不用 Git：只用豆包记账](docs/NO-GIT.md) |
 
-任何能读文件、跑命令的 AI 都能用。账本存哪按你手里有什么来：**私有 Git 仓库**（GitHub、Gitee 等）最好，没有就备份到云盘，AI 按 `docs/AI-SETUP.md`「账本存哪」自己判断。下面的命令也由 AI 来跑；自己动手的，前提是本机已有 Python 3.9+ 和 git，依赖装在仓库自己的 `.venv` 里，不动系统 Python：
+能读取文件、执行命令的 AI 均可使用。账本的存放方式取决于现有条件：首选**私有 Git 仓库**（GitHub、Gitee 等），没有时备份到云盘，由 AI 按 `docs/AI-SETUP.md`「账本存放」判断。下列命令通常由 AI 执行；手动执行须本机已安装 Python 3.9+ 与 git，依赖安装在仓库自带的 `.venv` 中，不影响系统 Python：
 
 ```bash
-python3 scripts/bootstrap.py                 # 建 .venv、装依赖、校验账本
-git config core.hooksPath scripts/hooks      # 启用提交前自动检查（每个克隆做一次）
-python3 scripts/ledger.py doctor             # 环境、账本、Git 远程仓库是否就绪
+python3 scripts/bootstrap.py                 # 创建 .venv、安装依赖、校验账本
+git config core.hooksPath scripts/hooks      # 启用提交前自动检查，每个克隆执行一次
+python3 scripts/ledger.py doctor             # 检查环境、账本与 Git 远程仓库
 ```
 
-> 账本是你的真实财务数据：请用 **Use this template** 建一个**私有**仓库再记账，不要 Fork（公开仓库的 Fork 也是公开的）。`doctor` 发现远程仓库是公开的会提醒。
+> 账本是真实的财务数据：请通过 **Use this template** 建立**私有**仓库后再记账，不要 Fork，公开仓库的 Fork 同样公开。`doctor` 发现远程仓库为公开时会给出提醒。
 
 ## 目录结构
 
@@ -81,90 +81,91 @@ python3 scripts/ledger.py doctor             # 环境、账本、Git 远程仓�
 beancount-ai-ledger/
 ├── personal.beancount          # 个人账入口
 ├── ledger.toml                 # 账套配置：账本清单、往来镜像、时区、本位币、利润分配
-├── rules/                      # 记账规则，按主题分文件；daily.md 每次入账前读
-├── STATE.md                    # 当前临时状态（失效即删）
-├── AGENTS.md                   # AI 操作规范（CLAUDE.md / GEMINI.md 引用它）
+├── rules/                      # 记账规则，按主题分文件；daily.md 为每次入账必读
+├── STATE.md                    # 当前临时状态，失效即删
+├── AGENTS.md                   # AI 作业规程，CLAUDE.md、GEMINI.md 引用它
 ├── common/
 │   ├── commodities.beancount   # 币种声明
 │   └── prices.beancount        # 外币、基金等价格
 ├── personal/
 │   ├── accounts.beancount      # 个人会计科目表
 │   ├── opening.beancount       # 期初余额
-│   └── journal/YYYY-MM.beancount  # 按月序时簿（由脚本自动追加）
+│   └── journal/YYYY-MM.beancount  # 按月序时簿，由脚本追加
 ├── scripts/
-│   ├── ledger.py               # 统一入口（入账/更正/作废/校验/查询/对账/格式化）
-│   ├── bootstrap.py            # 环境准备：建 .venv、装依赖、校验账本
+│   ├── ledger.py               # 统一入口：入账、更正、作废、校验、查询、对账、排版
+│   ├── bootstrap.py            # 环境准备：创建 .venv、安装依赖、校验账本
 │   ├── hooks/pre-commit        # 提交前自动检查
 │   ├── hooks/commit-msg        # 提交信息写法检查
 │   └── ledgerlib/              # 实现与科目表模板
 ├── examples/
 │   ├── cookbook.beancount      # AA、代垫、信用卡、退款、押金、贷款、基金、外币等写法
-│   └── demo/                   # 个人账 + 店铺账的完整示例账套
-├── docs/                       # 快速开始、使用指南、命令参考、常见问题
-└── tests/                      # pytest 用例（在临时账套上跑，不碰真实账本）
+│   └── demo/                   # 个人账与店铺账的完整示例账套
+├── docs/                       # 快速开始、使用指南、命令参考、常见问题；供 AI 读取的建账、常见请求、提交与开发规范
+└── tests/                      # pytest 用例，在临时账套上运行，不接触真实账本
 ```
 
-用 `new-book` 新增的账本（如 `shop`）会多出一组同样结构的 `shop.beancount` 与 `shop/` 目录。
+通过 `new-book` 新增的账本（例如 `shop`）另有一组结构相同的 `shop.beancount` 与 `shop/` 目录。
 
 ## 记账流程
 
-1. 用口语描述收支：金额、事由、付款方式，没说的按 `rules/daily.md` 的默认规则补全；
-2. AI 先跑 `ledger.py brief` 看现场（今天几号、`STATE.md` 当前情况、该补的周期分录、能用的科目），再按 `rules/daily.md` 把口语转成规范分录：必填日期、金额、科目、付款账户，标签按需；归类由 AI 自己定，**不反复问你"记在哪"**，只有金额、日期、是不是借出/代垫这类事实缺失才问；
-3. 经 `ledger.py add` 入账，一次一笔：借贷不平衡、科目未开立、未来日期、疑似重复时整笔回滚，并用中文说明该怎么改；两本账之间的往来用 `ledger.py pair` 两边一起记；
-4. AI 回报大类、金额、付款账户与标签，记错了一句话就能改（`amend` / `void`，不手改账本文件）；
-5. 每次改动立即提交并推送到你的私有仓库（没有远程仓库的按 [NO-GIT](docs/NO-GIT.md) 备份到云盘）。
+1. 用户以口语描述收支：金额、事由、付款方式；未说明的部分按 `rules/daily.md` 的默认规则补全。
+2. AI 执行 `ledger.py brief` 取得现场信息：当前日期、`STATE.md` 中生效的临时状态、待补记的周期分录、可用科目；再按 `rules/daily.md` 将口语转为规范分录，日期、金额、科目、付款账户必填，标签按需。归类由 AI 决定，**不向用户询问记入哪一类**；仅当金额、日期、是否属于借出或代垫等事实缺失时才确认。
+3. 通过 `ledger.py add` 入账，一次一笔：借贷不平、科目未开立、日期晚于当日、疑似重复时整笔回滚，并以中文说明修改方法；两本账之间的往来通过 `ledger.py pair` 同时登记。
+4. AI 回报大类、金额、付款账户与标签。记错时用一句话说明即可更正，由 `amend` / `void` 处理，不手工编辑账本文件。
+5. 每次改动后立即提交并推送到私有仓库；没有远程仓库时按 [NO-GIT](docs/NO-GIT.md) 备份到云盘。
 
 ## 常用命令
 
 完整清单与参数以 `python3 scripts/ledger.py --help` 为准，详细说明见 [命令与配置](docs/REFERENCE.md)：
 
 ```bash
-python3 scripts/ledger.py brief                        # 入账前一页现场信息：日期、临时状态、该补的周期分录、可用科目
-python3 scripts/ledger.py check                        # 校验全部账本 + 跨账本往来对账
-python3 scripts/ledger.py recent personal              # 最近 10 笔（行首 [编号]）
-python3 scripts/ledger.py find personal 午餐 18        # 按关键词找分录
-python3 scripts/ledger.py amend personal <编号>        # 更正：stdin 传入新分录替换这一笔
-python3 scripts/ledger.py void personal <编号>         # 作废这一笔
+python3 scripts/ledger.py brief                        # 入账所需的现场信息：日期、临时状态、待补记的周期分录、可用科目
+python3 scripts/ledger.py lookup 猫粮 拼多多            # 按关键词检索科目与规则所在章节
+python3 scripts/ledger.py check                        # 校验全部账本并核对账本之间的往来
+python3 scripts/ledger.py recent personal              # 最近 10 笔，行首为 [编号]
+python3 scripts/ledger.py find personal 午餐 18        # 按关键词查找分录
+python3 scripts/ledger.py amend personal <编号>        # 更正：从标准输入读取新分录，整笔替换
+python3 scripts/ledger.py void personal <编号>         # 作废该笔
 python3 scripts/ledger.py summary personal 2026-09     # 按一级大类汇总
-python3 scripts/ledger.py report personal 2026-09      # 月度收支 / 储蓄率分析
-python3 scripts/ledger.py tag personal trip 2026-09    # 按标签查明细（如一趟旅行的总花费）
-python3 scripts/ledger.py networth                     # 合并资产负债，外币金银基金股票按现价折算
-python3 scripts/ledger.py quote USD AU F161226         # 现拉汇率、金价（每克）、基金净值
+python3 scripts/ledger.py report personal 2026-09      # 月度报告：收支与储蓄率
+python3 scripts/ledger.py tag personal trip 2026-09    # 按标签汇总明细，例如一次旅行的总花费
+python3 scripts/ledger.py networth                     # 合并资产负债，外币、金银、基金、股票按现价折算
+python3 scripts/ledger.py quote USD AU F161226         # 联网查询汇率、每克金价、基金净值
 python3 scripts/ledger.py dividend 2026-09             # 合伙店铺按月利润分配
 python3 scripts/ledger.py new-book shop --template business --link personal   # 新增店铺账
-python3 scripts/ledger.py backup --daily               # 打包整个账套（含 Git 历史），存云盘用
+python3 scripts/ledger.py backup --daily               # 将整个账套连同 Git 历史打包，供存入云盘
 ```
 
 ## 核算要点
 
 - **会计主体分离**：个人与店铺、家庭共同账各设一本账，账本之间的资金往来双边镜像登记，不确认收支；`reconcile` 核对两边相加为 0，`networth` 合并时自动抵销。
-- **两级分类**：支出只分大类 + 小类（如 `Expenses:Food:Dining`），跟谁花的、哪趟行程交给标签（`#trip`、`#family`），摘要写清具体买了什么。
+- **两级分类**：支出只分大类与小类，例如 `Expenses:Food:Dining`；交易对象与行程由标签表示（`#trip`、`#family`），摘要写明具体事项。
 - **消费信贷**：花呗、白条、信用卡消费确认负债，还款冲减负债，不重复记支出。
-- **退款与代垫**：退款冲减原支出，不算收入；借出、代垫挂往来，不算消费。
-- **折现**：默认本位币 CNY，外币、加密币、黄金白银、基金、股票算总资产时自动现拉当天价格折算（拉不到用账内 `price`）；只记了金额的积存金按每笔当天金价估算克数和现值；养老金、医保个人账户取不出来，不计入净资产。
-- **利润分配**：合伙店铺在 `ledger.toml` 配 `[dividend]` 比例，每月初跑 `dividend`，算出各方应得、已分配与本次实付。
-- **店铺账只作内部管理**：店铺是注册主体的，对外纳税申报仍按税法与会计准则设账（可委托代理记账），这里的流水可以交给会计作依据。只记个人账的不用管这条。
+- **退款与代垫**：退款冲减原支出，不确认收入；借出、代垫挂往来科目，不确认支出。
+- **估值**：默认本位币为 CNY。计算总资产时，外币、加密货币、黄金白银、基金、股票按联网取得的当日价格折算，无法取得时改用账内 `price`；只登记了金额的积存金按每笔发生当日的金价估算克数与现值；养老保险、医保个人账户无法支取，不计入净资产。
+- **利润分配**：合伙店铺在 `ledger.toml` 的 `[dividend]` 中配置比例，每月初执行 `dividend`，得出各方应得、已分配与本次实付。
+- **店铺账仅用于内部管理**：店铺为注册主体的，对外纳税申报仍须按税法与会计准则设账，可委托代理记账；本账套的流水可作为会计的记账依据。只记个人账的不涉及本条。
 - 完整分录范例见 [`examples/cookbook.beancount`](examples/cookbook.beancount)。
 
 ## 数据可靠性
 
-两道把关：
+校验分两级：
 
-1. **命令内**：`add` / `amend` / `void` / `fmt` 写盘后整本校验，不通过原样还原；
-2. **提交前**：`scripts/hooks/pre-commit` 跑账本校验、往来对账与排版检查，改了脚本再跑 ruff 与 pytest；`scripts/hooks/commit-msg` 核对提交信息写法。
+1. **命令内**：`add`、`pair`、`amend`、`void`、`fmt` 写盘后校验整本账，未通过即还原。
+2. **提交前**：`scripts/hooks/pre-commit` 执行账本校验、往来对账与排版检查，修改脚本时另执行 ruff 与 pytest；`scripts/hooks/commit-msg` 检查提交信息。
 
-没有推送后的云端检查：每台设备、每个克隆都要先启用钩子（`git config core.hooksPath scripts/hooks`），`doctor` 会查有没有启用，`add` / `amend` / `void` 成功后也会提醒。
+推送后没有云端检查：每台设备、每个克隆均须先启用钩子（`git config core.hooksPath scripts/hooks`）。`doctor` 检查钩子是否启用，`add`、`amend`、`void` 成功后也会提醒。
 
-此外，入账守卫拒绝未来日期、估出来的时间、缺对方或摘要、内容相同的重复分录；Git 管理全部变更，可追溯、可 diff、可回滚。
+此外，入账命令拒绝晚于当日的日期、估算的时间、缺少对方或摘要的分录，以及内容相同的重复分录；全部变更由 Git 管理，可追溯、可比较、可回滚。
 
 ## 更多文档
 
 | 文档 | 内容 |
 |---|---|
-| [使用指南](docs/GUIDE.md) | 记账、改错、查账、对账时怎么跟 AI 说 |
+| [使用指南](docs/GUIDE.md) | 记账、更正、查询、对账时对 AI 的说法 |
 | [命令与配置](docs/REFERENCE.md) | 全部命令、多本账、利润分配、`ledger.toml`、目录结构 |
 | [常见问题](docs/FAQ.md) | 支持的 AI 工具、Windows、云环境、升级模板 |
-| [更新日志](CHANGELOG.md) | 每个版本改了什么 |
+| [更新日志](CHANGELOG.md) | 各版本的改动 |
 
 ## 致谢
 
