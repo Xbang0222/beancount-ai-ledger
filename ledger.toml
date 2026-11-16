@@ -56,7 +56,7 @@ kind = "personal"
 # ============================================================
 [naming]
 # 摘要括号内只允许下列固定标记；其他补充说明一律写入 note: 元数据
-markers = ["测试", "按利息处理", "按手续费处理"]
+markers = ["股东往来", "测试", "按利息处理", "按手续费处理"]
 # 不得单独用作对方名称的空泛词
 banned_payees = ["个人", "测试", "银行", "供应商", "商家", "商户", "未知"]
 # 费用冲回、收入冲减时，摘要必须以下列词结尾，例如「餐饮-燕麦退款」「销售退回」
@@ -69,7 +69,7 @@ note_required = ["Expenses:Other"]
 fallback = [
   "先执行 ledger.py lookup <关键词> 检索速查词典与分类表：先按物品查，未命中再按商家或平台查",
   "大类定得下、小类对不上：记该大类的「其他」小类（Shopping:Other、Entertainment:Other、Travel:Other），没有「其他」小类的挑最接近的",
-  "大类都对不上：参考统计局八大类和随手记、钱迹的分类挑最接近的；确是会反复出现的新品类，就在 accounts.beancount 开新科目、在下面 prefix 配好开头、补进 rules/classification.md 和 rules/dictionary.md",
+  "大类都对不上：参考统计局八大类和主流记账 App 的默认分类挑最接近的；确是会反复出现的新品类，就在 accounts.beancount 开新科目、在下面 prefix 配好开头、补进 rules/classification.md 和 rules/dictionary.md",
   "实在判断不了：记 Expenses:Other，摘要写「其他-<具体东西>」，note: 写清是什么，回报时告诉用户；不问用户记哪类",
   "连是消费、借出还是代垫都不清楚：先挂往来，不记费用（只有这类事实才问用户）",
 ]
@@ -91,7 +91,7 @@ vague_items = ["日用品", "消费", "支出", "杂项", "商品", "东西", "�
 "Expenses:PersonalCare" = "个护-"
 "Expenses:Pet" = "宠物-"
 "Expenses:Kids" = "育儿-"
-"Expenses:Social" = "人情-"
+"Expenses:Social" = "交际-"
 "Expenses:Insurance" = "保险-"
 "Expenses:Service" = "服务-"
 "Expenses:Tax" = "税费-"
@@ -100,7 +100,7 @@ vague_items = ["日用品", "消费", "支出", "杂项", "商品", "东西", "�
 "Expenses:Other" = "其他-"
 "Income:Salary" = "工资收入-"
 "Income:Bonus" = "奖金收入-"
-"Income:SideJob" = "兼职收入-"
+"Income:Labor" = "劳务收入-"
 "Income:SideBiz" = "副业收入-"
 "Income:Redpacket" = "红包收入-"
 "Income:Invest" = "投资收益-"
@@ -108,12 +108,47 @@ vague_items = ["日用品", "消费", "支出", "杂项", "商品", "东西", "�
 "Income:Benefit" = "社保入账-"
 "Income:Other" = "其他收入-"
 
-# 固定场景（可选）：分录只涉及下列科目时，对方与摘要只能按此书写。例如个人账与店铺账之间的往来：
+# 固定场景：分录只涉及下列科目时，对方与摘要只能按此书写；payee 省略表示对方不限，narration 省略表示摘要开头不限。
+# 账户更名或新增结算账户后，同步修改 when 与 with。写法的完整对照见 rules/naming.md 第 7 节。
+[[naming.patterns]]
+book = "personal"
+name = "自有账户之间的划转"
+when = ["Assets:Cash", "Assets:Bank", "Assets:Alipay", "Assets:Wechat"]    # 分录只涉及这些科目
+narration = ["银行转账-", "银行取现", "银行存现"]
+hint = '对方写转出机构，摘要写「银行转账-<转出>转<转入>」，如 "微信" "银行转账-微信转招行"；取现、存现写「银行取现」「银行存现」'
+
+[[naming.patterns]]
+book = "personal"
+name = "负债的借入与偿还"
+when = ["Liabilities:CreditCard", "Liabilities:Huabei", "Liabilities:Baitiao", "Liabilities:Loan", "Liabilities:Payable"]
+with = ["Assets:Cash", "Assets:Bank", "Assets:Alipay", "Assets:Wechat"]    # 其余科目只能是这些
+narration = ["偿还", "借款-", "其他应付款-", "信用卡取现"]
+hint = '对方写信贷机构或出借人。还款如 "蚂蚁花呗" "偿还花呗"、"京东" "偿还京东白条"、"招商银行" "偿还招行信用卡"、"朋友小王" "偿还小王借款"；借入如 "国家开发银行" "借款-助学贷款放款"'
+
+# 账本之间的往来可同样配置固定场景，例如个人账与店铺账：
 # [[naming.patterns]]
 # book = "personal"
 # name = "个人账与店铺之间的往来"
-# when = ["Assets:Receivable:Shop", "Liabilities:Shop"]          # 出现其中任一科目
-# with = ["Assets:Bank", "Assets:Wechat", "Assets:Alipay"]       # 其余科目只能是这些
-# payee = ["店铺"]
-# narration = ["代垫店铺款-", "代收店铺款-"]
+# when = ["Assets:Receivable:Shop", "Liabilities:Shop"]
+# with = ["Assets:Bank", "Assets:Wechat", "Assets:Alipay"]
+# payee = ["商店"]
+# narration = ["代垫商店", "代收商店", "收回商店", "归还商店"]
 # hint = "个人账不登记店铺的经营收支"
+
+# 对方或摘要中不得出现的写法：field 为 "narration"（摘要，默认）或 "payee"（对方）；pattern 为正则表达式，
+# 命中即拒绝；hint 为拒绝时给出的改法。误拦正常写法时，在 pattern 的排除字符中补充。
+[[naming.forbidden]]
+name = "具体日期"
+pattern = '\d{1,2}月\d{1,2}[日号]|(?<!\d)\d{1,2}号(?![线楼门口店桌厅馆院位车机仓柜铺色球电码汽油柴航风字房室库站台])|昨天|今天|明天|前天|昨晚|今晚'
+hint = "交易日期由分录首行的日期表达，不写入摘要；所属期间可以保留，如「居住-9月房租」；其余日期信息写入 note:"
+
+[[naming.forbidden]]
+name = "具体时刻"
+pattern = '(?<!\d)\d{1,2}[:：]\d{2}(?!\d)|(?<!\d)\d{1,2}点(?![券卡数心评赞击位读阵式])'
+hint = "交易时刻写入 time: 元数据；班次、场次等写入 note:"
+
+[[naming.forbidden]]
+field = "payee"
+name = "注册全称"
+pattern = '有限公司|有限责任公司|个体工商户|经营部|收单'
+hint = "对方写店名简称或业务描述，如「张记饭店」「便利店」，不写营业执照名称或收单机构名称"

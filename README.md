@@ -30,7 +30,7 @@
 写入账本的分录如下，`time` 由脚本注入录入时刻，不由 AI 估算：
 
 ```beancount
-2026-09-26 * "面馆" "餐饮-牛肉面"
+2026-09-26 * "面馆" "餐饮-午餐"
   time: "12:10"
   Expenses:Food:Dining  18.00 CNY
   Assets:Wechat

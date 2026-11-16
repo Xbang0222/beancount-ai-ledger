@@ -121,8 +121,8 @@ git add -A && git commit -q -m "feat: 登记个人账10月28日午餐支出18.00
 适用于 `doctor` 提示账本未初始化，或用户要求建账。
 
 1. 一次问清：有哪些账户（银行卡、支付宝、微信、现金、信用卡、花呗等）、开账日期、各账户在开账日的期初余额、未说明支付方式时的默认结算账户。
-2. 修改 `personal/accounts.beancount`：按用户的实际账户增删、更名，例如将 `Assets:Bank:Main` 改为 `Assets:Bank:CMB`；删除用不到的账户。
-3. 在 `personal/opening.beancount` 登记期初：开账日前一日写 `pad`，开账日写 `balance`，负债写负数。
+2. 修改 `personal/accounts.beancount`：按用户的实际账户增删、更名，例如将 `Assets:Bank:Main` 改为 `Assets:Bank:CMB`；删除用不到的账户。结算账户不在 `Assets:Cash`、`Assets:Bank`、`Assets:Alipay`、`Assets:Wechat` 之下，或负债科目更名的，同步修改 `ledger.toml` 中 `[[naming.patterns]]` 的 `when` 与 `with`。
+3. 在 `personal/opening.beancount` 登记期初：开账日前一日写 `pad`，开账日写 `balance`，负债写负数。用户同时提供记账 App 或支付平台的历史流水时，按 `docs/AI-TASKS.md`「导入账单」以当前实际余额倒推期初余额。
 4. 修改 `rules/daily.md`：将第 3 节的结算账户对照表与默认结算账户改为用户的账户，并删除文件开头的模板提示，`doctor` 据此判断规则是否已修改。旧布局账本修改 `CATEGORIES.md` 第 0 节。
 5. `check` 通过后提交，例如 `feat: 初始化个人账账户与期初余额`。
 

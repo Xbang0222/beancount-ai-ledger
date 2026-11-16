@@ -87,7 +87,7 @@ git add -A && git commit -m '<类型: 摘要>'
 1. **不得手工编辑序时簿**（`<账本>/journal/*.beancount`）。入账使用 `add` / `pair`，更正使用 `amend` / `void`；这些命令写盘后校验整本账，未通过即还原。
 2. **命令拒绝时按提示修改后重新提交，不得绕过。** 报错为中文，说明问题所在以及应使用的科目或写法。
 3. **一次只录入一笔。** 多笔分多次录入，每笔入账后先完成校验与提交，再录入下一笔；`pair` 为两本账各一笔。
-4. **对方与摘要必填并符合规范。** 规则由 `ledger.toml` 的 `[naming]` 校验，对照表见 `brief` 输出，补充规定见 `rules/naming.md`。
+4. **对方与摘要必填并符合规范。** 规则由 `ledger.toml` 的 `[naming]` 校验，对照表见 `brief` 输出，补充规定见 `rules/naming.md`。摘要不写交易日期与时刻，细节写入 `note:`；批量导入的分录同样适用。
 5. **不得估算时间。** 用户未给出具体时间时不写 `time` 行，由脚本注入录入时刻；无法判断上午或下午时先向用户确认。日期晚于当日、当日 `time` 晚于当前时间均会被拒绝。
 6. **账本之间的往来必须在两本账同时登记**，使用 `pair`；`add` 遇到往来科目会拒绝。更正或作废往来分录时同步处理另一本账，并执行 `python3 scripts/ledger.py reconcile` 确认每对镜像科目合计为 0。`add --one-sided` 仅用于补平既有的往来差额。
 7. **重复入账会被拒绝。** 日期、对方、摘要、各科目金额均相同的分录不得再次入账；确属两笔独立交易时使用 `--allow-duplicate`。不确定上一笔是否成功时，先执行 `ledger.py recent <账本>`。
@@ -127,7 +127,7 @@ git add -A && git commit -q -m "feat: 登记个人账10月28日午餐支出18.00
 | 情形 | 读取 |
 |---|---|
 | 每次入账 | `rules/daily.md`（必读） |
-| 对方与摘要的写法；被写法检查拒绝 | `rules/naming.md` |
+| 对方与摘要的写法；被写法检查拒绝；转账、还款、借贷、投资等非收支业务的固定写法 | `rules/naming.md` |
 | 行程、交易对象、专项事务的标签 | `rules/tags.md` |
 | 科目归类 | `ledger.py lookup <关键词>`；`rules/classification.md`（分类表与归类步骤）、`rules/dictionary.md`（速查词典）、`rules/cases.md`（判例） |
 | 分期、贷款 | `rules/credit.md` |
@@ -138,8 +138,8 @@ git add -A && git commit -q -m "feat: 登记个人账10月28日午餐支出18.00
 | 账本存放位置与同步方式、没有远程仓库 | `docs/AI-SETUP.md`「账本存放」「没有远程仓库时」 |
 | 账本未初始化、用户要求建账、用户不熟悉记账 | `docs/AI-SETUP.md`「首次使用」「引导新手」 |
 | 更正与作废 | `docs/AI-TASKS.md`「更正与删除」 |
-| 用户报告账户余额 | `docs/AI-TASKS.md`「余额核对」 |
-| 导入支付宝、微信账单 | `docs/AI-TASKS.md`「导入账单」 |
+| 用户报告账户余额、余额与账面不符 | `docs/AI-TASKS.md`「余额核对」，`rules/reconciliation.md` |
+| 导入历史流水：记账 App 导出文件、支付宝与微信账单、银行流水 | `docs/AI-TASKS.md`「导入账单」，`rules/import.md` |
 | 行程、临时默认账户等临时状态 | `docs/AI-TASKS.md`「行程与临时状态」，登记于 `STATE.md` |
 | 用户要求修改分类或规则 | `docs/AI-TASKS.md`「修改规则」 |
 | 升级本项目的脚本 | `docs/AI-TASKS.md`「升级工具」 |
@@ -161,5 +161,6 @@ git add -A && git commit -q -m "feat: 登记个人账10月28日午餐支出18.00
 | `rules/daily.md`、`rules/naming.md`、`rules/tags.md`、`rules/classification.md` 的分类表 | `CATEGORIES.md` |
 | `rules/dictionary.md`、`rules/cases.md`、`rules/classification.md` 的分类依据 | `CLASSIFY.md` |
 | `rules/credit.md`、`rules/investment.md`、`rules/valuation.md`、`rules/shared-books.md` | `CATEGORIES.md` 第 4、5 节 |
+| `rules/import.md`、`rules/reconciliation.md` | `docs/AI-TASKS.md`「导入账单」「余额核对」 |
 
 旧布局迁移为新布局的步骤见 `docs/AI-TASKS.md`「旧布局迁移」，须经用户同意后执行。

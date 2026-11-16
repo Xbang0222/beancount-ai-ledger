@@ -7,7 +7,7 @@
 
 ## 1 分类原则
 
-- 支出科目固定为两级：`Expenses:大类:小类`，例如 `Expenses:Food:Dining`；医疗、人情等无需细分的大类只设一级。不得开设第三级科目，不得为偶发支出新开小类。
+- 支出科目固定为两级：`Expenses:大类:小类`，例如 `Expenses:Food:Dining`；医疗、交际等无需细分的大类只设一级。不得开设第三级科目，不得为偶发支出新开小类。
 - 大类按消费性质划分，小类只为经常发生的支出设置。交易对象、行程、项目等维度由标签表达（`rules/tags.md`），不通过增加科目层级表达。
 - 旅行期间的餐饮仍计入 `Expenses:Food:*`，不因旅行改变科目；城际交通、住宿、门票计入对应的 `Expenses:Travel:*`，整趟行程成本由行程标签归集。
 - 退款冲减原科目，不确认收入。
@@ -19,8 +19,8 @@
 1. 确定大类：按所购物品或服务的性质，对应第 3 节的大类。
 2. 确定小类：在该大类内选择最接近的小类；均不匹配且该大类设有 `Other` 小类的，计入 `Other`；不分小类的大类直接计入大类。
 3. 无对应大类：参照第 5 节的通行分类口径选择最接近的大类。属于会重复发生的新品类时新开科目：在 `accounts.beancount` 中 `open` 并附中文注释，同步更新本表、`rules/dictionary.md` 和 `ledger.toml` 的 `[naming].prefix`，并在回报中告知用户。
-4. 仍无法判断：计入 `Expenses:Other`，在 `note:` 中说明内容，并在回报中告知用户。
-5. 摘要写明具体事项，例如「购物-蓝牙耳机」；分类只到两级，具体内容由摘要体现。
+4. 仍无法判断：计入 `Expenses:Other`，摘要写「其他-<具体事项>」，在 `note:` 中说明内容，并在回报中告知用户。
+5. 摘要按 `rules/naming.md` 第 4 节书写，例如「购物-蓝牙耳机」「餐饮-午餐」；分类只到两级，具体内容由摘要与 `note:` 体现。
 
 可以向用户确认的仅限事实：金额、日期、所属账本、业务性质（消费、借出或代垫）。业务性质不明时不得直接费用化。
 
@@ -31,12 +31,12 @@
 | 餐饮 | `Expenses:Food:Dining` | 早中晚饭、正餐、外卖、堂食、食堂、饭卡充值、工作餐、聚餐（自己吃的部分）、夜宵、快餐汉堡、火锅烧烤、粉面米线、冒菜麻辣烫、盒饭便当、方便面 |
 | 餐饮 | `Expenses:Food:Snack` | 奶茶、咖啡、饮料、矿泉水、酒水、香烟、零食、小吃（烤肠、炸串、关东煮）、甜品、面包蛋糕、冰淇淋、便利店零食 |
 | 餐饮 | `Expenses:Food:Grocery` | 买菜、肉蛋奶、水果、米面粮油、调料、生鲜超市、社区团购买菜 |
-| 居住 | `Expenses:Housing:Rent` | 房租、不可退的中介费、房贷以外的居住支出。**可退押金不是费用**，记 `Assets:Prepaid:Deposit`（`rules/daily.md` 第 5 节）；房贷本金记负债，利息记财务费用 |
+| 居住 | `Expenses:Housing:Rent` | 房租、不可退的中介费、房贷以外的居住支出。**可退押金是可收回的资产，不是费用**，记其他应收款 `Assets:Receivable:Other`，收回时冲减，只有不可退部分才记费用（`rules/daily.md` 第 5 节）；房贷本金记负债，利息记财务费用 |
 | 居住 | `Expenses:Housing:Utilities` | 水费、电费、燃气费、暖气费、话费、流量、宽带、物业费、停车位管理费以外的物业类收费 |
 | 居住 | `Expenses:Housing:Daily` | 纸巾、清洁用品、洗衣液、洗碗用品、垃圾袋、卫生巾、洗发水沐浴露等洗护用品、牙刷牙膏、厨具餐具、锅碗瓢盆、收纳、床品被褥、窗帘地垫、灯泡五金、水管配件、家具（桌椅柜子床垫）、桶装水、雨伞、小家居 |
 | 居住 | `Expenses:Housing:Repair` | 装修、刷墙、家电维修、上门安装打孔、开锁换锁、管道疏通 |
 | 交通 | `Expenses:Transport:Local` | 公交地铁、公交卡充值、打车网约车、出租车、摩的三轮、共享单车电单车、日常加油充电、电瓶车充电 |
-| 交通 | `Expenses:Transport:Vehicle` | 车辆（含电瓶车）维修保养、换电瓶轮胎、洗车、停车费、过路费、年检、车辆配件（坐垫、挡风被、头盔） |
+| 交通 | `Expenses:Transport:Vehicle` | 车辆（含电瓶车）维修保养、换电瓶轮胎、洗车、停车费、过路费、年检、车辆配件（坐垫、挡风被、头盔）、购买电瓶车等代步车 |
 | 交通 | `Expenses:Transport:LongDistance` | 不属于旅行的城际交通：回家、出差自付、考试的火车高铁、长途汽车、城际巴士、机场大巴、机票 |
 | 购物 | `Expenses:Shopping:Clothes` | 衣服裤子、内衣袜子、鞋子拖鞋、包、帽子围巾手套、首饰配饰手串发饰、雨衣、防晒衣、眼镜以外的穿戴 |
 | 购物 | `Expenses:Shopping:Digital` | 手机电脑平板、相机、耳机音箱、手表手环、充电器数据线、手机壳贴膜、存储卡、键鼠、家电（冰箱洗衣机空调风扇电饭煲吹风机）、剃须刀、监控摄像头 |
@@ -55,27 +55,27 @@
 | 教育 | `Expenses:Learning` | 学费、培训课程、网课、书籍、考试报名费、驾校学车练车、考证、复习资料 |
 | 医疗 | `Expenses:Medical` | 挂号看病、买药（感冒药、眼药水、膏药）、体检、牙科、眼镜隐形眼镜、针灸理疗、住院、保健品、口罩体温计等医疗用品 |
 | 保险 | `Expenses:Insurance` | 自付的医疗险、意外险、重疾险、寿险、车险、宠物险 |
-| 人情 | `Expenses:Social` | 发红包、礼金份子钱、生日节日礼物、请客、给父母长辈的钱、替亲友买单（替对象买票、买奶茶）、探病慰问、捐款 |
+| 交际 | `Expenses:Social` | 发红包、礼金份子钱、生日节日礼物、请客、给父母长辈的钱、替亲友买单（替对象买票、买奶茶）、探病慰问、捐款 |
 | 服务 | `Expenses:Service:Professional` | 税务/法律咨询、证件代办、翻译、公证、职业咨询、简历代写 |
 | 服务 | `Expenses:Service:Life` | 快递寄件、跑腿代取、充电宝租借、家政保洁、洗衣干洗、打印复印、证件照、修手机修鞋、搬家、存包寄存 |
 | 税费 | `Expenses:Tax` | 个税补缴、开发票的税费、签证费、护照身份证驾驶证工本费、行政规费、罚款罚单 |
 | 财务费用 | `Expenses:Finance:Interest` | 借款利息、信用卡分期利息、网贷利息、逾期罚息 |
 | 财务费用 | `Expenses:Finance:Fee` | 手续费、分期服务费、提现费、跨行转账费、银行卡年费、退票退款手续费 |
 | 副业 | `Expenses:SideBiz` | 个人小生意的进货成本：代购的货款、代充会员的进价、摆摊倒卖的进货款。收款记 `Income:SideBiz`，两边相减就是这门副业赚了多少，不要只记差价。生意做大了、要单独算盈亏的另建经营账本（`rules/daily.md` 第 2 节） |
-| 其他 | `Expenses:Other` | 无法判断归类时使用；须写 `note:` 并在回报中说明 |
+| 其他 | `Expenses:Other` | 丢钱、被骗、借出收不回的坏账、赔给别人的钱，以及无法判断归类时的兜底；须写 `note:` 并在回报中说明 |
 
 ## 4 收入
 
 | 科目 | 内容 |
 |---|---|
-| `Income:Salary` | 工资，按实际到账金额 |
-| `Income:Bonus` | 奖金 |
-| `Income:SideJob` | 兼职、劳务报酬（软件外包、稿费、讲课费）、二手转卖 |
+| `Income:Salary` | 工资、加班费、随工资发放的补贴，按实际到账金额，摘要「工资收入-9月工资」 |
+| `Income:Bonus` | 奖金、年终奖、绩效，摘要「奖金收入-…」。不单独统计奖金的账本可删除本科目，一并记 `Income:Salary`，摘要「工资收入-年终奖」 |
+| `Income:Labor` | 兼职、劳务报酬：软件外包、稿费、讲课费，摘要「劳务收入-…」 |
 | `Income:SideBiz` | 有进货成本的个人小生意收款（代购、代充会员、摆摊），摘要「副业收入-…」；进货成本记 `Expenses:SideBiz` |
 | `Income:Redpacket` | 红包、礼金 |
 | `Income:Invest:*` | 利息、分红、买卖价差 |
 | `Income:Benefit:Medical` / `Pension` / `HousingFund` | 医保个人账户、养老保险个人账户、住房公积金的入账，对应资产记 `Assets:Benefit:*`；不属于到手工资，报告储蓄率时单独说明 |
-| `Income:Other` | 来源不明的进账，不追问用户 |
+| `Income:Other` | 返现、中奖、出售自用的闲置物品、对账差额；来源不明的进账，不追问用户 |
 
 退款不属于收入，处理见 `rules/daily.md` 第 6 节。
 
@@ -89,42 +89,47 @@
 
 三者口径基本一致，本模板的大类在其基础上合并而成：统计局的「交通通信」拆为交通与居住中的通讯费，「教育文化娱乐」拆为教育与文娱。
 
-### 5.1 记账 App 分类对照
+### 5.1 来源分类对照
 
-从钱迹、随手记、鲨鱼记账或微信、支付宝账单导入时，先按下表确定大类，再按备注中的具体物品逐笔改判。App 中的「其它」「转账」「平账」「借贷」通常不是消费：转账、信用卡还款、借款与还款属于资产负债之间的划转；平账（余额调整）记 `Equity:Adjustment`；基金每日盈亏记 `Income:Invest:PnL`。表内科目省略 `Expenses:` 前缀。
+导入历史流水时，不论来源是记账 App 的导出文件、支付宝与微信账单还是银行流水，先按下表确定大类，再按备注中的具体物品逐笔改判。各来源的分类名称不同，表内按含义合并列出，遇到表内没有的名称时在本表追加一行，不另立规则。来源中的「其它」「转账」「平账」「借贷」「不计收支」通常不是消费：转账、信用卡还款、借款与还款属于资产负债之间的划转；基金逐日盈亏记 `Income:Invest:PnL`；平账不得原样记入 `Equity:Adjustment`，按 `rules/import.md` 第 4 节判定为划转、估值变动或并入期初余额。导入的完整规则见 `rules/import.md`。表内科目省略 `Expenses:` 前缀。
 
-| App 分类 | 科目 |
+| 来源分类 | 科目 |
 |---|---|
-| 三餐、早午晚餐、餐饮、外卖、食品 | `Food:Dining` |
+| 三餐、早午晚餐、餐饮、餐饮美食、外卖、食品 | `Food:Dining` |
 | 零食、饮料、水果零食、烟酒、酒水 | `Food:Snack`（水果记 `Food:Grocery`） |
 | 买菜、蔬菜、水果、粮油 | `Food:Grocery` |
 | 住房、房租、房贷 | `Housing:Rent`（房贷本金记负债，利息记 `Finance:Interest`） |
-| 水电煤、水电燃气、话费网费、通讯、物业 | `Housing:Utilities` |
-| 日用品、居家、家居、生活用品 | `Housing:Daily` |
+| 水电煤、水电燃气、话费网费、通讯、物业、充值缴费、住房物业 | `Housing:Utilities`（住房物业中的房租记 `Housing:Rent`） |
+| 日用品、日用百货、居家、家居、家居家装、生活用品 | `Housing:Daily` |
 | 维修、装修 | `Housing:Repair` |
-| 交通、出行、打车、公交 | `Transport:Local`（城际车票记 `Transport:LongDistance`） |
-| 汽车、加油、停车、车辆 | `Transport:Vehicle`（日常加油记 `Transport:Local`） |
-| 衣服、服饰、鞋包、饰品 | `Shopping:Clothes` |
-| 电器数码、数码、家电 | `Shopping:Digital` |
+| 交通、交通出行、出行、打车、公交 | `Transport:Local`（城际车票记 `Transport:LongDistance`） |
+| 汽车、爱车养车、加油、停车、车辆 | `Transport:Vehicle`（日常加油记 `Transport:Local`） |
+| 衣服、服饰、服饰装扮、鞋包、饰品 | `Shopping:Clothes` |
+| 电器数码、数码电器、数码、家电 | `Shopping:Digital` |
 | 购物、网购 | 看具体东西，归不进别类的记 `Shopping:Other` |
-| 娱乐、休闲、游戏、会员 | `Entertainment:*` |
-| 运动、健身 | `Fitness` |
-| 美妆、美容、个护、理发 | `PersonalCare` |
+| 娱乐、休闲、文化休闲、游戏、会员 | `Entertainment:*` |
+| 运动、运动户外、健身 | `Fitness`（户外服饰记 `Shopping:Clothes`） |
+| 美妆、美容、美容美发、个护、理发 | `PersonalCare` |
 | 宠物 | `Pet` |
-| 孩子、育儿、母婴 | `Kids` |
-| 旅行、旅游、度假 | `Travel:*` |
-| 学习、教育、书籍、培训 | `Learning` |
-| 医疗、医疗保健、药品 | `Medical` |
-| 保险 | `Insurance` |
+| 孩子、育儿、母婴、母婴亲子 | `Kids` |
+| 旅行、旅游、酒店旅游、度假 | `Travel:*` |
+| 学习、教育、教育培训、书籍、培训 | `Learning` |
+| 医疗、医疗保健、医疗健康、药品 | `Medical` |
+| 保险、互助保障 | `Insurance` |
 | 发红包、请客送礼、人情往来、孝敬长辈、礼物 | `Social` |
-| 快递、服务、生活服务 | `Service:Life` |
-| 税费、罚款 | `Tax` |
-| 手续费、利息 | `Finance:*` |
-| 工资、薪水 | `Income:Salary`（绩效奖金 `Income:Bonus`；单位发的差旅补助说不清就 `Income:Other`） |
+| 快递、服务、生活服务、商业服务 | `Service:Life` |
+| 税费、罚款、公共服务 | `Tax`（公共服务中的水电燃气记 `Housing:Utilities`） |
+| 手续费、利息、服务费 | `Finance:*` |
+| 工资、薪水、代发工资 | `Income:Salary`（绩效奖金 `Income:Bonus`；单位发的差旅补助说不清就 `Income:Other`） |
 | 社保、公积金、医保入账 | `Income:Benefit:Medical` / `Pension` / `HousingFund` |
-| 兼职、外快、提成、二手转卖 | `Income:SideJob` |
+| 兼职、外快、提成 | `Income:Labor` |
+| 二手闲置、出售自用物品 | `Income:Other`；以转卖为业且有进货成本的记 `Income:SideBiz` |
 | 经营所得、生意收入 | `Income:SideBiz`（进货成本记 `Expenses:SideBiz`） |
 | 收红包、礼金、生活费 | `Income:Redpacket` |
-| 理财收益、利息 | `Income:Invest:*` |
+| 理财收益、利息、结息 | `Income:Invest:*` |
 | 退款 | 冲减原交易的科目，不确认收入（`rules/daily.md` 第 6 节） |
 | 来源不明的进账 | `Income:Other` |
+| 商户消费、扫码付款、快捷支付、消费 | 来源只有交易类型、没有消费分类，按商品说明与交易对方逐笔归类 |
+| 转账、账户存取、提现、充值、还款、信用借还、投资理财、借入借出、平账、不计收支 | 不属于收支，见 `rules/import.md` 第 3、4 节 |
+| 转账红包、亲友代付 | 逐笔判定：赠与记 `Social` 或 `Income:Redpacket`；借出、代垫、归还记往来；自有账户之间的记划转 |
+| 公益捐赠 | `Social` |

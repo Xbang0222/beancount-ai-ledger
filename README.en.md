@@ -33,7 +33,7 @@ Long-lived rules go only in `rules/`, one topic per file; short-lived context go
 What ends up in the journal (`time` is injected by the script at entry time, never guessed by the agent):
 
 ```beancount
-2026-09-26 * "面馆" "餐饮-牛肉面"
+2026-09-26 * "面馆" "餐饮-午餐"
   time: "12:10"
   Expenses:Food:Dining  18.00 CNY
   Assets:Wechat
