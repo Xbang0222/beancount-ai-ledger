@@ -15,8 +15,8 @@
 1970-01-01 open Assets:Alipay:Yuebao CNY          ; 其他货币资金－余额宝
 1970-01-01 open Assets:Wechat CNY                 ; 其他货币资金－微信零钱
 ; —— 应收与预付（债权；对象较多时按 Assets:Receivable:<对象> 细分，例如 Assets:Receivable:Xiaoming）——
-1970-01-01 open Assets:Receivable:Other CNY       ; 其他应收款－借出款、为他人垫付的款项、待退款
-1970-01-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
+1970-01-01 open Assets:Receivable:Other CNY       ; 其他应收款－借出款、为他人垫付的款项、可退押金、待退款
+1970-01-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－定金、预付的服务费与货款（交付后转入费用；可退押金记其他应收款）
 ; —— 投资 ——
 1970-01-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 rules/investment.md）
 1970-01-01 open Assets:Invest:Stock               ; 金融资产－股票
@@ -39,7 +39,7 @@
 ; ===== 收入 Income（收入记在贷方，余额显示为负数属正常）=====
 1970-01-01 open Income:Salary CNY                 ; 工资薪金（按实发到账金额）
 1970-01-01 open Income:Bonus CNY                  ; 奖金、绩效
-1970-01-01 open Income:SideJob CNY                ; 兼职、劳务报酬、二手转卖所得
+1970-01-01 open Income:Labor CNY                  ; 劳务报酬－兼职、软件外包、稿费、讲课费
 1970-01-01 open Income:SideBiz CNY                ; 副业收入－个人小生意的收款（代购、代充、摆摊）
 1970-01-01 open Income:Redpacket CNY              ; 红包、礼金
 1970-01-01 open Income:Invest:Interest CNY        ; 投资收益－利息（余额宝、存款）
@@ -48,7 +48,7 @@
 1970-01-01 open Income:Benefit:Medical CNY       ; 社保入账－医保个人账户
 1970-01-01 open Income:Benefit:Pension CNY       ; 社保入账－养老保险个人账户
 1970-01-01 open Income:Benefit:HousingFund CNY   ; 社保入账－住房公积金
-1970-01-01 open Income:Other CNY                  ; 其他收入（返现、奖励等；退款不确认收入，冲减原支出）
+1970-01-01 open Income:Other CNY                  ; 其他收入（返现、中奖、出售自用闲置物品、对账差额、来源不明的进账；退款不确认收入，冲减原支出）
 
 ; ===== 支出 Expenses（一级大类 : 二级明细，与 rules/classification.md 一一对应）=====
 ; —— 餐饮 ——
@@ -56,14 +56,14 @@
 1970-01-01 open Expenses:Food:Snack CNY           ; 餐饮－饮品、咖啡、零食
 1970-01-01 open Expenses:Food:Grocery CNY         ; 餐饮－买菜、水果、食材
 ; —— 居住 ——
-1970-01-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不属于费用，记 Assets:Prepaid:Deposit）
+1970-01-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不属于费用，记 Assets:Receivable:Other）
 1970-01-01 open Expenses:Housing:Utilities CNY    ; 居住－水电燃气、话费宽带、物业
 1970-01-01 open Expenses:Housing:Daily CNY        ; 居住－日用品、清洁洗护用品、厨具床品、家具家居
 1970-01-01 open Expenses:Housing:Repair CNY     ; 居住－装修、维修、安装
 ; —— 交通 ——
 1970-01-01 open Expenses:Transport:Local CNY      ; 交通－地铁公交、打车、共享单车、加油、电瓶车充电
 1970-01-01 open Expenses:Transport:LongDistance CNY ; 交通－非旅行的长途车票（回家、出差自付）
-1970-01-01 open Expenses:Transport:Vehicle CNY   ; 交通－车辆（含电瓶车）维修保养、停车过路
+1970-01-01 open Expenses:Transport:Vehicle CNY   ; 交通－车辆（含电瓶车）购置、维修保养、停车过路
 ; —— 购物 ——
 1970-01-01 open Expenses:Shopping:Clothes CNY     ; 购物－服饰鞋包
 1970-01-01 open Expenses:Shopping:Digital CNY     ; 购物－数码电子及配件
@@ -84,7 +84,7 @@
 1970-01-01 open Expenses:PersonalCare CNY        ; 个护－理发、美容、护肤化妆品
 1970-01-01 open Expenses:Pet CNY                ; 宠物－粮食用品、看病疫苗、洗护寄养
 1970-01-01 open Expenses:Kids CNY               ; 育儿－奶粉尿布、童装玩具、托育兴趣班
-1970-01-01 open Expenses:Social CNY               ; 人情－红包、礼物、请客
+1970-01-01 open Expenses:Social CNY               ; 交际－红包、礼物、请客
 1970-01-01 open Expenses:Insurance CNY            ; 保险－自付保费
 1970-01-01 open Expenses:Service:Professional CNY ; 服务－税务法律咨询、证件代办
 1970-01-01 open Expenses:Service:Life CNY        ; 服务－快递、充电宝、跑腿、维修、家政、打印
@@ -92,8 +92,8 @@
 1970-01-01 open Expenses:Finance:Interest CNY     ; 财务费用－借款利息
 1970-01-01 open Expenses:Finance:Fee CNY          ; 财务费用－手续费、分期服务费
 1970-01-01 open Expenses:SideBiz CNY              ; 副业成本－个人小生意的进货款
-1970-01-01 open Expenses:Other CNY                ; 其他（无法判断类别时的兜底科目）
+1970-01-01 open Expenses:Other CNY                ; 其他（丢失、被骗、坏账、赔偿等损失，以及无法判断类别时的兜底）
 
 ; ===== 权益 Equity =====
 1970-01-01 open Equity:OpeningBalances            ; 期初净资产（开账平衡科目，配合 opening.beancount 的 pad 使用）
-1970-01-01 open Equity:Adjustment                 ; 余额差异调整（账实不符时临时调平，查明原因后冲回）
+1970-01-01 open Equity:Adjustment                 ; 余额差异调整（账实不符且原因在查时暂记，查明后改记对应科目，不长期挂账）
