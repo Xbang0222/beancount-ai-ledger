@@ -1,16 +1,16 @@
 ; 网店（示例） · 2026-09 流水
 
-2026-09-04 * "某供应商" "主营业务成本-进货"
+2026-09-04 * "某供应商" "主营业务成本-采购"
   time: "10:00"
   Expenses:COGS  800.00 CNY
   Assets:Bank:Main
 
-2026-09-07 * "客户" "主营业务收入（支付宝）"
+2026-09-07 * "客户" "主营业务收入-支付宝收款"
   time: "16:30"
   Assets:Alipay  1250.00 CNY
   Income:Revenue
 
-2026-09-07 * "电商平台" "平台服务费"
+2026-09-07 * "电商平台" "财务费用-平台服务费"
   time: "16:31"
   Expenses:PlatformFee  37.50 CNY
   Assets:Alipay
@@ -20,17 +20,19 @@
   Expenses:Shipping  64.00 CNY
   Assets:Alipay
 
-2026-09-14 * "包装材料店" "销售费用-包装耗材（股东垫付）"
+2026-09-14 * "包装材料店" "销售费用-包装耗材"
   time: "15:00"
+  note: "股东以个人微信垫付"
   Expenses:Packaging  45.00 CNY
   Liabilities:OwnerLoan
 
-2026-09-19 * "客户" "主营业务收入（股东代收）"
+2026-09-19 * "客户" "主营业务收入-支付宝收款"
   time: "11:25"
+  note: "股东个人支付宝代收"
   Assets:Receivable:Owner  300.00 CNY
   Income:Revenue
 
-2026-09-23 * "股东" "归还股东垫付款"
+2026-09-23 * "股东" "归还股东垫付款（股东往来）"
   time: "10:05"
   Liabilities:OwnerLoan  45.00 CNY
   Assets:Bank:Main

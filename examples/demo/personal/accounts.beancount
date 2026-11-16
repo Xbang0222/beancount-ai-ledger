@@ -16,8 +16,8 @@
 2026-08-01 open Assets:Wechat CNY                 ; 其他货币资金－微信零钱
 2026-08-01 open Assets:Bank:USD USD               ; 银行存款－美元储蓄（演示外币折算）
 ; —— 应收与预付（债权；对象较多时按 Assets:Receivable:<对象> 细分，例如 Assets:Receivable:Xiaoming）——
-2026-08-01 open Assets:Receivable:Other CNY       ; 其他应收款－借出款、为他人垫付的款项、待退款
-2026-08-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
+2026-08-01 open Assets:Receivable:Other CNY       ; 其他应收款－借出款、为他人垫付的款项、可退押金、待退款
+2026-08-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－定金、预付的服务费与货款（交付后转入费用；可退押金记其他应收款）
 ; —— 投资 ——
 2026-08-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 rules/investment.md）
 2026-08-01 open Assets:Invest:Stock               ; 金融资产－股票
@@ -32,12 +32,12 @@
 ; ===== 收入 Income（收入记在贷方，余额显示为负数属正常）=====
 2026-08-01 open Income:Salary CNY                 ; 工资薪金（按实发到账金额）
 2026-08-01 open Income:Bonus CNY                  ; 奖金、绩效
-2026-08-01 open Income:SideJob CNY                ; 兼职、劳务报酬
+2026-08-01 open Income:Labor CNY                  ; 劳务报酬－兼职、软件外包、稿费、讲课费
 2026-08-01 open Income:Redpacket CNY              ; 红包、礼金
 2026-08-01 open Income:Invest:Interest CNY        ; 投资收益－利息（余额宝、存款）
 2026-08-01 open Income:Invest:Dividend CNY        ; 投资收益－分红
 2026-08-01 open Income:Invest:PnL CNY             ; 投资收益－买卖价差
-2026-08-01 open Income:Other CNY                  ; 其他收入（返现、奖励等；退款不确认收入，冲减原支出）
+2026-08-01 open Income:Other CNY                  ; 其他收入（返现、中奖、出售自用闲置物品、对账差额、来源不明的进账；退款不确认收入，冲减原支出）
 
 ; ===== 支出 Expenses（一级大类 : 二级明细，与 rules/classification.md 一一对应）=====
 ; —— 餐饮 ——
@@ -45,7 +45,7 @@
 2026-08-01 open Expenses:Food:Snack CNY           ; 餐饮－饮品、咖啡、零食
 2026-08-01 open Expenses:Food:Grocery CNY         ; 餐饮－买菜、水果、食材
 ; —— 居住 ——
-2026-08-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不属于费用，记 Assets:Prepaid:Deposit）
+2026-08-01 open Expenses:Housing:Rent CNY         ; 居住－房租（可退押金不属于费用，记 Assets:Receivable:Other）
 2026-08-01 open Expenses:Housing:Utilities CNY    ; 居住－水电燃气、话费宽带、物业
 2026-08-01 open Expenses:Housing:Daily CNY        ; 居住－日用品、清洁用品、家居小物
 ; —— 交通 ——
@@ -67,15 +67,15 @@
 ; —— 其他一级大类 ——
 2026-08-01 open Expenses:Learning CNY             ; 教育－学费、课程、书籍、考试
 2026-08-01 open Expenses:Medical CNY              ; 医疗－看病、买药、体检
-2026-08-01 open Expenses:Social CNY               ; 人情－红包、礼物、请客
+2026-08-01 open Expenses:Social CNY               ; 交际－红包、礼物、请客
 2026-08-01 open Expenses:Insurance CNY            ; 保险－自付保费
 2026-08-01 open Expenses:Finance:Interest CNY     ; 财务费用－借款利息
 2026-08-01 open Expenses:Finance:Fee CNY          ; 财务费用－手续费、分期服务费
-2026-08-01 open Expenses:Other CNY                ; 其他（无法判断类别时的兜底科目）
+2026-08-01 open Expenses:Other CNY                ; 其他（丢失、被骗、坏账、赔偿等损失，以及无法判断类别时的兜底）
 
 ; ===== 权益 Equity =====
 2026-08-01 open Equity:OpeningBalances            ; 期初净资产（开账平衡科目，配合 opening.beancount 的 pad 使用）
-2026-08-01 open Equity:Adjustment                 ; 余额差异调整（账实不符时临时调平，查明原因后冲回）
+2026-08-01 open Equity:Adjustment                 ; 余额差异调整（账实不符且原因在查时暂记，查明后改记对应科目，不长期挂账）
 
 ; —— 与网店（示例）（shop 账本）的往来：双边镜像登记，见 ledger.toml [[mirrors]] ——
 2026-08-01 open Assets:Receivable:Shop CNY        ; 其他应收款－网店（示例）（本人垫付/借给该账本、尚未收回的款项）

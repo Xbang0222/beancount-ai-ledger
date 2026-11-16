@@ -25,12 +25,12 @@
   Expenses:Entertainment:Subscription  25.00 CNY
   Assets:Alipay
 
-2026-09-08 * "招商银行" "偿还信用卡账单"
+2026-09-08 * "招商银行" "偿还招行信用卡"
   time: "10:00"
   Liabilities:CreditCard  1500.00 CNY
   Assets:Bank:Main
 
-2026-09-10 * "公司" "工资-8月"
+2026-09-10 * "任职单位" "工资收入-8月工资"
   time: "09:00"
   Assets:Bank:Main  12000.00 CNY
   Income:Salary
@@ -40,22 +40,22 @@
   Assets:Invest:Fund  312.5 IDXFUND {1.6000 CNY}
   Assets:Bank:Main  -500.00 CNY
 
-2026-09-12 * "朋友小王" "借给朋友小王"
+2026-09-12 * "朋友小王" "其他应收款-借给小王"
   time: "20:30"
   Assets:Receivable:Other  500.00 CNY
   Assets:Wechat
 
-2026-09-13 * "餐厅" "人情-请同事吃饭"
+2026-09-13 * "餐厅" "交际-请同事吃饭"
   time: "12:40"
   Expenses:Social  120.00 CNY
   Liabilities:Huabei
 
-2026-09-14 * "商店" "代垫商店包装材料款（股东往来）"
+2026-09-14 * "商店" "代垫商店采购款-包装材料店（股东往来）"
   time: "15:00"
   Assets:Receivable:Shop  45.00 CNY
   Assets:Wechat
 
-2026-09-15 * "12306" "旅行-高铁票（去程）" #trip #chengdu
+2026-09-15 * "铁路12306" "旅行-重庆至成都高铁票" #trip #chengdu
   time: "07:30"
   Expenses:Travel:Transport  354.00 CNY
   Assets:Alipay
@@ -75,12 +75,12 @@
   Expenses:Travel:Ticket  90.00 CNY
   Assets:Alipay
 
-2026-09-17 * "12306" "旅行-高铁票（返程）" #trip #chengdu
+2026-09-17 * "铁路12306" "旅行-成都至重庆高铁票" #trip #chengdu
   time: "16:45"
   Expenses:Travel:Transport  354.00 CNY
   Assets:Alipay
 
-2026-09-18 * "朋友小王" "收回借款"
+2026-09-18 * "朋友小王" "收回小王借款"
   time: "21:00"
   Assets:Wechat  500.00 CNY
   Assets:Receivable:Other
@@ -100,7 +100,7 @@
   Expenses:Shopping:Digital  399.00 CNY
   Liabilities:Huabei
 
-2026-09-23 * "商店" "收回代垫商店款（股东往来）"
+2026-09-23 * "商店" "收回商店代垫款（股东往来）"
   time: "10:05"
   Assets:Bank:Main  45.00 CNY
   Assets:Receivable:Shop

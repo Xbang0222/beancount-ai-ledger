@@ -17,6 +17,7 @@ option "operating_currency" "CNY"
 2026-01-01 open Assets:Wechat CNY
 2026-01-01 open Assets:Receivable:Xiaowang CNY
 2026-01-01 open Assets:Receivable:Shop CNY
+2026-01-01 open Assets:Receivable:Other CNY
 2026-01-01 open Assets:Prepaid:Deposit CNY
 2026-01-01 open Assets:Invest:Fund
 2026-01-01 open Liabilities:CreditCard CNY
@@ -33,6 +34,7 @@ option "operating_currency" "CNY"
 2026-01-01 open Expenses:Travel:Other CNY
 2026-01-01 open Expenses:Finance:Interest CNY
 2026-01-01 open Expenses:Finance:Fee CNY
+2026-01-01 open Expenses:Service:Life CNY
 2026-01-01 open Equity:OpeningBalances
 
 ; ---------- 期初余额：开账日前一日写 pad，开账日写 balance ----------
@@ -45,20 +47,23 @@ option "operating_currency" "CNY"
   Assets:Wechat
 
 ; ---------- 2. 工资、红包：收入记在贷方 ----------
-2026-02-05 * "公司" "工资-1月"
+; 按期发生的收支写所属期间，期间只写到月；交易日期不写入摘要
+2026-02-05 * "任职单位" "工资收入-1月工资"
   Assets:Bank:Main  9000.00 CNY
   Income:Salary
-2026-02-10 * "家人" "春节红包"
+2026-02-10 * "母亲" "红包收入-春节红包"
   Assets:Wechat  600.00 CNY
   Income:Redpacket
 
 ; ---------- 3. AA 代垫：本人全付 240，朋友小王应还一半 ----------
-2026-02-12 * "火锅店" "餐饮-聚餐（代垫小王一半）"
+; 摘要按费用科目书写，代垫对象与金额写入 note
+2026-02-12 * "火锅店" "餐饮-晚餐"
+  note: "与朋友小王聚餐，本人全付240.00元，其中代垫小王120.00元"
   Expenses:Food:Dining          120.00 CNY
   Assets:Receivable:Xiaowang    120.00 CNY
   Assets:Alipay                -240.00 CNY
 ; 小王还款：冲减债权，不确认收入
-2026-02-13 * "小王" "收回聚餐代垫款"
+2026-02-13 * "朋友小王" "收回小王聚餐代垫款"
   Assets:Wechat                 120.00 CNY
   Assets:Receivable:Xiaowang
 
@@ -66,7 +71,7 @@ option "operating_currency" "CNY"
 2026-02-14 * "服饰店" "购物-外套"
   Expenses:Shopping:Clothes  300.00 CNY
   Liabilities:Huabei
-2026-03-09 * "蚂蚁花呗" "偿还花呗账单"
+2026-03-09 * "蚂蚁花呗" "偿还花呗"
   Liabilities:Huabei  300.00 CNY
   Assets:Bank:Main
 
@@ -76,32 +81,54 @@ option "operating_currency" "CNY"
   Expenses:Shopping:Clothes
 
 ; ---------- 6. 旅行：科目表示支出性质，标签表示所属行程；#trip 与目的地标签可同时使用 ----------
-2026-02-20 * "12306" "旅行-高铁票" #trip #chengdu
+; 班次、座位写入 note，不写入摘要
+2026-02-20 * "铁路12306" "旅行-重庆至成都高铁票" #trip #chengdu
+  note: "G8501次，二等座"
   Expenses:Travel:Transport  354.00 CNY
   Assets:Alipay
 ; 境外刷卡：按信用卡账单的人民币金额入账，外币原价写入元数据备查
-2026-02-22 * "免税店" "旅行-境外购物" #trip #japan
+2026-02-22 * "免税店" "旅行-伴手礼" #trip #japan
   foreign_amount: "20.00 USD"
   Expenses:Travel:Other   142.00 CNY
   Liabilities:CreditCard
 
-; ---------- 7. 押金：可退部分属于资产，不属于费用 ----------
-2026-03-01 * "房东" "居住-3月房租及押金"
+; ---------- 7. 押金与定金：可退押金记其他应收款，定金记预付款项，均不属于费用 ----------
+2026-03-01 * "房东" "居住-3月房租"
   Expenses:Housing:Rent     2500.00 CNY
-  Assets:Prepaid:Deposit    2500.00 CNY
   Assets:Bank:Main
+2026-03-01 * "房东" "其他应收款-租房押金"
+  Assets:Receivable:Other   2500.00 CNY
+  Assets:Bank:Main
+; 退租：押金退回 2300，被扣的 200 清洁费转入费用；含收支科目的一笔按该科目的大类简称书写
+2026-08-31 * "房东" "收回租房押金"
+  Assets:Bank:Main          2300.00 CNY
+  Assets:Receivable:Other
+2026-08-31 * "房东" "服务-退租清洁费"
+  note: "自租房押金2500.00元中扣除"
+  Expenses:Service:Life      200.00 CNY
+  Assets:Receivable:Other
+; 定金：服务完成后转入费用
+2026-03-03 * "维修店" "预付款项-手机维修定金"
+  Assets:Prepaid:Deposit     100.00 CNY
+  Assets:Wechat
+2026-03-06 * "维修店" "服务-手机维修"
+  note: "维修费合计260.00元，其中定金100.00元已于3月3日预付"
+  Expenses:Service:Life      260.00 CNY
+  Assets:Prepaid:Deposit    -100.00 CNY
+  Assets:Wechat             -160.00 CNY
 
 ; ---------- 8. 贷款：放款确认负债，不确认收入；还款拆分本金与利息 ----------
-2026-03-02 * "国家开发银行" "助学贷款放款"
+2026-03-02 * "国家开发银行" "借款-助学贷款放款"
   Assets:Bank:Main  8000.00 CNY
   Liabilities:Loan:Student
-2026-03-20 * "国家开发银行" "偿还助学贷款（本息）"
+2026-03-20 * "国家开发银行" "财务费用-助学贷款利息"
+  note: "本期还款530.00元，其中本金500.00元、利息30.00元"
   Liabilities:Loan:Student   500.00 CNY
   Expenses:Finance:Interest   30.00 CNY
   Assets:Bank:Main
 
 ; ---------- 9. 信用卡分期手续费 ----------
-2026-03-21 * "招商银行" "信用卡分期手续费"
+2026-03-21 * "招商银行" "财务费用-分期手续费"
   Expenses:Finance:Fee  12.60 CNY
   Liabilities:CreditCard
 
@@ -110,11 +137,12 @@ option "operating_currency" "CNY"
   Assets:Invest:Fund  312.5 IDXFUND {1.6000 CNY}
   Assets:Bank:Main   -500.00 CNY
 2026-03-31 price IDXFUND 1.6500 CNY
-2026-04-15 * "基金公司" "指数基金现金分红"
+2026-04-15 * "基金公司" "投资收益-指数基金现金分红"
   Assets:Bank:Main  8.00 CNY
   Income:Invest:Dividend
 ; 赎回 100 份，单位售价 1.70：成本 160，到账 170，价差 10 记投资收益
-2026-05-06 * "基金公司" "赎回指数基金100份"
+2026-05-06 * "基金公司" "投资收益-赎回指数基金"
+  note: "赎回100份，单位净值1.7000元"
   Assets:Bank:Main                         170.00 CNY
   Assets:Invest:Fund  -100 IDXFUND {1.6000 CNY} @ 1.7000 CNY
   Income:Invest:PnL
@@ -125,7 +153,7 @@ option "operating_currency" "CNY"
   Assets:Receivable:Shop  800.00 CNY
   Assets:Bank:Main
 ; 店铺账同时登记，分录写入 shop 账本，此处仅作示意：
-;   2026-05-08 * "某供应商" "主营业务成本-进货（股东垫付）"
+;   2026-05-08 * "某供应商" "主营业务成本-采购"
 ;     Expenses:COGS          800.00 CNY
 ;     Liabilities:OwnerLoan
 ; 两边通过 pair 同时登记，add 遇到往来科目会拒绝。任一边不合规或两边金额不符时，两本账均不改动：
@@ -135,11 +163,19 @@ option "operating_currency" "CNY"
 ;     Assets:Receivable:Shop  800.00 CNY
 ;     Assets:Bank:Main
 ;   [shop]
-;   2026-05-08 * "某供应商" "主营业务成本-进货（股东垫付）"
+;   2026-05-08 * "某供应商" "主营业务成本-采购"
 ;     Expenses:COGS          800.00 CNY
 ;     Liabilities:OwnerLoan
 ;   EOF
 ; 更正、作废往来分录后执行 ledger.py reconcile，两侧余额合计必须为 0。
 
-; ---------- 12. 余额断言：核对余额时写入一条，余额不符时 check 报出差额 ----------
+; ---------- 12. 自有账户之间转账、信用卡还款：不属于收支，对方与摘要使用固定写法 ----------
+2026-05-09 * "微信" "银行转账-微信转银行卡"
+  Assets:Bank:Main  500.00 CNY
+  Assets:Wechat
+2026-05-09 * "招商银行" "偿还招行信用卡"
+  Liabilities:CreditCard  154.60 CNY
+  Assets:Bank:Main
+
+; ---------- 13. 余额断言：核对余额时写入一条，余额不符时 check 报出差额 ----------
 2026-05-10 balance Assets:Receivable:Xiaowang  0.00 CNY

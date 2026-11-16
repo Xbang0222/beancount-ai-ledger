@@ -9,6 +9,9 @@
 - 升级只替换 `scripts`、`tests`、`docs`、`AGENTS.md` 与依赖清单；`rules/`、`STATE.md`、`ledger.toml`、各账本目录属于用户数据，不被覆盖。步骤见 `docs/AI-TASKS.md`「升级工具」。
 - 旧布局账本（规则位于根目录的 `CATEGORIES.md`、`CLASSIFY.md`）升级后照常可用：脚本与 `lookup` 同时支持两种布局，新版 `AGENTS.md` 第 6.1 节给出新旧文件的对应关系。迁移到 `rules/` 布局为可选操作，步骤见 `docs/AI-TASKS.md`「旧布局迁移」。
 - 下列功能依赖用户数据中的配置，升级后须手动启用：写法检查须将模板 `ledger.toml` 的 `[naming]` 段复制到自己的配置，再执行 `check` 并按提示更正既有分录；新增的科目（见「新增」中的分类条目）须对照模板的 `personal/accounts.beancount` 自行开立，并在 `[naming.prefix.<账本>]` 配置摘要开头；新的分类、标签与估值规则须对照模板 `rules/` 下的对应文件自行合并。
+- 写法规则本次有四项须手动合并到自己的 `ledger.toml`：`[naming]` 的 `two_way`；`markers` 中的「股东往来」；三段 `[[naming.forbidden]]`；两段 `[[naming.patterns]]`（自有账户之间的划转、负债的借入与偿还），其中 `when`、`with` 的科目须改为自己账本的结算账户与负债科目。合并后执行 `check`，被拦截的既有分录以 `amend` 更正；确属正常写法被误拦的，在对应 `pattern` 的排除字符中补充，不得删除整条规则。
+- 新增的 `rules/import.md`、`rules/reconciliation.md` 须从模板复制；`rules/naming.md` 新增第 4.2、4.3、7 节，`rules/daily.md`、`rules/classification.md`、`rules/dictionary.md`、`rules/cases.md`、`rules/credit.md`、`rules/investment.md` 补充了对方与摘要的写法，须对照模板自行合并。
+- 默认科目与大类简称的三项调整只影响新建的账本，已有账本的科目表与 `[naming].prefix` 不被改动，是否跟随由用户决定：`Expenses:Social` 的大类简称由「人情」改为「交际」；`Income:SideJob`「兼职收入-」更名为 `Income:Labor`「劳务收入-」；可退押金由 `Assets:Prepaid:Deposit` 改记 `Assets:Receivable:Other`，`Assets:Prepaid:Deposit` 只用于定金与预付的服务费。跟随时，更名科目须先在 `accounts.beancount` 开立新科目，再以 `amend` 逐笔更正既有分录。
 - 已执行过 `git config core.hooksPath scripts/hooks` 的仓库，升级后提交信息检查自动生效。仓库中已有的 `.github/workflows/ci.yml` 不会被删除，可自行决定保留或删除。
 
 ### 新增
@@ -30,10 +33,17 @@
 - `[dividend]` 的 `partners` 新增可选 `owner = true`，标注账本所有者本人。标注后，`networth` 在折合本位币的净资产之后单列其余各方在未结清月份中尚未分配的利润，并给出「扣后净资产」；预支超过应得时加回。
 - `[ledger]` 新增可选 `fx_alias`，例如 `{ USDT = "USD" }`，取汇率时按别名币种折算。经营账模板新增 `Equity:Distributions`。
 - 分类表补全：对照统计局居民消费支出八大类与常见记账 App 的默认分类，补全各小类的关键词；新增宠物 `Pet`、育儿 `Kids`、居住-装修维修 `Housing:Repair`、运动 `Fitness`、个护 `PersonalCare`、服务 `Service:Professional` 与 `Service:Life`、税费 `Tax`、交通-车辆 `Transport:Vehicle`；收入新增社保公积金个人账户入账 `Income:Benefit:Medical`、`Pension`、`HousingFund`，对应资产 `Assets:Benefit:*`。`rules/classification.md` 附常见记账 App 分类的对照表，`rules/dictionary.md` 提供按物品、按商家或平台、非消费业务三张速查表，`rules/cases.md` 提供典型业务的判例。
-- 副业收支科目：有进货成本的个人经营（代购、代充会员、摆摊）收款记 `Income:SideBiz`，进货款记 `Expenses:SideBiz`；没有进货成本的兼职与劳务（软件外包、稿费、讲课费）仍记 `Income:SideJob`。
+- 副业收支科目：有进货成本的个人经营（代购、代充会员、摆摊）收款记 `Income:SideBiz`，进货款记 `Expenses:SideBiz`；没有进货成本的兼职与劳务（软件外包、稿费、讲课费）记 `Income:Labor`。
 - 新增文档：`docs/AI-SETUP.md`（第一次接手、账本存放、没有远程仓库时、首次使用、引导新手）、`docs/AI-TASKS.md`（更正与删除、余额核对、导入账单、行程与临时状态、修改规则、升级工具、新建账本、常用查询）、`docs/COMMITS.md`（提交信息规范）、`docs/DEVELOPMENT.md`（环境初始化、模块职责、开发约束）。上述内容原在 `AGENTS.md`。
 - 账本存放不再绑定具体的 AI 与存储方式，按用户现有条件选择：有私有 Git 仓库（GitHub、Gitee 等）时每次推送；只有云盘时打包备份；两者均无时本地提交并提醒用户。见 `docs/AI-SETUP.md`「账本存放」。
 - 写法检查新增 `two_way`（双向科目）：借贷两个方向均属正常发生额的科目，例如 `Income:Invest:PnL` 的收益与亏损，记在借方时不要求摘要以「退款」结尾。模板 `ledger.toml` 默认将 `Income:Invest:PnL` 列为双向科目；已有账本须将该行复制到自己的 `[naming]`。
+- 写法检查新增 `[[naming.forbidden]]`：以正则表达式定义对方或摘要中不得出现的写法，命中即拒绝并给出改法。模板默认配置三条：摘要不得出现具体日期（「12月21日」「19号」「昨天」）、摘要不得出现具体时刻（「20:10」「8点」）、对方不得写营业执照名称或收单机构名称（「有限公司」「个体工商户」「经营部」）。所属期间与编号不在拦截之列，例如「居住-9月房租」「工资收入-9月工资」「交通-地铁1号线」。`rules` 与 `brief` 输出这些规则，`check` 按其扫描全部既有分录。
+- `[[naming.patterns]]` 的 `payee` 改为可省略：只限定摘要开头、不限定对方。`payee` 与 `narration` 至少填写一项。
+- 模板 `ledger.toml` 默认配置两个固定场景：自有账户之间的划转，摘要以「银行转账-」「银行取现」「银行存现」开头；负债的借入与偿还，摘要以「偿还」「借款-」「其他应付款-」「信用卡取现」开头。
+- 新增 `rules/import.md`（历史流水导入）：规则与来源无关，记账 App 的导出文件、支付宝与微信账单、银行流水、信用卡账单按同一套规则处理，各来源的差异只体现在 `rules/classification.md` 第 5.1 节的分类对照表与 `rules/import.md` 第 2 节的字段对应表。内容包括：导入的分录与日常入账适用同一套归类与写法；备注原文写入 `note:`，摘要改写且不带日期与时刻；未指定账户的收付记默认结算账户；平账记录的判定顺序；期初余额以当前实际余额倒推；导入报告的内容。
+- 新增 `rules/reconciliation.md`（余额核对）：差额先查漏记，查不出的经用户确认后，实际多于账面记 `Income:Other`「其他收入-对账差额」，少于账面记 `Expenses:Finance:Fee`「财务费用-对账差额」；原因在查时暂记 `Equity:Adjustment`「余额调整-账实差异」；余额断言写在确认日的次日。
+- `rules/naming.md` 新增三部分：第 4.2 节各科目事项的写法（正餐写餐次，饮品零食写品类，买菜写「买菜」，交通写出行方式或起讫地，按期收支写所属期间）；第 4.3 节不得写入摘要的内容及其去向；第 7 节非收支业务的固定写法，覆盖转账、取现存现、信贷还款、借入借出、垫付与收回、押金、定金、基金与黄金的买卖、期初更正、余额调整。`rules/daily.md`、`rules/credit.md`、`rules/investment.md`、`rules/dictionary.md`、`rules/cases.md` 的对应条款同步补充对方与摘要的写法。
+- 新增测试 `tests/test_docs_examples.py`：`examples/demo`、`examples/cookbook.beancount` 以及 `AGENTS.md`、`docs/`、`rules/` 代码块中的分录须通过写法检查，模板根目录与演示账套的通用写法配置须一致。
 
 ### 变更
 
@@ -50,6 +60,10 @@
 - `doctor` 的「没有远程仓库时」「首次使用」两处提示，仅当账套的文档中确有对应章节时才指向该章节，否则只说明处理方法。
 - `scripts/ledger.py` 开头的说明不再另列命令清单，以 `python3 scripts/ledger.py --help` 为准。
 - 脚本内部整理，命令用法未变：`books.print_error_lines`、`fxrate.http_get` 改为公开名；`env.run_command` 统一 `doctor`、`backup`、`commitmsg` 中执行外部命令的函数；`journal.rstrip_blank` 取代 `fmt` 中的重复函数；`entry.inject_time` 复用 `with_time_line`。
+- 历史流水导入时的平账记录不再原样记入 `Equity:Adjustment`，按下列顺序判定：同一时段内多个账户此增彼减的，改记账户之间的划转、申购或赎回；基金、理财等市值变动账户的差额记 `Income:Invest:PnL`「投资收益-基金估值调整」；查得出业务的按该业务补记；其余并入按当前实际余额倒推的期初余额。`docs/AI-TASKS.md`「导入账单」按此重写，并写明与日常余额核对的区别：导入前的差额无法归属到具体期间，并入期初；导入并登记余额断言之后的差额发生在本期，确认为其他收入或财务费用。
+- 余额核对的口径统一：`docs/AI-TASKS.md`、`docs/GUIDE.md` 此前写「经确认后调平」，`rules/naming.md`、`rules/dictionary.md` 写按损益入账，二者不一致。现统一为 `rules/reconciliation.md` 的口径。
+- 分类与科目口径的调整，均只影响新建的账本：`Expenses:Social` 的大类简称由「人情」改为「交际」；`Income:SideJob`「兼职收入-」更名为 `Income:Labor`「劳务收入-」；出售自用闲置物品由兼职收入改记 `Income:Other`；可退押金由 `Assets:Prepaid:Deposit` 改记 `Assets:Receivable:Other`，摘要「其他应收款-<事项>押金」，`Assets:Prepaid:Deposit` 只用于定金与预付的服务费；`Expenses:Other` 的范围写明包括丢失、被骗、坏账、赔偿，摘要「其他-<具体事项>」；`Expenses:Transport:Vehicle` 的范围加入购买电瓶车等代步车。
+- 文档中的分录范例统一为规范写法：正餐写餐次（「餐饮-午餐」），不再使用「餐饮-牛肉面」等按菜品的写法。`examples/cookbook.beancount` 与 `examples/demo` 的分录全部按 `[naming]` 更正，`examples/demo/ledger.toml` 增加 `[naming]` 配置。
 
 ### 移除
 
@@ -57,6 +71,8 @@
 
 ### 修复
 
+- 模板 `ledger.toml` 的 `markers` 缺少「股东往来」：`AGENTS.md` 与 `rules/daily.md` 给出的 `pair` 范例使用「（股东往来）」，按原配置入账会被写法检查拒绝。
+- `examples/cookbook.beancount` 与 `examples/demo` 中的多笔分录不符合模板自身的写法规则，例如「工资-1月」「偿还花呗账单」「主营业务收入（支付宝）」；演示账套此前未配置 `[naming]`，`check` 未能发现。
 - `fmt` 重排序时簿时持有互斥锁 `store.book_lock`：此前另一会话同时入账时，重排会以读到的旧内容覆盖刚写入的分录。`fmt --check` 只读，不持锁。
 - `networth` 估值科目的 `estimate` 元数据按科目所在的账本读取：此前其他账本开立了同名科目并标注 `estimate` 时，本账本未标注的科目也会被按金价估值。
 - 取汇率时，CDN 明确返回 404 即报告数据集中没有该代码，不再下载完整数据包确认；查询失败的结果在本次运行内缓存，不重复请求。
