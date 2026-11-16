@@ -13,11 +13,10 @@ A plain-text double-entry ledger template built on [Beancount](https://github.co
 
 ## Files that drive the agent
 
-- `CATEGORIES.md`: the bookkeeping rules — which account each payment method maps to, how expenses are categorized, how payees and narrations are written, cross-book transfers, tags and timestamps. **Edit it to match your habits**; the agent follows whatever it says.
-- `ACCOUNTING.md`: rules for less common topics (loans, funds and stocks, gold, foreign-currency valuation, books shared with others). The agent reads it only when the topic comes up; your own rare conventions go here too.
-- `CLASSIFY.md`: a lookup table from common items and merchants to accounts, why the categories are what they are, plus "what the user said → how it is booked" examples.
+- `rules/daily.md`: the rules for everyday entries — required fields, which book an entry belongs to, which account each payment method maps to, cross-book transfers, refunds, timestamps and tags. **Edit it to match your habits**; the agent follows whatever it says. The agent reads it before every entry.
+- The other files under `rules/`: one topic per file — payee and narration style, tags, the category table, a lookup dictionary from items and merchants to accounts, worked cases, and less common topics (credit and loans, investments, valuation, books shared with others). The agent reads them on demand, or searches them with `ledger.py lookup <keyword>`; your own rare conventions go here too.
 - `STATE.md`: short-lived context such as an ongoing trip or a temporary default payment account; deleted when it no longer applies.
-- `AGENTS.md` (referenced by `CLAUDE.md` and `GEMINI.md`): operating rules for the agent, picked up automatically by common coding agents. It covers only the three steps of booking one entry and the hard rules; setup, storage, corrections, reconciliation and other occasional tasks live in `docs/AI-SETUP.md` and `docs/AI-TASKS.md`, read on demand.
+- `AGENTS.md` (referenced by `CLAUDE.md` and `GEMINI.md`): operating rules for the agent, picked up automatically by common coding agents. It covers the workflow for booking one entry, the hard constraints and an index of which document to read in which situation; setup, storage, corrections, reconciliation and other occasional tasks live in `docs/AI-SETUP.md` and `docs/AI-TASKS.md`, read on demand.
 
 ## Example
 
@@ -78,9 +77,7 @@ python3 scripts/ledger.py --root examples/demo networth
 beancount-ai-ledger/
 ├── personal.beancount          # entry file of the personal book
 ├── ledger.toml                 # books, cross-book mirrors, timezone, base currency, profit split
-├── CATEGORIES.md               # bookkeeping rules (daily)
-├── ACCOUNTING.md               # topic rules (read on demand)
-├── CLASSIFY.md                 # category reasoning and examples
+├── rules/                      # bookkeeping rules, one topic per file; daily.md is read before every entry
 ├── STATE.md                    # short-lived context
 ├── AGENTS.md                   # agent operating rules
 ├── common/                     # commodity declarations and prices

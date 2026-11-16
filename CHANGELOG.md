@@ -10,9 +10,11 @@
 - `pair`：两本账之间的往来一次录入。标准输入分 `[账本名]` 两段各写一笔，同一把锁内写两本账、各自整本校验、判重，再核对每对往来镜像的差额没有变；任何一步不过，两本账都原样还原。
 - 周期事项提醒：`ledger.toml` 新增 `[[recurring]]`（每天、每周几、每月几号），到日子没记的由 `brief` 和 `doctor` 列出来并给出现成分录；`confirm = false` 表示约定好直接补记，不用先问用户。只提醒，不代记。写法见 `docs/REFERENCE.md`「周期事项」。
 - 入账被拒时的报错改成中文并带下一步：科目没开的列出同一上级下已开的科目和拼写相近的科目；科目已停用的打印科目表里那一行的中文注释（可以把"该改用哪个科目"写在注释里）；借贷不平、币种不符、余额断言不符的写明差多少。
-- `ACCOUNTING.md`：不常遇到的专题规则（与他人共有的账本、贷款、基金股票、黄金白银、折现、不计入净资产的钱）从 `CATEGORIES.md` 第 4、5 节搬出来单放，AI 遇到才读；自己定的少见口径也写这里。
+- 规则文档改为按主题拆分的 `rules/` 目录，原 `CATEGORIES.md`、`CLASSIFY.md` 的内容全部迁入，根目录不再保留这两个文件：`daily.md`（日常入账，每次入账前读取）、`naming.md`、`tags.md`、`classification.md`、`dictionary.md`、`cases.md`、`credit.md`、`investment.md`、`valuation.md`、`shared-books.md`。除 `daily.md` 外均按需读取，AI 单次入账需要读取的规则由约 45KB 降到约 9KB。
+- `lookup <关键词...>`：按关键词检索规则文档与科目说明，输出命中的分类表行（附表头）、条款所在文件与章节、科目表中的说明。归类或业务处理不确定时查一个词即可，不必通读分类表。
+- `docs/COMMITS.md`（提交信息规范）、`docs/DEVELOPMENT.md`（环境初始化、模块职责、开发约束），原文自 `AGENTS.md` 迁出。
 - `docs/AI-SETUP.md`、`docs/AI-TASKS.md`：给 AI 看的建账与存放（第一次接手、账本存哪、没有远程仓库时、首次使用、引导新手）和不常做的事（更正与删除、余额核对、导入账单、行程与临时状态、修改规则、升级工具、新建账本、常用查询），原文从 `AGENTS.md` 搬出。
-- 提交信息写法由 `scripts/hooks/commit-msg` 把关（新命令 `ledger.py commit-msg`）：首行 `类型: 摘要`，英文类型、书面中文摘要、不带括号；改了账本只能用 `feat` / `fix` / `style`，摘要以登记、补记、更正、作废、对账、重排、新开、新建、初始化之一开头，并写明改到的账本（称呼取 `ledger.toml` 的 title）。写法见 `AGENTS.md`「每次改动后」。已执行过 `git config core.hooksPath scripts/hooks` 的仓库升级后自动生效。
+- 提交信息写法由 `scripts/hooks/commit-msg` 把关（新命令 `ledger.py commit-msg`）：首行 `类型: 摘要`，英文类型、书面中文摘要、不带括号；改了账本只能用 `feat` / `fix` / `style`，摘要以登记、补记、更正、作废、对账、重排、新开、新建、初始化之一开头，并写明改到的账本（称呼取 `ledger.toml` 的 title）。写法见 `docs/COMMITS.md`。已执行过 `git config core.hooksPath scripts/hooks` 的仓库升级后自动生效。
 - `dividend` 对已结清的月份直接显示「已结清」，只列实发金额，不再按新汇率重算出几块钱的差额；确要重算加 `--recalc`。结清的口径是「这个月过完之后记过该月的分红」：月内预发时全月利润还没定，过了月仍按全月利润多退少补，补发那一笔记在月后才算结清。
 - `ledger.py commit-msg --range A..B`：逐条检查范围里已有的提交，各自按它改到的文件核对账本；范围取不出来（首次推送、强推）时只查最新一条。自己接 CI 时可以用它把推上来的提交再查一遍，没启用提交钩子的设备推上来的不合规提交也能被发现。
 - `add` / `amend` / `void` 成功后，这台设备要是没启用提交前自动检查（账套带了 `scripts/hooks`、又是 Git 仓库，却没执行过 `git config core.hooksPath scripts/hooks`），会打印一行提醒。
@@ -34,9 +36,11 @@
 
 ### 变更
 
+- `AGENTS.md` 重写为作业规程：作业流程、强制约束、回报要求与文档索引，27KB 减到 11KB；建账、存放、更正、对账等章节迁至 `docs/AI-SETUP.md`、`docs/AI-TASKS.md`。`doctor` 的引导提示先到 `docs/AI-SETUP.md` 找章节。
+- 规则文档与 `AGENTS.md` 统一为规范文体：条款化表述、章节编号、表格；出处与解释性旁白从规则正文移除。核算口径未变。
+- `brief` 输出的标题与操作提示改用规范措辞。
+- **升级的用户**：`rules/` 属于用户数据，升级不覆盖。旧布局账本（规则在根目录的 `CATEGORIES.md`、`CLASSIFY.md`）升级后照常可用，脚本与 `lookup` 同时支持两种布局，新版 `AGENTS.md` 第 6.1 节给出新旧文件的对应关系；迁移到 `rules/` 为可选操作，步骤见 `docs/AI-TASKS.md`「升级工具」。本节以下条目中出现的 `CATEGORIES.md`、`CLASSIFY.md` 均指旧布局文件。
 - `add` 碰到往来镜像科目直接拒绝，并给出 `pair` 的完整写法和另一本账该用的科目（原先只在入账后提示一句，要到 `check` 才拦得住）；补平已有的往来差额才用 `add --one-sided`。
-- `AGENTS.md` 改成「看现场、写分录入账、校验提交」三步加一张按情况查阅表，27KB 减到 15KB；规则没有删，不常用的章节搬到了 `docs/AI-SETUP.md`、`docs/AI-TASKS.md`。`doctor` 的引导提示先到 `docs/AI-SETUP.md` 找章节，没有再找 `AGENTS.md`（老账套照旧）。
-- `CATEGORIES.md` 只留日常入账必读：第 4.1 节的往来改用 `pair` 举例，原第 4 节「与他人共有的账本」、第 5 节的贷款与投资搬到 `ACCOUNTING.md`，与 `AGENTS.md` 重复的第 6 节「AI 入账操作流程」删除。**升级的用户**：`CATEGORIES.md` 不会被覆盖，旧版照常可用，不需要补 `ACCOUNTING.md`；手动升级又要换新版 `AGENTS.md` 的，把 `docs` 一起取下来（它现在指向 `docs/AI-SETUP.md`、`docs/AI-TASKS.md`）；让 AI 升级的本来就一起取。想用周期提醒的，把模板 `ledger.toml` 里注释掉的 `[[recurring]]` 示例抄过去。
 - `CATEGORIES.md` 4.5 标签规则改写：一个标签只表达一个意思（`#japan #visa`，不写 `#japanvisa`），多层意思并列打多个；标签分地点、跟谁、什么事三类；用户讲了时间线的按时间线推断每笔在哪儿花，能打的地点标签都打上。**升级的用户**：`CATEGORIES.md` 不会被覆盖，想要新规则请对照本条手动合并 4.5。
 - 归类改由 AI 自己定，不再问用户"记在哪"：分类固定为大类 + 小类两级，拿不准先查 `CLASSIFY.md` 和通行口径，必要时新开科目；只有金额、日期、记哪本账、是不是借出/代垫这类事实缺失才问。`AGENTS.md`、`CATEGORIES.md` 第 0、1 节相应改写。**升级的用户**：`CATEGORIES.md` 不会被覆盖，想要新规则请对照本条手动合并第 0 节第 5 条和第 1 节开头。
 - README 重写：补上文档约定、目录结构、记账流程、常用命令、核算要点与数据可靠性说明，中英文结构一致。

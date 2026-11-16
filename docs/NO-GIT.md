@@ -13,7 +13,7 @@
 
 请你在云电脑里完成下面的事：
 1. 把这个项目放到个人目录下的固定位置 ~/AI记账/ledger，不要放在这次对话的工作目录里。
-2. 先读里面的 AGENTS.md、docs/AI-SETUP.md（重点看「没有远程仓库时」一节）和 CATEGORIES.md，之后严格按里面的规矩来。
+2. 先读里面的 AGENTS.md、docs/AI-SETUP.md（重点看「没有远程仓库时」一节）和 rules/daily.md，之后严格按里面的规矩来。
 3. 帮我建账，从今天开始记。我不知道要准备什么，需要哪些信息请一条一条问我。
 4. 我不会用 Git 和 GitHub。每天往我云盘的「AI记账」文件夹存一份备份，存了告诉我。
 ```
@@ -80,7 +80,7 @@
 1. 从我云盘「AI记账」文件夹取最新的 ledger-backup 压缩包，解压到 ~/AI记账/，得到 ~/AI记账/ledger。
 2. 下载新版项目：https://github.com/Xbang0222/beancount-ai-ledger/archive/refs/heads/main.zip
    用新版覆盖账本里的 scripts、tests、docs 三个文件夹和 AGENTS.md、requirements.txt、requirements-dev.txt、pyproject.toml。
-   其他的不要动，特别是 personal 文件夹、ledger.toml、CATEGORIES.md、STATE.md。
+   其他的不要动，特别是 personal 文件夹、rules 文件夹（旧版是 CATEGORIES.md 等规则文件）、ledger.toml、STATE.md。
 3. 重读新的 AGENTS.md 和 docs/AI-SETUP.md「没有远程仓库时」一节，按里面的规矩自检、提交。
 4. 告诉我最后一笔是什么，然后存一份新的备份到云盘。
 以后账本就常驻 ~/AI记账/ledger，每天往云盘备份一次。

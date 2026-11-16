@@ -19,7 +19,7 @@
 2026-08-01 open Assets:Receivable:Other CNY       ; 其他应收款－借给别人、替别人垫付、待退款
 2026-08-01 open Assets:Prepaid:Deposit CNY        ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
 ; —— 投资 ——
-2026-08-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 ACCOUNTING 第 3 节）
+2026-08-01 open Assets:Invest:Fund                ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 rules/investment.md）
 2026-08-01 open Assets:Invest:Stock               ; 金融资产－股票
 
 ; ===== 负债 Liabilities（余额为负数表示欠款）=====
@@ -39,7 +39,7 @@
 2026-08-01 open Income:Invest:PnL CNY             ; 投资收益－买卖价差
 2026-08-01 open Income:Other CNY                  ; 其他收入（返现、奖励等；退款不算收入，冲减原支出）
 
-; ===== 支出 Expenses（一级大类 : 二级明细，与 CATEGORIES.md 第 1 节一一对应）=====
+; ===== 支出 Expenses（一级大类 : 二级明细，与 rules/classification.md 一一对应）=====
 ; —— 餐饮 ——
 2026-08-01 open Expenses:Food:Dining CNY          ; 餐饮－正餐、外卖、堂食
 2026-08-01 open Expenses:Food:Snack CNY           ; 餐饮－饮品、咖啡、零食
@@ -59,7 +59,7 @@
 2026-08-01 open Expenses:Entertainment:Subscription CNY ; 文娱－会员、订阅
 2026-08-01 open Expenses:Entertainment:Game CNY   ; 文娱－游戏充值
 2026-08-01 open Expenses:Entertainment:Other CNY  ; 文娱－电影、演出、KTV 等
-; —— 旅行（出游专项；旅行期间吃饭仍记 Food，整趟花费靠 #trip 标签归集，见 CATEGORIES 第 2 节）——
+; —— 旅行（出游专项；旅行期间吃饭仍记 Food，整趟花费靠 #trip 标签归集，见 rules/tags.md）——
 2026-08-01 open Expenses:Travel:Transport CNY     ; 旅行－城际交通（机票、火车票）
 2026-08-01 open Expenses:Travel:Lodging CNY       ; 旅行－酒店民宿
 2026-08-01 open Expenses:Travel:Ticket CNY        ; 旅行－门票、游玩项目

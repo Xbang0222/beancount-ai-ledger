@@ -1,7 +1,7 @@
 # 使用指南：怎么跟 AI 说
 
 这份指南教你用大白话让 AI 记账、查账、改账。**下面引号里的话都可以照着说**，打字、语音都行，带「呃」「那个」也没关系。
-规矩 AI 已经知道了（`AGENTS.md`、`CATEGORIES.md`），你只要把事情说清楚。
+规矩 AI 已经知道了（`AGENTS.md` 和 `rules/` 里的规则），你只要把事情说清楚。
 
 - [一、第一次用：让 AI 帮你建账](#一第一次用让-ai-帮你建账)
 - [二、日常记账](#二日常记账)
@@ -26,7 +26,7 @@ AI 会先运行 `doctor` 检查环境：缺依赖会自己装好；仓库如果�
 
 1. 改科目表 `personal/accounts.beancount`：把「主力银行卡」改成招商银行，删掉你用不到的账户；
 2. 在 `personal/opening.beancount` 登记这些余额作为期初；
-3. 改 `CATEGORIES.md` 里的「付款渠道 → 账户」对照表，把默认付款方式设成微信；
+3. 改 `rules/daily.md` 里的结算账户对照表，把默认付款方式设成微信；
 4. 校验通过后提交。
 
 小提示：
@@ -197,7 +197,7 @@ AI 会逐个核对：
 
 ## 七、教 AI 你的习惯
 
-长期的习惯直接告诉它，AI 会写进规则文件 `CATEGORIES.md`，以后都照着来：
+长期的习惯直接告诉它，AI 会写进 `rules/` 里对应的规则文件，以后都照着来：
 
 > 以后我说「银行卡」就是招行卡。
 
@@ -241,7 +241,7 @@ AI 会逐个核对：
 用的工具不读这些文件时，第一句先发这段：
 
 ```text
-你是我的记账员。先运行 python3 scripts/ledger.py doctor 检查环境，再阅读仓库里的 AGENTS.md、CATEGORIES.md，
+你是我的记账员。先运行 python3 scripts/ledger.py doctor 检查环境，再阅读仓库里的 AGENTS.md、rules/daily.md，
 每次记账前运行 python3 scripts/ledger.py brief，严格按其中的规矩记账：只能通过 scripts/ledger.py 的命令入账，一次一笔，不许估时间；
 记完回报大类、金额、付款账户和标签，check 通过后提交 git。
 ```

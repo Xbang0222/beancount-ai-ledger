@@ -1,6 +1,6 @@
 # AI 作业须知 · 常见请求
 
-给 AI 看的。不是"记一笔"的请求，按用户说的话找到对应一节再读；用户可能怎么说，`docs/GUIDE.md` 里列了一遍。
+面向 AI。入账以外的请求，按用户的表述找到对应一节后读取；用户的常见表述见 `docs/GUIDE.md`。
 
 | 用户说 | 读哪一节 |
 |---|---|
@@ -50,7 +50,7 @@ EOF
 - 导出文件只在本地读，不要提交（`.gitignore` 已忽略 `*.csv`、`*.xlsx`）。
 - 先和用户确认：导入哪段时间，账单里的支付方式各对应哪个账户，和已经记过的账怎么去重（按日期、金额、对方比对序时簿）。
 - 仍然逐笔调用 `add`，可以写循环；不要直接写序时簿。账单里的交易时间写进 `time` 行，这是用户提供的数据，不算估时间。
-- 账户之间的划转（充值、提现、还信用卡、转入余额宝）不是收支；退款冲减原支出（`CATEGORIES.md` 第 4、5 节）。
+- 账户之间的划转（充值、提现、还信用卡、转入余额宝）不是收支；退款冲减原支出（`rules/daily.md` 第 5 至 7 节）。
 - 导完跑 `check`，告诉用户导入了几笔、跳过了几笔重复、几笔拿不准暂记在 `Expenses:Other`。
 
 ## 行程与临时状态（"我 10 月 1 号到 5 号去成都"）
@@ -60,28 +60,34 @@ EOF
 
 ## 修改规则（"以后奶茶单独算一类"）
 
-- 长期规则改 `CATEGORIES.md`；需要新科目时在 `accounts.beancount` 里开立。提交信息如 `docs: 奶茶单独分类`。
+- 长期规则写入 `rules/` 下对应主题的文件：结算账户、账本范围改 `rules/daily.md`，分类改 `rules/classification.md` 并同步 `rules/dictionary.md`，其余按 `AGENTS.md` 第 6 节的主题；需要新科目时在 `accounts.beancount` 里开立。提交信息如 `docs: 奶茶单独分类`。
 - 以前已经记了的分录要不要跟着改，先问用户，不要自作主张批量改历史账。
 
 ## 升级工具（"帮我升级记账项目"）
 
-只换脚本、测试和说明文档，账本数据和用户自己的规则不动：
+只替换脚本、测试和说明文档，账本数据和用户自己的规则不动：
 
 ```bash
 git remote add upstream https://github.com/Xbang0222/beancount-ai-ledger.git 2>/dev/null; git fetch -q upstream
 git checkout upstream/main -- scripts tests docs AGENTS.md requirements.txt requirements-dev.txt pyproject.toml
-[ -f CLASSIFY.md ] || git checkout upstream/main -- CLASSIFY.md   # 分类指南：没有才取，用户补过判例的不覆盖
-# ACCOUNTING.md 不取：旧账本的专题规则还在自己的 CATEGORIES.md 第 4、5 节里，取了会有两份
 python3 scripts/bootstrap.py && git commit -q -m "chore: 同步上游脚本"
 ```
 
-- `CATEGORIES.md`、`ACCOUNTING.md`、`STATE.md`、`ledger.toml` 和各账本目录不要覆盖。用户改过 `AGENTS.md` 的，先问他再覆盖。
-- 升级后重读一遍 `AGENTS.md`，告诉用户升到了哪个版本（`CHANGELOG.md` 最上面一条）和最后一笔是什么。
+- `rules/`、`STATE.md`、`ledger.toml` 和各账本目录属于用户数据，不得覆盖。用户改过 `AGENTS.md` 的，先征得同意再覆盖。
+- 旧布局账本（规则在根目录的 `CATEGORIES.md`、`CLASSIFY.md`，没有 `rules/` 目录）升级后照常可用：这些文件不得覆盖或删除，新版 `AGENTS.md` 第 6.1 节给出了新旧文件的对应关系，`ledger.py lookup` 同样检索它们。
+- 升级后重读 `AGENTS.md`，向用户报告升级到的版本（`CHANGELOG.md` 最上面一条）和最后一笔分录。
+
+旧布局迁移为 `rules/` 布局属于可选操作，须先征得用户同意：
+
+1. 取上游的规则文件：`git checkout upstream/main -- rules`。
+2. 将用户在旧文件中修改过的内容逐项并入对应文件：结算账户对照表与账本范围并入 `rules/daily.md`，分类表并入 `rules/classification.md`，速查词典与判例并入 `rules/dictionary.md`、`rules/cases.md`，标签登记并入 `rules/tags.md`，自定的专题口径并入对应主题文件或新建文件。
+3. 删除 `rules/daily.md` 开头的模板提示；将 `CLAUDE.md`、`GEMINI.md` 中的 `CATEGORIES.md` 引用改为 `rules/daily.md`；`ledger.toml` 的 `[naming].fallback` 中的文件名同步修改。
+4. 逐条核对旧文件的规则均已迁入后，删除根目录的旧规则文件，执行 `python3 scripts/ledger.py doctor` 与 `check`，以 `docs: 规则文档迁移至rules目录` 提交。
 
 ## 新建账本（"我开了个网店，帮我建本店铺账"）
 
 - 用 `new-book`：经营账加 `--template business`；要和个人账互相垫付、代收的加 `--link personal`；与他人共有、不算个人资产的（如家庭共同账）加 `--no-consolidate`。
-- 建好后在 `CATEGORIES.md` 第 3 节写清这本账记什么，然后提交。加了 `--link` 的两本账之间的往来用 `ledger.py pair` 两边一起录（`CATEGORIES.md` 4.1）。
+- 建好后在 `rules/daily.md` 第 2 节的账本范围表登记这本账的记账范围，然后提交。加了 `--link` 的两本账之间的往来用 `ledger.py pair` 两边一起录（`rules/daily.md` 第 4 节）。
 
 ## 常用查询
 
@@ -97,4 +103,4 @@ python3 scripts/bootstrap.py && git commit -q -m "chore: 同步上游脚本"
 | 美元、金价、基金净值、股价现在多少 | `ledger.py quote USD AU F161226 SH600519` |
 | 账本之间的往来对不对得上 | `ledger.py reconcile` |
 
-`networth` 会自动现拉外币、金银、基金、股票的当天价格折成本位币，回报时说明用的价格和数据时间；单独查价用 `ledger.py quote <代码>`（写法见 `ACCOUNTING.md` 第 5 节）。养老金、医保个人账户标了 `networth: FALSE`，不算进净资产。
+`networth` 会自动现拉外币、金银、基金、股票的当天价格折成本位币，回报时说明用的价格和数据时间；单独查价用 `ledger.py quote <代码>`（写法见 `rules/valuation.md` 第 2 节）。养老金、医保个人账户标了 `networth: FALSE`，不算进净资产。

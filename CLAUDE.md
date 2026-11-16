@@ -1,7 +1,7 @@
 # CLAUDE.md
 
-操作规范写在 AGENTS.md（Codex、Cursor、GitHub Copilot 等工具也读它）。下面三行把它和记账规则一起载入上下文：
+作业规程在 `AGENTS.md` 维护，适用于所有 AI 工具。下列引用将规程、日常入账规则与临时状态载入上下文：
 
 @AGENTS.md
-@CATEGORIES.md
+@rules/daily.md
 @STATE.md
