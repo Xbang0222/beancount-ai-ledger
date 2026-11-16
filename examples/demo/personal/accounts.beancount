@@ -65,7 +65,7 @@
 2026-08-01 open Expenses:Travel:Ticket CNY        ; 旅行－门票、游玩项目
 2026-08-01 open Expenses:Travel:Other CNY         ; 旅行－其他
 ; —— 其他一级大类 ——
-2026-08-01 open Expenses:Learning CNY             ; 学习－学费、课程、书籍、考试
+2026-08-01 open Expenses:Learning CNY             ; 教育－学费、课程、书籍、考试
 2026-08-01 open Expenses:Medical CNY              ; 医疗－看病、买药、体检
 2026-08-01 open Expenses:Social CNY               ; 人情－红包、礼物、请客
 2026-08-01 open Expenses:Insurance CNY            ; 保险－自付保费

@@ -40,6 +40,7 @@
 1970-01-01 open Income:Salary CNY                 ; 工资薪金（按实发到账金额）
 1970-01-01 open Income:Bonus CNY                  ; 奖金、绩效
 1970-01-01 open Income:SideJob CNY                ; 兼职、劳务报酬、二手转卖所得
+1970-01-01 open Income:SideBiz CNY                ; 副业收入－个人小生意的收款（代购、代充、摆摊）
 1970-01-01 open Income:Redpacket CNY              ; 红包、礼金
 1970-01-01 open Income:Invest:Interest CNY        ; 投资收益－利息（余额宝、存款）
 1970-01-01 open Income:Invest:Dividend CNY        ; 投资收益－分红
@@ -77,7 +78,7 @@
 1970-01-01 open Expenses:Travel:Ticket CNY        ; 旅行－门票、游玩项目
 1970-01-01 open Expenses:Travel:Other CNY         ; 旅行－其他
 ; —— 其他一级大类 ——
-1970-01-01 open Expenses:Learning CNY             ; 学习－学费、课程、书籍、考试
+1970-01-01 open Expenses:Learning CNY             ; 教育－学费、课程、书籍、考试
 1970-01-01 open Expenses:Medical CNY              ; 医疗－看病、买药、体检
 1970-01-01 open Expenses:Fitness CNY             ; 运动－健身房、球馆、运动课程
 1970-01-01 open Expenses:PersonalCare CNY        ; 个护－理发、美容、护肤化妆品
@@ -90,6 +91,7 @@
 1970-01-01 open Expenses:Tax CNY                 ; 税费－个税补缴、开票税费、证件工本费、罚款
 1970-01-01 open Expenses:Finance:Interest CNY     ; 财务费用－借款利息
 1970-01-01 open Expenses:Finance:Fee CNY          ; 财务费用－手续费、分期服务费
+1970-01-01 open Expenses:SideBiz CNY              ; 副业成本－个人小生意的进货款
 1970-01-01 open Expenses:Other CNY                ; 其他（实在判断不了归哪类时的兜底）
 
 ; ===== 权益 Equity =====

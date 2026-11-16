@@ -36,6 +36,7 @@
 {{OPEN_DATE}} open Income:Salary {{CURRENCY}} ; 工资薪金（按实发到账金额）
 {{OPEN_DATE}} open Income:Bonus {{CURRENCY}} ; 奖金、绩效
 {{OPEN_DATE}} open Income:SideJob {{CURRENCY}} ; 兼职、劳务报酬、二手转卖所得
+{{OPEN_DATE}} open Income:SideBiz {{CURRENCY}} ; 副业收入－个人小生意的收款（代购、代充、摆摊）
 {{OPEN_DATE}} open Income:Redpacket {{CURRENCY}} ; 红包、礼金
 {{OPEN_DATE}} open Income:Invest:Interest {{CURRENCY}} ; 投资收益－利息（余额宝、存款）
 {{OPEN_DATE}} open Income:Invest:Dividend {{CURRENCY}} ; 投资收益－分红
@@ -73,7 +74,7 @@
 {{OPEN_DATE}} open Expenses:Travel:Ticket {{CURRENCY}} ; 旅行－门票、游玩项目
 {{OPEN_DATE}} open Expenses:Travel:Other {{CURRENCY}} ; 旅行－其他
 ; —— 其他一级大类 ——
-{{OPEN_DATE}} open Expenses:Learning {{CURRENCY}} ; 学习－学费、课程、书籍、考试
+{{OPEN_DATE}} open Expenses:Learning {{CURRENCY}} ; 教育－学费、课程、书籍、考试
 {{OPEN_DATE}} open Expenses:Medical {{CURRENCY}} ; 医疗－看病、买药、体检
 {{OPEN_DATE}} open Expenses:Fitness {{CURRENCY}} ; 运动－健身房、球馆、运动课程
 {{OPEN_DATE}} open Expenses:PersonalCare {{CURRENCY}} ; 个护－理发、美容、护肤化妆品
@@ -86,6 +87,7 @@
 {{OPEN_DATE}} open Expenses:Tax {{CURRENCY}} ; 税费－个税补缴、开票税费、证件工本费、罚款
 {{OPEN_DATE}} open Expenses:Finance:Interest {{CURRENCY}} ; 财务费用－借款利息
 {{OPEN_DATE}} open Expenses:Finance:Fee {{CURRENCY}} ; 财务费用－手续费、分期服务费
+{{OPEN_DATE}} open Expenses:SideBiz {{CURRENCY}} ; 副业成本－个人小生意的进货款
 {{OPEN_DATE}} open Expenses:Other {{CURRENCY}} ; 其他（实在判断不了归哪类时的兜底）
 
 ; ===== 权益 Equity =====
