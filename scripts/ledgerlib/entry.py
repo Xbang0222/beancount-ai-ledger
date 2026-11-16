@@ -72,7 +72,7 @@ def validate(block):
             continue
         if not (e.payee or "").strip() or not (e.narration or "").strip():
             return ('交易首行要同时写对方和摘要两段："对方" "摘要"，都不能为空（本次未写入）。'
-                    "写法见 CATEGORIES.md 0.1。")
+                    "写法对照 `ledger.py brief` 输出的范例。")
         t = e.meta.get("time")
         if t is not None and not (isinstance(t, str) and TIME_OK_RE.match(t)):
             return (f'time 应为 24 小时制的 "HH:MM"（如 "09:05"），收到：{t!r}（本次未写入）。'
@@ -117,7 +117,7 @@ def count_transactions(block):
 def inject_time(block, now=None):
     """交易未含 time 元数据时注入当前时间（配置时区）。
 
-    无论交易日期是否为今天都注入：补记历史账同样带 time（即录入时刻），口径见 CATEGORIES.md 第 7 节。
+    无论交易日期是否为今天都注入：补记历史账同样带 time（即录入时刻），口径见规则文档的「时间」一节。
     用户已手写 time 的不覆盖；余额断言、价格等非交易指令不注入（balance 断言的是当天开始时，time 无意义）。
     """
     if TIME_RE.search(block) or not TXN_RE.search(block):

@@ -18,7 +18,7 @@
 {{OPEN_DATE}} open Assets:Receivable:Other {{CURRENCY}} ; 其他应收款－借给别人、替别人垫付、待退款
 {{OPEN_DATE}} open Assets:Prepaid:Deposit {{CURRENCY}} ; 预付款项－押金、定金（可退部分；收回或转费用时冲减）
 ; —— 投资 ——
-{{OPEN_DATE}} open Assets:Invest:Fund ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 ACCOUNTING 第 3 节）
+{{OPEN_DATE}} open Assets:Invest:Fund ; 金融资产－基金（不限币种；按份额记账时用基金代码，见 rules/investment.md）
 {{OPEN_DATE}} open Assets:Invest:Stock ; 金融资产－股票
 ; —— 社保公积金个人账户（不能随时取用，合并资产时可单独看）——
 {{OPEN_DATE}} open Assets:Benefit:Medical {{CURRENCY}} ; 医保个人账户
@@ -46,7 +46,7 @@
 {{OPEN_DATE}} open Income:Benefit:HousingFund {{CURRENCY}} ; 社保入账－住房公积金
 {{OPEN_DATE}} open Income:Other {{CURRENCY}} ; 其他收入（返现、奖励等；退款不算收入，冲减原支出）
 
-; ===== 支出 Expenses（一级大类 : 二级明细，与 CATEGORIES.md 第 1 节一一对应）=====
+; ===== 支出 Expenses（一级大类 : 二级明细，与 rules/classification.md 一一对应）=====
 ; —— 餐饮 ——
 {{OPEN_DATE}} open Expenses:Food:Dining {{CURRENCY}} ; 餐饮－正餐、外卖、堂食
 {{OPEN_DATE}} open Expenses:Food:Snack {{CURRENCY}} ; 餐饮－饮品、咖啡、零食
@@ -68,7 +68,7 @@
 {{OPEN_DATE}} open Expenses:Entertainment:Subscription {{CURRENCY}} ; 文娱－会员、订阅
 {{OPEN_DATE}} open Expenses:Entertainment:Game {{CURRENCY}} ; 文娱－游戏充值
 {{OPEN_DATE}} open Expenses:Entertainment:Other {{CURRENCY}} ; 文娱－电影、演出、KTV 等
-; —— 旅行（出游专项；旅行期间吃饭仍记 Food，整趟花费靠 #trip 标签归集，见 CATEGORIES 第 2 节）——
+; —— 旅行（出游专项；旅行期间吃饭仍记 Food，整趟花费靠 #trip 标签归集，见 rules/tags.md）——
 {{OPEN_DATE}} open Expenses:Travel:Transport {{CURRENCY}} ; 旅行－城际交通（机票、火车票）
 {{OPEN_DATE}} open Expenses:Travel:Lodging {{CURRENCY}} ; 旅行－酒店民宿
 {{OPEN_DATE}} open Expenses:Travel:Ticket {{CURRENCY}} ; 旅行－门票、游玩项目

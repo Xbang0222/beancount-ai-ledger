@@ -14,6 +14,7 @@ EPILOG = """\
 示例：
   python3 scripts/ledger.py doctor                       检查环境与账套状态（第一次用先跑它）
   python3 scripts/ledger.py brief                        入账前先看这一页（日期、临时状态、可用科目、写法、范例）
+  python3 scripts/ledger.py lookup 猫粮 拼多多            按关键词查该记哪个科目、规则写在哪一节
   python3 scripts/ledger.py check                        校验全部账本（有往来镜像时连带对账）
   python3 scripts/ledger.py add personal <<'EOF'         从 stdin 录一笔，分录写在 heredoc 里，以 EOF 结束
   python3 scripts/ledger.py add personal --file entry.tmp   从 UTF-8 文件录一笔（PowerShell 等没有 heredoc 时用）
@@ -174,6 +175,9 @@ def build_parser():
     br = sub.add_parser("brief", help="入账前先看这一页：今天几号、临时状态、该补的周期分录、可用科目、写法、最近几笔")
     br.add_argument("book", nargs="?", help="只看某本账，默认全部")
 
+    lk = sub.add_parser("lookup", help="按关键词检索分类表、速查词典、规则文档和科目说明")
+    lk.add_argument("words", nargs="+", metavar="关键词", help="东西、商家平台或业务名，可给多个，逐个检索")
+
     ru = sub.add_parser("rules", help="对方与摘要的写法对照表（ledger.toml 的 [naming]，入账前查它）")
     ru.add_argument("book", nargs="?", help="只看某本账，默认全部")
 
@@ -319,6 +323,10 @@ def _dispatch(args):
         from .brief import cmd_brief
 
         return cmd_brief(args.book)
+    if args.cmd == "lookup":
+        from .lookup import cmd_lookup
+
+        return cmd_lookup(args.words)
     if args.cmd == "rules":
         from .naming import cmd_rules
 

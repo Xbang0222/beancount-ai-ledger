@@ -89,6 +89,13 @@ def test_模板原样的_CATEGORIES_给出提醒(ledger, capsys):
     assert "CATEGORIES.md 还是模板原样" in capsys.readouterr().out
 
 
+def test_模板原样的日常规则在_rules_目录时同样提醒(ledger, capsys):
+    (ledger / "rules").mkdir()
+    (ledger / "rules" / "daily.md").write_text(f"> **{doctor.TEMPLATE_MARK}。**\n", encoding="utf-8")
+    cli.main(["doctor"])
+    assert "rules/daily.md 还是模板原样" in capsys.readouterr().out
+
+
 @needs_git
 def test_origin_指向公开模板仓库时警告(ledger, capsys):
     _git(ledger, "init", "-q")

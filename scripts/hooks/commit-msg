@@ -1,5 +1,5 @@
 #!/bin/sh
-# 提交信息把关：首行「类型: 摘要」，不带括号，改了账本要在摘要里写明是哪本（规则见 AGENTS.md「每次改动后」）。
+# 提交信息把关：首行「类型: 摘要」，不带括号，改了账本要在摘要里写明是哪本（规则见 docs/COMMITS.md）。
 # 与 pre-commit 一起启用（每个克隆做一次）：git config core.hooksPath scripts/hooks
 root=$(git rev-parse --show-toplevel) || exit 1
 

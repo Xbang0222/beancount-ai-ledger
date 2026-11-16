@@ -15,7 +15,7 @@ import os
 import re
 from datetime import date
 
-from . import config
+from . import config, rulebook
 from .books import load_book, print_errors
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
@@ -222,10 +222,10 @@ def cmd_new_book(name, template="personal", title=None, kind=None, link=None, op
     print("  3. 运行 python3 scripts/ledger.py check")
     step = 4
     if cfg is not None:  # 已有别的账本：要告诉 AI 这本账记什么
-        print(f"  {step}. 在 CATEGORIES.md 第 3 节写清哪些业务记进 {name}，AI 记账时才分得清账本")
+        print(f"  {step}. 在 {rulebook.ref('books')} 写清哪些业务记进 {name}，AI 记账时才分得清账本")
         step += 1
     if link:
-        print(f"  {step}. {link} 与 {name} 之间的垫付/代收按双边镜像登记（CATEGORIES.md 第 4 节），记完跑 reconcile")
+        print(f"  {step}. {link} 与 {name} 之间的垫付/代收按双边镜像登记（{rulebook.ref('mirror')}），记完跑 reconcile")
     return 0
 
 

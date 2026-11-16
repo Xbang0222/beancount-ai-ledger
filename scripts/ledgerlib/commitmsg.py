@@ -10,7 +10,7 @@ import os
 import re
 import sys
 
-from . import config, env
+from . import config, env, rulebook
 
 TYPES = {
     "feat": "登记新业务、补记，脚本新功能",
@@ -104,7 +104,7 @@ def cmd_commit_msg(path):
     if not msgs:
         return 0
     _report(msgs, "[commit-msg] 提交信息不合规，已拒绝提交：")
-    print(f"   规范见 AGENTS.md「每次改动后」，如 feat: {EXAMPLE}", file=sys.stderr)
+    print(f"   规范见 {rulebook.ref('commits')}，如 feat: {EXAMPLE}", file=sys.stderr)
     return 1
 
 
@@ -132,7 +132,7 @@ def cmd_commit_range(rev_range):
             head = next((ln.strip() for ln in message.splitlines() if ln.strip()), "")
             _report(msgs, f"[FAIL] {sha[:7]} {head}")
     if bad:
-        print(f"共 {bad} 条提交信息不合规（规范见 AGENTS.md「每次改动后」）。已经推送的不要改写历史，"
+        print(f"共 {bad} 条提交信息不合规（规范见 {rulebook.ref('commits')}）。已经推送的不要改写历史，"
               "在推送它的那台设备上运行 git config core.hooksPath scripts/hooks 启用提交检查，以后就不会再漏。",
               file=sys.stderr)
         return 1

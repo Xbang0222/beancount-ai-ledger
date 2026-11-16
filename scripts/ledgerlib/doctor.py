@@ -9,14 +9,14 @@ import re
 import sys
 from decimal import Decimal
 
-from . import __version__, config, entry, env, recurring
+from . import __version__, config, entry, env, recurring, rulebook
 from .books import balances, load_book, transactions
 from .query import last_summary
 
 # 公开的模板仓库。用户的真实账目只能放在自己的私有仓库，不能推到这里。
 UPSTREAM = "Xbang0222/beancount-ai-ledger"
 GITHUB_URL_RE = re.compile(r"github\.com(?::\d+)?[:/]+([^/\s]+)/([^/\s]+?)(?:\.git)?/?$", re.I)
-# CATEGORIES.md 开头的模板提示；初始化时连同第 0 节一起改掉
+# 日常规则文档开头的模板提示；初始化时连同结算账户对照表一起改掉
 TEMPLATE_MARK = "这是模板，请改成你自己的"
 # 没有 Git 时的两条路：会用 Git 的建私有仓库；只用豆包这类云电脑的改用压缩包加云盘
 NO_GIT_TODO = ("在账套目录 git init 并提交，改动才有记录可查。"
@@ -171,12 +171,13 @@ def _books(r):
             r.warn(f"{name} 还没有期初余额，也没有任何交易",
                    f"第一次使用：{_guide(FIRST_USE_SECTION)}问清用户的账户和余额，初始化 {name}")
 
-    cats = os.path.join(config.ROOT, "CATEGORIES.md")
+    daily = rulebook.ref("daily")
+    cats = os.path.join(config.ROOT, *daily.split("/"))
     if os.path.exists(cats):
         with open(cats, encoding="utf-8") as f:
             if TEMPLATE_MARK in f.read():
-                r.warn("CATEGORIES.md 还是模板原样",
-                       "初始化时把 CATEGORIES.md 第 0 节的付款渠道对照表改成用户的账户，并删掉开头的模板提示")
+                r.warn(f"{daily} 还是模板原样",
+                       f"初始化时把 {daily} 的付款渠道对照表改成用户的账户，并删掉开头的模板提示")
 
 
 def _git(r):
