@@ -112,7 +112,7 @@ def test_brief_周期分录都记了(ledger, capsys):
     cfg = ledger / "ledger.toml"
     cfg.write_text(cfg.read_text(encoding="utf-8") + RECURRING.replace("2026-09-01", "2026-09-23"), encoding="utf-8")
     assert cli.main(["brief"]) == 0
-    assert "（都记了）" in capsys.readouterr().out
+    assert "（无待补记）" in capsys.readouterr().out
 
 
 def test_doctor_提醒漏记的周期事项(ledger, capsys):

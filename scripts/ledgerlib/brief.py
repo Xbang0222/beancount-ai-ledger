@@ -13,7 +13,7 @@ from .display import pad
 STATE_NAME = "STATE.md"
 RECENT_SHOWN = 3
 WEEKDAY_CN = "一二三四五六日"
-GROUPS = (("Assets", "资产（钱在哪、别人欠的）"), ("Liabilities", "负债（花呗、信用卡、欠别人的）"),
+GROUPS = (("Assets", "资产（资金账户、应收款）"), ("Liabilities", "负债（消费信贷、应付款）"),
           ("Expenses", "支出"), ("Income", "收入"), ("Equity", "权益（期初、利润分配）"))
 
 
@@ -68,7 +68,7 @@ def _print_recent(book):
     txns = [b for b in blocks if entry.TXN_RE.search(b.text)][-RECENT_SHOWN:]
     if not txns:
         return
-    print(f"\n----- {book}：最近 {len(txns)} 笔（写法照这个来）-----")
+    print(f"\n----- {book}：最近 {len(txns)} 笔（写法参照）-----")
     for b in txns:
         print()
         for line in b.lines:
@@ -102,7 +102,7 @@ def cmd_brief(book=None):
         print("\n===== 该补的周期分录 =====")
         todo = recurring.pending(cfg, loaded, now.date())
         if not todo:
-            print("  （都记了）")
+            print("  （无待补记）")
         for rule, days in todo:
             print(f"  {rule.book} · {rule.name}：{len(days)} 天没记（{'、'.join(d.isoformat() for d in days)}）")
             how = "先跟用户确认这几天确实发生了，再逐笔入账" if rule.confirm else "按约定直接逐笔补记，不用问用户"
@@ -116,7 +116,7 @@ def cmd_brief(book=None):
         _print_accounts(cfg, b, loaded[b])
 
     if cfg.naming is not None:
-        print("\n===== 对方与摘要怎么写 =====")
+        print("\n===== 对方与摘要写法 =====")
         for b in books:
             naming.print_patterns(cfg.naming, b)
         naming.print_general(cfg.naming)
@@ -125,10 +125,11 @@ def cmd_brief(book=None):
     for b in books:
         _print_recent(b)
 
-    print("\n===== 怎么录 =====")
-    print("  普通一笔：python3 scripts/ledger.py add <账本> <<'EOF' …分录… EOF（一次一笔）")
+    print("\n===== 操作命令 =====")
+    print("  单本账入账：python3 scripts/ledger.py add <账本> <<'EOF' …分录… EOF（一次一笔）")
     if cfg.mirrors:
-        print("  账本之间的往来：python3 scripts/ledger.py pair <<'EOF'，[账本名] 一段一笔、共两段，两本账一起录")
-    print("  记错了：ledger.py find <账本> <关键词> 查编号，再 amend / void；不要手改序时簿")
-    print("  录完：python3 scripts/ledger.py check 通过后提交")
+        print("  账本之间的往来：python3 scripts/ledger.py pair <<'EOF'，[账本名] 一段一笔、共两段，两本账同时入账")
+    print("  归类或业务处理不确定：python3 scripts/ledger.py lookup <物品、商家或业务名>，按输出的科目和章节处理")
+    print("  更正与作废：ledger.py find <账本> <关键词> 查编号，再 amend / void；不得手工编辑序时簿")
+    print("  入账后：python3 scripts/ledger.py check 通过后提交")
     return 0
