@@ -156,7 +156,7 @@ EOF
 
 ```
 2026-10-24 * "拼多多" "餐饮-买菜退款"
-  note: "冲回当日买菜中退货的部分"
+  note: "原单150.28，部分退货"
   Assets:Alipay          11.25 CNY
   Expenses:Food:Grocery
 ```

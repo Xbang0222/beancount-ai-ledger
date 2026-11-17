@@ -242,7 +242,8 @@ def _check_naming(book, entries):
     found = scan(book, entries)
     if not found:
         return ok
-    print(f"[FAIL] {book}: {len(found)} 笔对方/摘要写法不合规（对照表见 ledger.py rules {book}，用 amend 更正）：")
+    print(f"[FAIL] {book}: {len(found)} 笔对方、摘要或 note 的写法不合规"
+          f"（对照表见 ledger.py rules {book}，用 amend 更正）：")
     for t, msgs in found:
         meta = t.meta or {}
         where = os.path.relpath(meta.get("filename", ""), config.ROOT).replace(os.sep, "/")

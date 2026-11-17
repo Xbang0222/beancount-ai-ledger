@@ -18,7 +18,7 @@
 | 实际少于账面 | `Expenses:Finance:Fee` | 账户所属机构 | 「财务费用-对账差额」 |
 | 银行计付或扣收的利息 | `Income:Invest:Interest` / `Expenses:Finance:Interest` | 银行 | 「利息收入-活期存款利息」「财务费用-银行扣收利息」 |
 
-`note:` 写明实际余额、账面余额与差额。经营账本的差额科目以该账本 `accounts.beancount` 的注释为准。
+`note:` 写「实际<余额>，账面<余额>」。经营账本的差额科目以该账本 `accounts.beancount` 的注释为准。
 
 差额原因仍在查找、需要先使账面与实际一致时，暂记 `Equity:Adjustment`，对方写账户所属机构，摘要「余额调整-账实差异」；查明后以 `amend` 改记对应科目，不得长期挂账。
 

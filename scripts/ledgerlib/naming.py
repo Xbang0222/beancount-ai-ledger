@@ -13,6 +13,9 @@ from . import config
 PAREN_RE = re.compile(r"[（(]([^（）()]*)[）)]")
 # 收支科目的根：这两类科目每个都要配好摘要开头，否则 check 报错
 PNL_ROOTS = ("Expenses", "Income")
+# note 中导入来源的备注原文：自「<来源>备注：」起照录，不参加写法检查
+NOTE_SOURCE_RE = re.compile(r"(?:^|；)[^；：，。]{0,12}" + config.NOTE_SOURCE_SUFFIX + "：")
+FIELD_LABELS = {"payee": "对方", "narration": "摘要", "note": "note"}
 
 
 def _match(account, prefix):
@@ -69,6 +72,19 @@ def _quote(items):
     return "」或「".join(items)
 
 
+def own_note(note):
+    """note 里由入账者书写的部分：去掉导入来源的备注原文。"""
+    m = NOTE_SOURCE_RE.search(note)
+    return note[:m.start()] if m else note
+
+
+def _applies(f, txn):
+    """带条件的禁用写法只在分录带该标签、涉及该科目时检查。"""
+    if f.tag and f.tag not in (txn.tags or ()):
+        return False
+    return not f.account or any(_match(p.account, f.account) for p in txn.postings)
+
+
 def problems(book, txn, naming):
     """一笔交易的写法问题清单（中文说明）；没问题返回空列表。"""
     if naming is None or txn.flag == "P":  # beancount 为 pad 自动生成的补差交易，不是人写的
@@ -91,11 +107,15 @@ def problems(book, txn, naming):
     if item in naming.vague_items:
         out.append(f"摘要事项「{item}」太笼统：写清具体是什么东西（如「购物-小米音箱」）")
 
+    note = str((txn.meta or {}).get("note", "")).strip()
+    texts = {"payee": payee, "narration": narr, "note": own_note(note)}
     for f in naming.forbidden:
-        label, text = ("对方", payee) if f.field == "payee" else ("摘要", narr)
-        m = f.regex.search(text)
+        if not _applies(f, txn):
+            continue
+        m = f.regex.search(texts[f.field])
         if m:
-            out.append(f"{label}「{text}」含{f.name}「{m.group(0)}」" + (f"：{f.hint}" if f.hint else ""))
+            out.append(f"{FIELD_LABELS[f.field]}「{texts[f.field]}」含{f.name}「{m.group(0)}」"
+                       + (f"：{f.hint}" if f.hint else ""))
 
     pat = _pattern_of(txn, [p for p in naming.patterns if p.book == book])
     if pat is not None:
@@ -109,7 +129,7 @@ def problems(book, txn, naming):
                 want.append(f"摘要以「{_quote(pat.narrations)}」开头")
             out.append(f"「{pat.name}」{'，'.join(want)}" + (f"：{pat.hint}" if pat.hint else ""))
 
-    if not str((txn.meta or {}).get("note", "")).strip():
+    if not note:
         for p in txn.postings:
             if any(_match(p.account, a) for a in naming.note_required):
                 out.append(f"记到兜底科目 {p.account} 要写 note: 说明买的是什么、为什么现有分类都对不上，"
@@ -149,7 +169,7 @@ def block_error(book, block):
     if not msgs:
         return None
     lines = "\n".join(f"   - {m}" for m in msgs)
-    return f"对方/摘要写法不合规（本次未写入），对照表见 `ledger.py rules {book}`：\n{lines}"
+    return f"对方、摘要或 note 的写法不合规（本次未写入），对照表见 `ledger.py rules {book}`：\n{lines}"
 
 
 def unmapped(book, entries):
@@ -224,8 +244,9 @@ def print_general(naming):
     if naming.vague_items:
         print(f"  不能当事项的笼统词：{'、'.join(naming.vague_items)}")
     for f in naming.forbidden:
-        label = "对方" if f.field == "payee" else "摘要"
-        print(f"  {label}不得出现{f.name}" + (f"：{f.hint}" if f.hint else ""))
+        scope = "".join([f"带 #{f.tag} 的分录，" if f.tag else "", f"涉及 {f.account} 的分录，" if f.account else ""])
+        label = FIELD_LABELS[f.field] + (" " if f.field == "note" else "")
+        print(f"  {scope}{label}不得出现{f.name}" + (f"：{f.hint}" if f.hint else ""))
 
 
 def cmd_rules(book=None):
@@ -235,7 +256,7 @@ def cmd_rules(book=None):
     cfg = config.load()
     naming = cfg.naming
     if naming is None:
-        print(f"{config.CONFIG_NAME} 没有配置 [naming]，不做对方/摘要写法检查。")
+        print(f"{config.CONFIG_NAME} 没有配置 [naming]，不做对方、摘要与 note 的写法检查。")
         return 0
     books = [book] if book else list(cfg.books)
     for b in books:

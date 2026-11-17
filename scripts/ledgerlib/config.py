@@ -45,8 +45,9 @@ _MIRROR_KEYS = {"name", "currency", "accounts"}
 _NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "two_way", "note_required", "fallback",
                 "prefix", "patterns", "forbidden"}
 _PATTERN_KEYS = {"book", "name", "when", "with", "payee", "narration", "hint"}
-_FORBIDDEN_KEYS = {"field", "name", "pattern", "hint"}
-FORBIDDEN_FIELDS = ("narration", "payee")
+_FORBIDDEN_KEYS = {"field", "name", "pattern", "hint", "tag", "account"}
+FORBIDDEN_FIELDS = ("narration", "payee", "note")
+NOTE_SOURCE_SUFFIX = "备注"  # note 中「<来源>备注：」起为导入来源的备注原文，照录，不受写法检查
 _RECURRING_KEYS = {"book", "name", "every", "since", "match", "entry", "confirm"}
 
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
@@ -111,12 +112,14 @@ class Pattern:
 
 @dataclass(frozen=True)
 class Forbidden:
-    """对方或摘要里不许出现的写法：正则命中即拒绝，例如摘要里夹带的日期、时刻。"""
-    field: str         # narration：查摘要；payee：查对方
+    """对方、摘要或 note 里不许出现的写法：正则命中即拒绝，例如摘要里夹带的日期、时刻。"""
+    field: str         # narration：查摘要；payee：查对方；note：查 note（不含导入来源的备注原文）
     name: str          # 这类写法叫什么，报错与 rules 对照表里用
     pattern: str       # 正则原文
     regex: object      # 编译好的正则
     hint: str = ""     # 被拒时给出的改法
+    tag: str = ""      # 非空时只检查带该标签的分录：标签已表达的信息不许在 note 里重复
+    account: str = ""  # 非空时只检查涉及该科目（含下级）的分录：分录已表达的结算账户不许在 note 里重复
 
 
 @dataclass(frozen=True)
@@ -361,8 +364,13 @@ def _parse_forbidden(raw):
             regex = re.compile(pattern)
         except re.error as e:
             raise ConfigError(f"{where} pattern 不是合法的正则表达式：{pattern!r}（{e}）") from None
+        tag = f.get("tag", "")
+        if not isinstance(tag, str):
+            raise ConfigError(f"{where} tag 应为一个标签名，如 \"trip\"")
+        account = f.get("account", "")
         out.append(Forbidden(field=field, name=name.strip(), pattern=pattern, regex=regex,
-                             hint=str(f.get("hint", ""))))
+                             hint=str(f.get("hint", "")), tag=tag.strip().lstrip("#"),
+                             account=_account_prefix(account, where) if account else ""))
     return tuple(out)
 
 

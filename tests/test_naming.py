@@ -126,7 +126,7 @@ def test_check_列出全账不合规的分录(named, capsys):
     path.write_text(path.read_text(encoding="utf-8").replace('"餐饮-午餐"', '"午饭"'), encoding="utf-8")
     assert cli.main(["check"]) == 1
     out = capsys.readouterr().out
-    assert "1 笔对方/摘要写法不合规" in out and "personal/journal/2026-09.beancount" in out
+    assert "1 笔对方、摘要或 note 的写法不合规" in out and "personal/journal/2026-09.beancount" in out
 
 
 def test_check_全部合规时通过(named):
@@ -296,7 +296,7 @@ def test_固定场景可以只限定摘要开头(strict, capsys):
     ('[[naming.forbidden]]\nname = "日期"\npattern = "(未闭合"\n', "不是合法的正则表达式"),
     ('[[naming.forbidden]]\npattern = "x"\n', "缺少 name"),
     ('[[naming.forbidden]]\nname = "日期"\n', "缺少 pattern"),
-    ('[[naming.forbidden]]\nname = "日期"\npattern = "x"\nfield = "note"\n', "field 应为"),
+    ('[[naming.forbidden]]\nname = "日期"\npattern = "x"\nfield = "tags"\n', "field 应为"),
     ('[[naming.forbidden]]\nname = "日期"\npattern = "x"\nwhere = "摘要"\n', "不认识的键"),
     ('[naming]\nforbidden = "x"\n', "数组表"),
 ])
@@ -327,3 +327,77 @@ def test_没配开头表的账本不算漏配(named):
     assert "shop" not in config.load().naming.prefix
     entries, _, _ = books.load_book("shop")
     assert naming.unmapped("shop", entries) == []
+
+
+NOTE_RULES = """
+[[naming.forbidden]]
+field = "note"
+name = "口语"
+pattern = '一起|帮人'
+hint = "note 写书面短语"
+
+[[naming.forbidden]]
+field = "note"
+name = "句号或段末标点"
+pattern = '。|[，；、：]$'
+hint = "note 写短语，不加句号，段末不加标点"
+
+[[naming.forbidden]]
+field = "note"
+tag = "friend"
+name = "标签已表达的交易对象"
+pattern = '与朋友(用餐|共同消费)'
+hint = "交易对象由标签表达"
+
+[[naming.forbidden]]
+field = "note"
+account = "Assets:Wechat"
+name = "分录已表达的结算账户"
+pattern = '微信(零钱)?(支付|付款)'
+hint = "结算账户由分录表达"
+"""
+
+
+@pytest.fixture
+def tidy(named):
+    with open(named / "ledger.toml", "a", encoding="utf-8") as f:
+        f.write(NOTE_RULES)
+    return named
+
+
+def _noted(note, head='2026-09-23 * "餐馆" "餐饮-晚餐"', pay="Assets:Alipay"):
+    return _txn(head, f'note: "{note}"', "Expenses:Food:Dining  30.00 CNY", pay)
+
+
+@pytest.mark.parametrize("note,head,pay,expect", [
+    ("和朋友一起吃的火锅", '2026-09-23 * "餐馆" "餐饮-晚餐"', "Assets:Alipay", "含口语「一起」"),
+    ("火鸡面。", '2026-09-23 * "餐馆" "餐饮-晚餐"', "Assets:Alipay", "含句号或段末标点「。」"),
+    ("火鸡面，", '2026-09-23 * "餐馆" "餐饮-晚餐"', "Assets:Alipay", "含句号或段末标点「，」"),
+    ("与朋友用餐", '2026-09-23 * "餐馆" "餐饮-晚餐" #friend', "Assets:Alipay", "含标签已表达的交易对象"),
+    ("火鸡面；微信零钱支付", '2026-09-23 * "餐馆" "餐饮-晚餐"', "Assets:Wechat", "含分录已表达的结算账户"),
+])
+def test_note_口语句号与重复信息被拒(tidy, capsys, note, head, pay, expect):
+    path = tidy / "personal" / "journal" / "2026-09.beancount"
+    before = path.read_bytes()
+    assert _add(_noted(note, head, pay)) == 1
+    out = capsys.readouterr().out
+    assert "写法不合规" in out and expect in out
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("note,head,pay", [
+    ("火鸡面；经营卡代付", '2026-09-23 * "餐馆" "餐饮-晚餐"', "Assets:Alipay"),
+    ("与朋友用餐", '2026-09-23 * "餐馆" "餐饮-晚餐"', "Assets:Alipay"),            # 没带标签，不算重复
+    ("微信零钱支付", '2026-09-23 * "餐馆" "餐饮-晚餐"', "Assets:Alipay"),          # 分录不涉及微信，不算重复
+    ("账单备注：和朋友一起吃的。微信支付", '2026-09-23 * "餐馆" "餐饮-晚餐" #friend', "Assets:Wechat"),
+    ("按微信零钱处理；账单备注：一起吃。", '2026-09-23 * "餐馆" "餐饮-晚餐"', "Assets:Alipay"),
+])
+def test_note_条件不满足与来源备注原文不受限(tidy, note, head, pay):
+    assert _add(_noted(note, head, pay)) == 0
+
+
+def test_note_规则写进_rules_对照表(tidy, capsys):
+    assert cli.main(["rules"]) == 0
+    out = capsys.readouterr().out
+    assert "带 #friend 的分录，note 不得出现标签已表达的交易对象" in out
+    assert "涉及 Assets:Wechat 的分录，note 不得出现分录已表达的结算账户" in out

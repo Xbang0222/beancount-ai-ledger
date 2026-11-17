@@ -135,8 +135,10 @@ hint = '对方写信贷机构或出借人。还款如 "蚂蚁花呗" "偿还花�
 # narration = ["代垫商店", "代收商店", "收回商店", "归还商店"]
 # hint = "个人账不登记店铺的经营收支"
 
-# 对方或摘要中不得出现的写法：field 为 "narration"（摘要，默认）或 "payee"（对方）；pattern 为正则表达式，
-# 命中即拒绝；hint 为拒绝时给出的改法。误拦正常写法时，在 pattern 的排除字符中补充。
+# 对方、摘要或 note 中不得出现的写法：field 为 "narration"（摘要，默认）、"payee"（对方）或 "note"；
+# pattern 为正则表达式，命中即拒绝；hint 为拒绝时给出的改法。误拦正常写法时，在 pattern 的排除字符中补充。
+# field = "note" 的规则不检查导入来源的备注原文（自「<来源>备注：」起）。可选 tag、account 限定范围：
+# 仅当分录带该标签、涉及该科目（含下级）时检查，用于拦截与标签、分录重复的信息。
 [[naming.forbidden]]
 name = "具体日期"
 pattern = '\d{1,2}月\d{1,2}[日号]|(?<!\d)\d{1,2}号(?![线楼门口店桌厅馆院位车机仓柜铺色球电码汽油柴航风字房室库站台])|昨天|今天|明天|前天|昨晚|今晚'
@@ -158,3 +160,77 @@ field = "payee"
 name = "未统一的统称"
 pattern = '^(餐厅|饭店|饭馆|小卖部|小超市)$'
 hint = "店名不明时同一类对方使用同一个统称：正餐堂食写「餐馆」，零售小店写「便利店」；已知店名的写店名简称"
+
+
+# note 的写法：只记录首行、标签、科目未表达的事实，写短语。规定见 rules/naming.md 第 5 节。
+# 新增交易对象标签或结算账户时，仿照末尾几条补充 tag、account 限定的规则。
+[[naming.forbidden]]
+field = "note"
+name = "口语"
+pattern = '一起|顺便|顺手|帮人|帮忙|好像|大概是|应该是|记不清|不知道|忘了|啥|咋|[吧呢啊了]$|[吃喝买用]的$'
+hint = "note 写书面短语，如「牛肉面」「伴侣点的米线」"
+
+[[naming.forbidden]]
+field = "note"
+name = "自造的文言缩略"
+pattern = '同食|共食|同饮|共饮|同购|自食|自饮'
+hint = "使用通行的现代书面语；交易对象由标签表达，不写入 note"
+
+[[naming.forbidden]]
+field = "note"
+name = "句号或末尾标点"
+pattern = '。|[，；、：,;.]$'
+hint = "note 写短语，不加句号，末尾不加标点；多项事实以「；」分隔"
+
+[[naming.forbidden]]
+field = "note"
+name = "处理过程用语"
+pattern = '用户|录入时刻|补记日'
+hint = "只写事实，不写入账过程与科目去向；信息缺失写「时间未报」「金额未报」，经确认的处理写「经确认按…记」"
+
+[[naming.forbidden]]
+field = "note"
+name = "账户尾号"
+pattern = '尾号 ?\d+'
+hint = "账户写简称，如「店铺经营卡」「对公账户」"
+
+[[naming.forbidden]]
+field = "note"
+name = "超过50字的说明"
+pattern = '^.{51,}$'
+hint = "note 只记录分录未表达的事实，写短语，不超过 50 字"
+
+[[naming.forbidden]]
+field = "note"
+tag = "partner"
+name = "标签已表达的交易对象"
+pattern = '[与和跟同](伴侣|爱人|对象|女友|男友)(用餐|吃饭|共同消费|同行|出行)'
+hint = "交易对象由 #partner 表达，note 不重复；一单之内的归属写「伴侣点的米线」"
+
+[[naming.forbidden]]
+field = "note"
+tag = "family"
+name = "标签已表达的交易对象"
+pattern = '[与和跟同](家人|父母)(用餐|吃饭|共同消费|同行|出行)'
+hint = "交易对象由 #family 表达，note 不重复"
+
+[[naming.forbidden]]
+field = "note"
+account = "Assets:Wechat"
+name = "分录已表达的结算账户"
+pattern = '微信(零钱)?(支付|付款|扣款|收款|到账)'
+hint = "结算账户由分录表达，note 不重复"
+
+[[naming.forbidden]]
+field = "note"
+account = "Assets:Alipay"
+name = "分录已表达的结算账户"
+pattern = '支付宝(余额)?(支付|付款|扣款|收款|到账)'
+hint = "结算账户由分录表达，note 不重复"
+
+[[naming.forbidden]]
+field = "note"
+account = "Liabilities:Huabei"
+name = "分录已表达的结算账户"
+pattern = '花呗(支付|付款)'
+hint = "结算账户由分录表达，note 不重复"

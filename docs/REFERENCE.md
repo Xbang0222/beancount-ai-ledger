@@ -164,7 +164,7 @@ entry = '''
 
 ## 5 写法规则
 
-`ledger.toml` 的 `[naming]` 是对方与摘要写法的唯一来源，`ledger.py rules [账本]` 将其输出为对照表。配置后由 `add`、`pair`、`amend` 拦截不合规的分录，`check` 检查全部账目；整段删除即不做写法检查。
+`ledger.toml` 的 `[naming]` 是对方、摘要与 `note:` 写法的唯一来源，`ledger.py rules [账本]` 将其输出为对照表。配置后由 `add`、`pair`、`amend` 拦截不合规的分录，`check` 检查全部账目；整段删除即不做写法检查。
 
 | 键 | 作用 |
 |---|---|
@@ -176,7 +176,7 @@ entry = '''
 | `fallback` | 找不到分类时的处理步骤，`rules` 原样输出 |
 | `[naming.prefix.<账本>]` | 科目前缀与摘要开头的对应关系；一笔分录有多个收支科目时按金额最大者确定。账本配置了该表后，新开的收支科目未配置摘要开头时 `check` 报错 |
 | `[[naming.patterns]]` | 固定场景：分录出现 `when` 中的科目、其余科目均在 `with` 中时，对方只能为 `payee`，摘要只能以 `narration` 开头。`payee` 与 `narration` 至少写一项，省略的一项不作限制；`with` 省略时分录只能涉及 `when` 中的科目 |
-| `[[naming.forbidden]]` | 对方或摘要中不得出现的写法：`pattern` 为正则表达式，命中即拒绝；`field` 为 `narration`（摘要，默认）或 `payee`（对方）；`name` 为该类写法的名称；`hint` 为拒绝时给出的改法 |
+| `[[naming.forbidden]]` | 对方、摘要或 `note:` 中不得出现的写法：`pattern` 为正则表达式，命中即拒绝；`field` 为 `narration`（摘要，默认）、`payee`（对方）或 `note`，`note` 不检查导入来源的备注原文（自「<来源>备注：」起）；`name` 为该类写法的名称；`hint` 为拒绝时给出的改法；可选的 `tag`、`account` 限定范围，仅当分录带该标签、涉及该科目（含下级）时检查，用于拦截 `note:` 中与标签、结算账户重复的信息 |
 
 `new-book` 建账时按所选模板自动追加该账本的 `[naming.prefix.<账本>]`。
 
