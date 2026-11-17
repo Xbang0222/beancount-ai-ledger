@@ -39,7 +39,7 @@ python3 scripts/ledger.py doctor                            # 检查环境、账
 |---|---|
 | `config` | 读取 `ledger.toml`：账本清单、往来镜像、周期事项、时区、本位币、写法规则 |
 | `entry` | 分录文本的检查与预处理，不访问磁盘 |
-| `naming` | 对方与摘要的写法检查，`rules` 对照表；规则定义在 `[naming]`，未配置则不检查 |
+| `naming` | 对方、摘要与 `note:` 的写法检查，`rules` 对照表；规则定义在 `[naming]`，未配置则不检查 |
 | `journal` | 序时簿分块、行号与分录编号 |
 | `store` | 加锁、写盘、整本校验、失败还原 |
 | `add` / `pair` / `edit` / `fmt` | 入账、两本账同时入账、更正与作废、排版 |

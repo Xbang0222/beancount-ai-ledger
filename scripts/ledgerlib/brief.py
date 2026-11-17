@@ -116,7 +116,7 @@ def cmd_brief(book=None):
         _print_accounts(cfg, b, loaded[b])
 
     if cfg.naming is not None:
-        print("\n===== 对方与摘要写法 =====")
+        print("\n===== 对方、摘要与 note 的写法 =====")
         for b in books:
             naming.print_patterns(cfg.naming, b)
         naming.print_general(cfg.naming)

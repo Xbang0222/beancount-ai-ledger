@@ -43,7 +43,7 @@ _PARTNER_KEYS = {"name", "payee", "share", "offset", "owner"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
 _MIRROR_KEYS = {"name", "currency", "accounts"}
 _NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "two_way", "note_required", "fallback",
-                "note_labels", "prefix", "patterns", "forbidden"}
+                "note_labels", "note_max", "prefix", "patterns", "forbidden"}
 _PATTERN_KEYS = {"book", "name", "when", "with", "payee", "narration", "hint"}
 _FORBIDDEN_KEYS = {"field", "name", "pattern", "hint", "tag", "account"}
 FORBIDDEN_FIELDS = ("narration", "payee", "note")
@@ -124,7 +124,7 @@ class Forbidden:
 
 @dataclass(frozen=True)
 class Naming:
-    """对方名称与摘要的写法规则（[naming]）。未配置时不做任何写法检查。"""
+    """对方名称、摘要与 note 的写法规则（[naming]）。未配置时不做任何写法检查。"""
     markers: tuple        # 摘要括号里允许出现的固定标记
     banned_payees: tuple  # 不许用作对方名称的空泛词
     vague_items: tuple    # 摘要“大类-事项”里不许单独当事项用的笼统词
@@ -136,6 +136,7 @@ class Naming:
     patterns: tuple       # Pattern 元组
     forbidden: tuple = ()  # Forbidden 元组
     note_labels: tuple = ()  # note 的栏目：((栏目名, 说明), ...)，按书写顺序；空表示不查 note 的分栏格式
+    note_max: int = 0        # note 的字数上限（不含导入来源的备注原文）；0 表示不限
 
 
 @dataclass(frozen=True)
@@ -159,7 +160,7 @@ class Config:
     base_currency: str
     fx_alias: dict = None       # 折算时视同另一币种取汇率，如 {"USDT": "USD"}
     dividend: Dividend = None   # 按月利润分配；未配置为 None
-    naming: Naming = None       # 对方与摘要写法规则；未配置为 None
+    naming: Naming = None       # 对方、摘要与 note 的写法规则；未配置为 None
     reconcile_days: int = 35    # 有余额的账户超过这么多天没核对，doctor 就提醒；0 为不提醒
     recurring: tuple = ()       # Recurring 元组；未配置为空
 
@@ -341,7 +342,14 @@ def _parse_naming(raw, books):
         fallback=_str_list(raw.get("fallback", []), f"{where} fallback"),
         prefix=prefix, patterns=tuple(patterns),
         forbidden=_parse_forbidden(raw.get("forbidden", [])),
-        note_labels=_parse_note_labels(raw.get("note_labels", {})))
+        note_labels=_parse_note_labels(raw.get("note_labels", {})),
+        note_max=_parse_note_max(raw.get("note_max", 0)))
+
+
+def _parse_note_max(raw):
+    if isinstance(raw, bool) or not isinstance(raw, int) or raw < 0:
+        raise ConfigError(f"[naming] note_max 应为不小于 0 的整数（note 的字数上限，0 为不限），收到：{raw!r}")
+    return raw
 
 
 def _parse_note_labels(raw):

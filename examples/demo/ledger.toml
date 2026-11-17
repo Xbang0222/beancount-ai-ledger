@@ -28,7 +28,7 @@ currency = "CNY"
 accounts = { personal = "Liabilities:Shop", shop = "Assets:Receivable:Owner" }
 
 # ============================================================
-# 对方与摘要的写法规则：本节为唯一来源，`python3 scripts/ledger.py rules` 将其输出为对照表，brief 同时输出。
+# 对方、摘要与 note 的写法规则：本节为唯一来源，`python3 scripts/ledger.py rules` 将其输出为对照表，brief 同时输出。
 # add / pair / amend 拒绝不合规的分录并提示正确写法，check 检查全部账目。整段删除即不做写法检查。
 # 各键的作用见 docs/REFERENCE.md「写法规则」，补充规定见 rules/naming.md。
 # ============================================================
@@ -43,6 +43,8 @@ refund_suffix = ["退款", "退回"]
 two_way = ["Income:Invest:PnL"]
 # 记入兜底科目时必须写 note:，说明具体事项以及现有分类均不适用的原因
 note_required = ["Expenses:Other"]
+# note 的字数上限，不含导入来源的备注原文；0 为不限
+note_max = 60
 # 找不到分类时的处理顺序，rules 原样输出
 fallback = [
   "先执行 ledger.py lookup <关键词> 检索速查词典与分类表：先按物品查，未命中再按商家或平台查",
@@ -203,12 +205,6 @@ field = "note"
 name = "账户尾号"
 pattern = '尾号 ?\d+'
 hint = "账户写简称，如「店铺经营卡」「对公账户」"
-
-[[naming.forbidden]]
-field = "note"
-name = "超过60字的说明"
-pattern = '^.{61,}$'
-hint = "note 只记录分录未表达的事实，写短语，不超过 60 字"
 
 [[naming.forbidden]]
 field = "note"

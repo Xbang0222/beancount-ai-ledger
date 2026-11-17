@@ -52,7 +52,7 @@ def read_block(stream=None, path=None):
 def precheck(block, book=None):
     """写盘前的文本级检查；有问题打印原因并返回 None，否则返回 (年, 月)。
 
-    给了 book 时连带检查对方与摘要的写法（ledger.toml 的 [naming]）。
+    给了 book 时连带检查对方、摘要与 note 的写法（ledger.toml 的 [naming]）。
     """
     err = future_error(block) or validate(block) or (book and naming.block_error(book, block))
     if err:

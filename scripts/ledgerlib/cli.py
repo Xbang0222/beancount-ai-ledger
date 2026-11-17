@@ -178,7 +178,7 @@ def build_parser():
     lk = sub.add_parser("lookup", help="按关键词检索分类表、速查词典、规则文档和科目说明")
     lk.add_argument("words", nargs="+", metavar="关键词", help="物品、商家或平台、业务名称；可给出多个，逐个检索")
 
-    ru = sub.add_parser("rules", help="对方与摘要的写法对照表，取自 ledger.toml 的 [naming]")
+    ru = sub.add_parser("rules", help="对方、摘要与 note 的写法对照表，取自 ledger.toml 的 [naming]")
     ru.add_argument("book", nargs="?", help="只输出该账本，默认全部")
 
     cm = sub.add_parser("commit-msg", help="检查提交信息：由 commit-msg 钩子调用；--range 检查已有的提交")
@@ -228,7 +228,7 @@ def cmd_check(no_reconcile=False):
 
 
 def _check_naming(book, entries):
-    """对方与摘要的写法（ledger.toml 的 [naming]）；不合规的逐笔列出文件与行号。"""
+    """对方、摘要与 note 的写法（ledger.toml 的 [naming]）；不合规的逐笔列出文件与行号。"""
     from .naming import scan, unmapped
 
     ok = True

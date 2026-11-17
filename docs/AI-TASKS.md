@@ -102,7 +102,7 @@ EOF
 ## 5 修改规则
 
 - 长期规则写入 `rules/` 下对应主题的文件：结算账户与账本范围修改 `rules/daily.md`；分类修改 `rules/classification.md` 并同步 `rules/dictionary.md`；其余按 `AGENTS.md` 第 6 节的主题归入对应文件。
-- 对方与摘要的写法：可由脚本校验的修改 `ledger.toml` 的 `[naming]`，其余修改 `rules/naming.md`。
+- 对方、摘要与 `note:` 的写法：可由脚本校验的修改 `ledger.toml` 的 `[naming]`，其余修改 `rules/naming.md`。
 - 需要新科目时在 `accounts.beancount` 中开立。提交信息示例：`docs: 奶茶单独分类`。
 - 已入账的历史分录是否随之调整，须先询问用户；不得自行批量修改历史账目。
 

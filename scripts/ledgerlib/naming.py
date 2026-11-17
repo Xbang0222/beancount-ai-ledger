@@ -1,7 +1,7 @@
-"""对方名称与摘要的写法检查：规则来自 ledger.toml 的 [naming]，没配就不检查。
+"""对方名称、摘要与 note 的写法检查：规则来自 ledger.toml 的 [naming]，没配就不检查。
 
 入账（add）、更正（amend）时拦截不合规的写法，check 时扫一遍全账，
-让“摘要怎么写”和借贷平衡一样由脚本把关，而不是只靠每次读文档。
+让“摘要怎么写、note 怎么分栏”和借贷平衡一样由脚本把关，而不是只靠每次读文档。
 规则只在 ledger.toml 写一份，`ledger.py rules` 把它打印成人能看的对照表。
 """
 import re
@@ -78,14 +78,18 @@ def own_note(note):
     return note[:m.start()] if m else note
 
 
-def note_problem(note, labels):
-    """note 的分栏格式问题（中文说明）；合规、或未配置栏目时返回 None。
+def note_problem(note, labels, limit=0):
+    """note 的字数与分栏格式问题（中文说明）；合规、或未配置上限与栏目时返回 None。
 
     格式：「栏目：内容；栏目：内容」，栏目取自 [naming.note_labels]，按表中顺序，各至多一次；
-    末段可以是导入来源的备注原文「<来源>备注：……」，照录，不参加检查。
+    末段可以是导入来源的备注原文「<来源>备注：……」，照录，不参加检查，也不计入字数。
     """
     own = own_note(note)
-    if not labels or not own:
+    if not own:
+        return None
+    if limit and len(own) > limit:
+        return f"note 共 {len(own)} 字，超过 {limit} 字上限：只写分录未表达的事实，写短语"
+    if not labels:
         return None
     names = [name for name, _ in labels]
     usage = f"每段写「栏目：内容」，段间用「；」，栏目按顺序为 {'、'.join(names)}"
@@ -146,7 +150,7 @@ def problems(book, txn, naming):
             out.append(f"{FIELD_LABELS[f.field]}「{texts[f.field]}」含{f.name}「{m.group(0)}」"
                        + (f"：{f.hint}" if f.hint else ""))
 
-    bad_note = note_problem(note, naming.note_labels)
+    bad_note = note_problem(note, naming.note_labels, naming.note_max)
     if bad_note:
         out.append(bad_note)
 
@@ -282,6 +286,8 @@ def print_general(naming):
         for name, desc in naming.note_labels:
             print(f"    {name}：{desc}")
         print(f"    <来源>{config.NOTE_SOURCE_SUFFIX}：导入来源的备注原文，照录，写在末段")
+    if naming.note_max:
+        print(f"  note 不超过 {naming.note_max} 字（不含导入来源的备注原文）")
     for f in naming.forbidden:
         scope = "".join([f"带 #{f.tag} 的分录，" if f.tag else "", f"涉及 {f.account} 的分录，" if f.account else ""])
         label = FIELD_LABELS[f.field] + (" " if f.field == "note" else "")

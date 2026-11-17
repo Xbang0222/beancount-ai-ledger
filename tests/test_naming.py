@@ -471,3 +471,23 @@ def test_note_labels_配置写错时报错(tmp_path, body, expect):
     with pytest.raises(config.ConfigError) as e:
         config.parse({"books": {"personal": {}}, **raw})
     assert expect in str(e.value)
+
+
+def test_note_超过字数上限被拒且来源备注原文不计(named, capsys):
+    with open(named / "ledger.toml", encoding="utf-8") as f:
+        text = f.read()
+    with open(named / "ledger.toml", "w", encoding="utf-8") as f:
+        f.write(text.replace("[naming]\n", "[naming]\nnote_max = 10\n", 1))
+    assert _add(_noted("火鸡面加蛋加肠加辣加葱花")) == 1
+    assert "note 共 12 字，超过 10 字上限" in capsys.readouterr().out
+    assert _add(_noted("火鸡面；账单备注：这一段是导入来源的原文，再长也不计入字数")) == 0
+    assert cli.main(["rules"]) == 0
+    assert "note 不超过 10 字（不含导入来源的备注原文）" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("value", ['"60"', "-1", "true", "1.5"])
+def test_note_max_配置写错时报错(value):
+    raw = config.tomllib.loads(f"[naming]\nnote_max = {value}\n")
+    with pytest.raises(config.ConfigError) as e:
+        config.parse({"books": {"personal": {}}, **raw})
+    assert "note_max 应为不小于 0 的整数" in str(e.value)
