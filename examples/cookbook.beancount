@@ -58,7 +58,7 @@ option "operating_currency" "CNY"
 ; ---------- 3. AA 代垫：本人全付 240，朋友小王应还一半 ----------
 ; 摘要按费用科目书写，代垫对象与金额写入 note
 2026-02-12 * "火锅店" "餐饮-晚餐"
-  note: "与朋友小王聚餐，本人全付240.00元，其中代垫小王120.00元"
+  note: "明细：合计240.00，其中代垫小王120.00"
   Expenses:Food:Dining          120.00 CNY
   Assets:Receivable:Xiaowang    120.00 CNY
   Assets:Alipay                -240.00 CNY
@@ -83,7 +83,7 @@ option "operating_currency" "CNY"
 ; ---------- 6. 旅行：科目表示支出性质，标签表示所属行程；#trip 与目的地标签可同时使用 ----------
 ; 班次、座位写入 note，不写入摘要
 2026-02-20 * "铁路12306" "旅行-重庆至成都高铁票" #trip #chengdu
-  note: "G8501次，二等座"
+  note: "明细：G8501次，二等座"
   Expenses:Travel:Transport  354.00 CNY
   Assets:Alipay
 ; 境外刷卡：按信用卡账单的人民币金额入账，外币原价写入元数据备查
@@ -104,7 +104,7 @@ option "operating_currency" "CNY"
   Assets:Bank:Main          2300.00 CNY
   Assets:Receivable:Other
 2026-08-31 * "房东" "服务-退租清洁费"
-  note: "自租房押金2500.00元中扣除"
+  note: "支付：自租房押金2500.00中扣除"
   Expenses:Service:Life      200.00 CNY
   Assets:Receivable:Other
 ; 定金：服务完成后转入费用
@@ -112,7 +112,7 @@ option "operating_currency" "CNY"
   Assets:Prepaid:Deposit     100.00 CNY
   Assets:Wechat
 2026-03-06 * "维修店" "服务-手机维修"
-  note: "维修费合计260.00元，其中定金100.00元已于3月3日预付"
+  note: "明细：维修费合计260.00；关联：定金100.00已于3月3日预付"
   Expenses:Service:Life      260.00 CNY
   Assets:Prepaid:Deposit    -100.00 CNY
   Assets:Wechat             -160.00 CNY
@@ -122,7 +122,7 @@ option "operating_currency" "CNY"
   Assets:Bank:Main  8000.00 CNY
   Liabilities:Loan:Student
 2026-03-20 * "国家开发银行" "财务费用-助学贷款利息"
-  note: "本期还款530.00元，其中本金500.00元、利息30.00元"
+  note: "明细：本期还款530.00，其中本金500.00，利息30.00"
   Liabilities:Loan:Student   500.00 CNY
   Expenses:Finance:Interest   30.00 CNY
   Assets:Bank:Main
@@ -142,7 +142,7 @@ option "operating_currency" "CNY"
   Income:Invest:Dividend
 ; 赎回 100 份，单位售价 1.70：成本 160，到账 170，价差 10 记投资收益
 2026-05-06 * "基金公司" "投资收益-赎回指数基金"
-  note: "赎回100份，单位净值1.7000元"
+  note: "明细：赎回100份，单位净值1.7000"
   Assets:Bank:Main                         170.00 CNY
   Assets:Invest:Fund  -100 IDXFUND {1.6000 CNY} @ 1.7000 CNY
   Income:Invest:PnL

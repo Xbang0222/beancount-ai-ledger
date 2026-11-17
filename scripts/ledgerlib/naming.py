@@ -78,6 +78,35 @@ def own_note(note):
     return note[:m.start()] if m else note
 
 
+def note_problem(note, labels):
+    """note 的分栏格式问题（中文说明）；合规、或未配置栏目时返回 None。
+
+    格式：「栏目：内容；栏目：内容」，栏目取自 [naming.note_labels]，按表中顺序，各至多一次；
+    末段可以是导入来源的备注原文「<来源>备注：……」，照录，不参加检查。
+    """
+    own = own_note(note)
+    if not labels or not own:
+        return None
+    names = [name for name, _ in labels]
+    usage = f"每段写「栏目：内容」，段间用「；」，栏目按顺序为 {'、'.join(names)}"
+    last = -1
+    for seg in own.split("；"):
+        head, sep, body = seg.partition("：")
+        if not sep or head not in names:
+            return f"note 的「{seg}」没有写栏目：{usage}"
+        if not body.strip():
+            return f"note 的「{head}」栏没有内容：没有可写的就去掉这一栏"
+        if "：" in body:
+            return f"note 的「{seg}」一段里有两个「：」：一段只属于一个栏目，内容里的并列用「，」"
+        i = names.index(head)
+        if i == last:
+            return f"note 的「{head}」栏出现了两次：同一栏的内容并成一段，用「，」连接"
+        if i < last:
+            return f"note 的「{head}」栏位置不对：{usage}"
+        last = i
+    return None
+
+
 def _applies(f, txn):
     """带条件的禁用写法只在分录带该标签、涉及该科目时检查。"""
     if f.tag and f.tag not in (txn.tags or ()):
@@ -116,6 +145,10 @@ def problems(book, txn, naming):
         if m:
             out.append(f"{FIELD_LABELS[f.field]}「{texts[f.field]}」含{f.name}「{m.group(0)}」"
                        + (f"：{f.hint}" if f.hint else ""))
+
+    bad_note = note_problem(note, naming.note_labels)
+    if bad_note:
+        out.append(bad_note)
 
     pat = _pattern_of(txn, [p for p in naming.patterns if p.book == book])
     if pat is not None:
@@ -243,6 +276,12 @@ def print_general(naming):
         print(f"  不能当对方的空泛词：{'、'.join(naming.banned_payees)}")
     if naming.vague_items:
         print(f"  不能当事项的笼统词：{'、'.join(naming.vague_items)}")
+    if naming.note_labels:
+        print("  note 格式：「栏目：内容；栏目：内容」，栏目按下列顺序，各至多一次；"
+              "分录已表达的信息不写，没有可写的不写 note")
+        for name, desc in naming.note_labels:
+            print(f"    {name}：{desc}")
+        print(f"    <来源>{config.NOTE_SOURCE_SUFFIX}：导入来源的备注原文，照录，写在末段")
     for f in naming.forbidden:
         scope = "".join([f"带 #{f.tag} 的分录，" if f.tag else "", f"涉及 {f.account} 的分录，" if f.account else ""])
         label = FIELD_LABELS[f.field] + (" " if f.field == "note" else "")

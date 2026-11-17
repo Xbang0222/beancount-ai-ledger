@@ -22,7 +22,8 @@ COOKBOOK = os.path.join(REPO, "examples", "cookbook.beancount")
 IS_TEMPLATE = os.path.exists(os.path.join(REPO, ".github", "workflows", "release.yml"))
 
 # 通用写法配置：演示账套与根目录的 ledger.toml 必须一致
-SHARED_KEYS = ("markers", "banned_payees", "refund_suffix", "two_way", "note_required", "vague_items", "forbidden")
+SHARED_KEYS = ("markers", "banned_payees", "refund_suffix", "two_way", "note_required", "vague_items", "forbidden",
+               "note_labels")
 
 HEAD = re.compile(r'^\s*(?:;\s*)?\d{4}-\d{2}-\d{2} [*!] "')
 FENCE = re.compile(r"^\s*```")

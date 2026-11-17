@@ -401,3 +401,73 @@ def test_note_规则写进_rules_对照表(tidy, capsys):
     out = capsys.readouterr().out
     assert "带 #friend 的分录，note 不得出现标签已表达的交易对象" in out
     assert "涉及 Assets:Wechat 的分录，note 不得出现分录已表达的结算账户" in out
+
+
+NOTE_LABELS = """
+[naming.note_labels]
+"明细" = "交易的具体内容"
+"支付" = "分录无法表达的支付情况"
+"核对" = "余额核对的数字"
+"依据" = "推定与缺失信息的说明"
+"""
+
+
+@pytest.fixture
+def labeled(named):
+    # note_labels 是 [naming] 的子表：写在文件末尾的其他表之后同样归属 [naming]
+    with open(named / "ledger.toml", "a", encoding="utf-8") as f:
+        f.write(NOTE_LABELS)
+    return named
+
+
+@pytest.mark.parametrize("note,expect", [
+    ("火鸡面", "没有写栏目"),
+    ("明细：火鸡面；经营卡代付", "没有写栏目"),
+    ("备忘：火鸡面", "没有写栏目"),
+    ("明细：", "栏没有内容"),
+    ("明细：火鸡面；明细：加蛋", "出现了两次"),
+    ("支付：经营卡代付；明细：火鸡面", "位置不对"),
+    ("支付：分3笔：6+5+8", "有两个「：」"),
+])
+def test_note_分栏格式不合规被拒(labeled, capsys, note, expect):
+    path = labeled / "personal" / "journal" / "2026-09.beancount"
+    before = path.read_bytes()
+    assert _add(_noted(note)) == 1
+    out = capsys.readouterr().out
+    assert "写法不合规" in out and expect in out
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("note", [
+    "明细：火鸡面",
+    "明细：火鸡面；支付：经营卡代付，分3笔6+5+8",
+    "核对：实际8.42，账面0.52；依据：时间未报",
+    "账单备注：和朋友一起吃的。没有栏目；也不检查",
+    "依据：付款账户未指定，按微信零钱记；账单备注：9月21日成都到重庆",
+])
+def test_note_分栏格式合规与来源备注原文(labeled, note):
+    assert _add(_noted(note)) == 0
+
+
+def test_note_未配置栏目时不查分栏格式(named):
+    assert _add(_noted("火鸡面")) == 0
+
+
+def test_note_栏目写进_rules_对照表(labeled, capsys):
+    assert cli.main(["rules"]) == 0
+    out = capsys.readouterr().out
+    assert "note 格式：「栏目：内容；栏目：内容」" in out
+    assert "明细：交易的具体内容" in out and "<来源>备注：导入来源的备注原文" in out
+
+
+@pytest.mark.parametrize("body,expect", [
+    ('note_labels = ["明细"]\n', "应为 栏目名"),
+    ('[naming.note_labels]\n"明 细" = "x"\n', "不能含标点或空格"),
+    ('[naming.note_labels]\n"账单备注" = "x"\n', "留给导入来源的备注原文"),
+    ('[naming.note_labels]\n"明细" = 1\n', "说明应为字符串"),
+])
+def test_note_labels_配置写错时报错(tmp_path, body, expect):
+    raw = config.tomllib.loads(body if body.startswith("[") else "[naming]\n" + body)
+    with pytest.raises(config.ConfigError) as e:
+        config.parse({"books": {"personal": {}}, **raw})
+    assert expect in str(e.value)

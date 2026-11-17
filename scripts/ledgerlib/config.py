@@ -43,7 +43,7 @@ _PARTNER_KEYS = {"name", "payee", "share", "offset", "owner"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
 _MIRROR_KEYS = {"name", "currency", "accounts"}
 _NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "two_way", "note_required", "fallback",
-                "prefix", "patterns", "forbidden"}
+                "note_labels", "prefix", "patterns", "forbidden"}
 _PATTERN_KEYS = {"book", "name", "when", "with", "payee", "narration", "hint"}
 _FORBIDDEN_KEYS = {"field", "name", "pattern", "hint", "tag", "account"}
 FORBIDDEN_FIELDS = ("narration", "payee", "note")
@@ -135,6 +135,7 @@ class Naming:
     prefix: dict          # 账本名 -> {科目前缀: (允许的摘要开头, ...)}
     patterns: tuple       # Pattern 元组
     forbidden: tuple = ()  # Forbidden 元组
+    note_labels: tuple = ()  # note 的栏目：((栏目名, 说明), ...)，按书写顺序；空表示不查 note 的分栏格式
 
 
 @dataclass(frozen=True)
@@ -339,7 +340,27 @@ def _parse_naming(raw, books):
                             _str_list(raw.get("note_required", []), f"{where} note_required")),
         fallback=_str_list(raw.get("fallback", []), f"{where} fallback"),
         prefix=prefix, patterns=tuple(patterns),
-        forbidden=_parse_forbidden(raw.get("forbidden", [])))
+        forbidden=_parse_forbidden(raw.get("forbidden", [])),
+        note_labels=_parse_note_labels(raw.get("note_labels", {})))
+
+
+def _parse_note_labels(raw):
+    """[naming.note_labels]：栏目名 = "说明"，书写顺序即表中顺序。"""
+    where = "[naming.note_labels]"
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{where} 应为 栏目名 = \"说明\" 的表，如 \"明细\" = \"交易的具体内容\"")
+    out = []
+    for label, desc in raw.items():
+        label = label.strip()
+        if not label or any(ch in label for ch in "：；，。 "):
+            raise ConfigError(f"{where} 栏目名不能为空，也不能含标点或空格，收到：{label!r}")
+        if label.endswith(NOTE_SOURCE_SUFFIX):
+            raise ConfigError(f"{where} 栏目名不能以「{NOTE_SOURCE_SUFFIX}」结尾："
+                              f"「<来源>{NOTE_SOURCE_SUFFIX}：」留给导入来源的备注原文")
+        if not isinstance(desc, str):
+            raise ConfigError(f"{where} {label} 的说明应为字符串")
+        out.append((label, desc.strip()))
+    return tuple(out)
 
 
 def _parse_forbidden(raw):

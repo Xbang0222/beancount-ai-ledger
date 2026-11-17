@@ -22,13 +22,13 @@
 
 2026-09-14 * "包装材料店" "销售费用-包装耗材"
   time: "15:00"
-  note: "股东以个人微信垫付"
+  note: "支付：股东个人微信垫付"
   Expenses:Packaging  45.00 CNY
   Liabilities:OwnerLoan
 
 2026-09-19 * "客户" "主营业务收入-支付宝收款"
   time: "11:25"
-  note: "股东个人支付宝代收"
+  note: "支付：股东个人支付宝代收"
   Assets:Receivable:Owner  300.00 CNY
   Income:Revenue
 
