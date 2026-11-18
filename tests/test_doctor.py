@@ -156,12 +156,13 @@ def _git_init(root):
 
 
 @pytest.mark.skipif(not shutil.which("git"), reason="需要 git")
-def test_带了提交前检查脚本却没启用时提醒(ledger, capsys):
+def test_带了提交前检查脚本却没启用时自动启用(ledger, capsys):
     _git_init(ledger)
     (ledger / "scripts" / "hooks").mkdir(parents=True)
     (ledger / "scripts" / "hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
     doctor.cmd_doctor()
-    assert "git config core.hooksPath scripts/hooks" in capsys.readouterr().out
+    assert "已自动启用" in capsys.readouterr().out
+    assert doctor.hooks_missing() is False
 
 
 @pytest.mark.skipif(not shutil.which("git"), reason="需要 git")
@@ -220,7 +221,7 @@ ENTRY = '''2026-09-03 * "食堂" "餐饮-晚餐"
 
 @needs_git
 @pytest.mark.parametrize("enabled", [False, True])
-def test_改账后提醒启用提交检查(ledger, capsys, enabled):
+def test_改账后自动启用提交检查(ledger, capsys, enabled):
     _git_init(ledger)
     (ledger / "scripts" / "hooks").mkdir(parents=True)
     (ledger / "scripts" / "hooks" / "pre-commit").write_text("#!/bin/sh\n", encoding="utf-8")
@@ -229,7 +230,8 @@ def test_改账后提醒启用提交检查(ledger, capsys, enabled):
     entry = ledger / "entry.tmp"
     entry.write_text(ENTRY, encoding="utf-8")
     assert cli.main(["add", "personal", "--file", str(entry)]) == 0
-    assert ("git config core.hooksPath scripts/hooks" in capsys.readouterr().out) is not enabled
+    assert ("已自动启用" in capsys.readouterr().out) is not enabled
+    assert doctor.hooks_missing() is False
 
 
 def test_不是_Git_仓库或没带检查脚本时不提醒(ledger):

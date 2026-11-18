@@ -1,17 +1,20 @@
-"""入账前的一页现场信息：今天几号、当前临时状态、该补的周期分录、能用哪些科目、怎么写、最近几笔长什么样。
+"""入账前的一页现场信息：今天几号、当前临时状态、该补的周期分录、能用哪些科目、怎么写、标准范例。
 
-把“读 STATE.md、查 rules、翻科目表、看最近几笔”合成一条命令，记账的人（多半是 AI）照着输出写分录，
-不用靠记性去拼这些信息。只读不写。
+把“读 STATE.md、查 rules、翻科目表、看范例”合成一条命令，记账的人（多半是 AI）照着输出写分录，
+不用靠记性去拼这些信息。不改账本；本仓库未启用提交检查时顺带启用。
+
+范例取自 rules/daily.md 的「分录范例」一节，不取最近入账的分录：最近的分录一旦写错，
+记账的人会照着继续写错，错误随范例一路传下去。范例由账套所有者维护，文档测试保证其符合写法规则。
 """
 import os
 import re
 
-from . import config, entry, journal, naming, recurring
+from . import config, entry, naming, recurring, rulebook
 from .books import Chart, load_book
 from .display import pad
 
 STATE_NAME = "STATE.md"
-RECENT_SHOWN = 3
+EXAMPLES_TITLE = "分录范例"
 WEEKDAY_CN = "一二三四五六日"
 GROUPS = (("Assets", "资产（资金账户、应收款）"), ("Liabilities", "负债（消费信贷、应付款）"),
           ("Expenses", "支出"), ("Income", "收入"), ("Equity", "权益（期初、利润分配）"))
@@ -63,16 +66,35 @@ def _print_accounts(cfg, book, entries):
             print(f"  {pad(acc, 38)}{pad(currencies, 10)}{pad(head, 16)}{note}".rstrip())
 
 
-def _print_recent(book):
-    blocks = sorted(journal.book_blocks(book), key=lambda b: b.sort_key)
-    txns = [b for b in blocks if entry.TXN_RE.search(b.text)][-RECENT_SHOWN:]
-    if not txns:
-        return
-    print(f"\n----- {book}：最近 {len(txns)} 笔（写法参照）-----")
-    for b in txns:
-        print()
-        for line in b.lines:
-            print(f"  {line}")
+def example_lines():
+    """规则文档中「分录范例」一节的正文（去掉代码块围栏与末尾空行）；没有这一节返回 (路径, [])。"""
+    rel = rulebook.ref("daily")
+    try:
+        with open(os.path.join(config.ROOT, *rel.split("/")), encoding="utf-8") as f:
+            lines = f.read().split("\n")
+    except OSError:
+        return rel, []
+    start = next((i for i, ln in enumerate(lines) if ln.startswith("## ") and EXAMPLES_TITLE in ln), None)
+    if start is None:
+        return rel, []
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    body = [ln.rstrip() for ln in lines[start + 1:end] if not ln.startswith("```")]
+    while body and not body[0]:
+        body.pop(0)
+    while body and not body[-1]:
+        body.pop()
+    return rel, body
+
+
+def _print_examples():
+    rel, body = example_lines()
+    print(f"\n===== 写法范例（{rel}「{EXAMPLES_TITLE}」，写法以此为准）=====")
+    if not body:
+        print(f"  （{rel} 中没有「{EXAMPLES_TITLE}」一节；写法以上方规则为准）")
+    for line in body:
+        print(f"  {line}".rstrip())
+    print("\n  最近入账的分录不作写法参照，其中可能有未被校验拦下的错误写法；"
+          "核对是否重复入账用 ledger.py recent <账本>")
 
 
 def cmd_brief(book=None):
@@ -87,6 +109,10 @@ def cmd_brief(book=None):
             return 1
         loaded[b] = entries
 
+    from .doctor import ENABLED_NOTE, enable_hooks
+
+    if enable_hooks():
+        print(f"[OK] {ENABLED_NOTE}\n")
     print("===== 现在 =====")
     print(f"  {now:%Y-%m-%d} 周{WEEKDAY_CN[now.weekday()]} {now:%H:%M}（{cfg.timezone}）")
     print("  用户没说日期就记今天；没报具体时间就不写 time 行。日期晚于今天、当天 time 晚于此刻会被拒绝。")
@@ -121,9 +147,7 @@ def cmd_brief(book=None):
             naming.print_patterns(cfg.naming, b)
         naming.print_general(cfg.naming)
 
-    print("\n===== 写法范例 =====")
-    for b in books:
-        _print_recent(b)
+    _print_examples()
 
     print("\n===== 操作命令 =====")
     print("  单本账入账：python3 scripts/ledger.py add <账本> <<'EOF' …分录… EOF（一次一笔）")

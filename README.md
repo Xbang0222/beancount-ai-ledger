@@ -154,7 +154,7 @@ python3 scripts/ledger.py backup --daily               # 将整个账套连同 G
 1. **命令内**：`add`、`pair`、`amend`、`void`、`fmt` 写盘后校验整本账，未通过即还原。
 2. **提交前**：`scripts/hooks/pre-commit` 执行账本校验、往来对账与排版检查，修改脚本时另执行 ruff 与 pytest；`scripts/hooks/commit-msg` 检查提交信息。
 
-推送后没有云端检查：每台设备、每个克隆均须先启用钩子（`git config core.hooksPath scripts/hooks`）。`doctor` 检查钩子是否启用，`add`、`amend`、`void` 成功后也会提醒。
+推送后没有云端检查：每台设备、每个克隆均须先启用钩子（`git config core.hooksPath scripts/hooks`）。`brief`、`doctor` 与 `add`、`pair`、`amend`、`void` 发现本仓库未启用时自动启用。
 
 此外，入账命令拒绝晚于当日的日期、估算的时间、缺少对方或摘要的分录，以及内容相同的重复分录；全部变更由 Git 管理，可追溯、可比较、可回滚。
 

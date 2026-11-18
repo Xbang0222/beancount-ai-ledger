@@ -5,6 +5,9 @@
 
 改到哪本账按暂存的文件自动判断（`<账本>.beancount` 与账本目录），不靠记；
 摘要里要出现的账本称呼取 ledger.toml 的 title（「个人账本」去掉末尾的「本」即「个人账」），不写死。
+
+以「登记」开头的提交一本账只能新增一笔交易：一笔一提交，出错时能单独更正或回退。
+新增笔数按暂存差异中交易首行的增减计，重排与更正不计入。
 """
 import os
 import re
@@ -30,6 +33,9 @@ HEAD_RE = re.compile(r"^(?P<type>[a-z]+): (?P<summary>\S.*)$")
 PAREN_RE = re.compile(r"[()（）]")
 # git 自己生成的提交信息不查
 SKIP_RE = re.compile(r"^(Merge |Revert |fixup! |squash! |amend! )")
+# 差异中的交易首行：+/- 后接日期与标记
+DIFF_TXN_RE = re.compile(r"^([+-])\d{4}-\d{2}-\d{2} [*!] ")
+ONE_ENTRY_VERB = "登记"
 
 
 def book_label(book):
@@ -48,8 +54,29 @@ def touched_books(files, books):
     return out
 
 
-def problems(message, files, books):
-    """提交信息的问题清单（中文说明）；没问题返回空列表。files 为空（如 --amend 只改信息）时不核对账本。"""
+def added_entries(diff, books):
+    """统一差异文本中各账本净新增的交易笔数：{账本名: 笔数}。"""
+    counts, current = {}, None
+    for line in diff.splitlines():
+        if line.startswith("+++ "):
+            path = line[4:].strip()
+            path = path[2:] if path.startswith("b/") else path
+            hit = touched_books([path], books)
+            current = hit[0].name if hit else None
+            continue
+        if line.startswith("--- ") or current is None:
+            continue
+        m = DIFF_TXN_RE.match(line)
+        if m:
+            counts[current] = counts.get(current, 0) + (1 if m.group(1) == "+" else -1)
+    return counts
+
+
+def problems(message, files, books, added=None):
+    """提交信息的问题清单（中文说明）；没问题返回空列表。files 为空（如 --amend 只改信息）时不核对账本。
+
+    added 为各账本净新增的交易笔数（见 added_entries）；为 None 时不检查一笔一提交。
+    """
     lines = [ln for ln in message.splitlines() if not ln.startswith("#")]
     head = next((ln.strip() for ln in lines if ln.strip()), "")
     if not head or SKIP_RE.match(head):
@@ -76,6 +103,11 @@ def problems(message, files, books):
         missing = [book_label(b) for b in hit if book_label(b) not in summary]
         if missing:
             out.append(f"这次改到了{'与'.join(book_label(b) for b in hit)}，摘要里要写明：缺「{'」「'.join(missing)}」")
+        if added and summary.startswith(ONE_ENTRY_VERB):
+            many = [f"{book_label(b)} {added[b.name]} 笔" for b in hit if added.get(b.name, 0) > 1]
+            if many:
+                out.append(f"一次「{ONE_ENTRY_VERB}」只提交一笔，这次新增了{'、'.join(many)}："
+                           "每笔入账后先校验并提交，再录下一笔；往来用 pair，两本账各一笔")
     return out
 
 
@@ -100,7 +132,8 @@ def cmd_commit_msg(path):
     with open(path, encoding="utf-8") as f:
         message = f.read()
     books = list(config.load().books.values())
-    msgs = problems(message, _staged_files(), books)
+    added = added_entries(_git("diff", "--cached", "-U0", "--no-color") or "", books)
+    msgs = problems(message, _staged_files(), books, added)
     if not msgs:
         return 0
     _report(msgs, "[commit-msg] 提交信息不合规，已拒绝提交：")
@@ -126,7 +159,8 @@ def cmd_commit_range(rev_range):
     for sha in shas:
         message = _git("log", "-1", "--format=%B", sha) or ""
         files = (_git("diff-tree", "--no-commit-id", "--name-only", "-r", "--root", sha) or "").splitlines()
-        msgs = problems(message, [f for f in files if f], books)
+        diff = _git("show", "--format=", "-U0", "--no-color", sha) or ""
+        msgs = problems(message, [f for f in files if f], books, added_entries(diff, books))
         if msgs:
             bad += 1
             head = next((ln.strip() for ln in message.splitlines() if ln.strip()), "")

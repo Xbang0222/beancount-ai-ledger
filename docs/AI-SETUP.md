@@ -20,7 +20,7 @@
 |---|---|
 | 缺少依赖，或任一命令退出码为 3 | 执行 `python3 scripts/bootstrap.py`。官方源安装失败时脚本自动改用清华镜像重试；仍失败时以 `-i <镜像地址>` 指定其他镜像。依赖安装在仓库的 `.venv` 中，此后照常执行 `python3 scripts/ledger.py`，入口自动使用 `.venv`。不得使用 `--break-system-packages` 向系统 Python 安装依赖 |
 | origin 指向公开的模板仓库，或远程仓库为公开 | 立即停止并告知用户，待用户拥有私有仓库后再提交账目。处理方式见 1.1 |
-| 提交前自动检查未启用 | 执行 `git config core.hooksPath scripts/hooks`。此后每次提交自动执行账本校验、排版检查与提交信息检查，未通过则无法提交。`add` / `pair` / `amend` / `void` 成功后也会给出同样的提示 |
+| 提交前自动检查未启用 | 执行 `git config core.hooksPath scripts/hooks`。此后每次提交自动执行账本校验、排版检查与提交信息检查，未通过则无法提交。`brief`、`doctor` 与 `add` / `pair` / `amend` / `void` 发现未启用时自动启用 |
 | 账套目录不是 Git 仓库 | 执行 `git init` 并提交。用户在自己的电脑上使用 Claude Code、Codex 等工具的，建议另建私有远程仓库，存放方式按第 2 节选择；只有云盘、没有远程仓库的按第 3 节处理 |
 | 账本尚未初始化 | 按第 4 节引导用户 |
 | 有账户超过若干天未与实际余额核对 | 请用户报出这些账户当前的实际余额，按 `docs/AI-TASKS.md`「余额核对」逐个核对。天数由 `ledger.toml` 的 `[ledger] reconcile_days` 设定，默认 35，0 为不提醒 |

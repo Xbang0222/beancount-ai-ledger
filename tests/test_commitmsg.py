@@ -67,6 +67,31 @@ def test_不合规提交信息被拒(message, files, expect):
     assert msgs and any(expect in m for m in msgs)
 
 
+def _diff(path, *heads):
+    """构造统一差异：heads 中以 + 或 - 开头的交易首行。"""
+    return f"diff --git a/{path} b/{path}\n--- a/{path}\n+++ b/{path}\n@@ -1 +1 @@\n" + "\n".join(heads) + "\n"
+
+
+def test_按差异统计各账本净新增的交易笔数():
+    diff = (_diff(P[0], '+2026-10-28 * "食堂" "餐饮-午餐"', "+  Expenses:Food:Dining  5.00 CNY",
+                  '+2026-10-28 * "充电桩" "交通-电瓶车充电"')
+            + _diff(S[0], '-2026-10-27 * "客户" "营业收入"', '+2026-10-27 * "客户" "营业收入"'))
+    assert commitmsg.added_entries(diff, BOOKS) == {"personal": 2, "shop": 0}
+
+
+@pytest.mark.parametrize("message,added,bad", [
+    ("feat: 登记个人账10月28日午餐支出5.00元与电瓶车充电1.28元", {"personal": 2}, True),
+    ("feat: 登记个人账10月28日午餐支出5.00元，工行付款", {"personal": 1}, False),
+    ("feat: 登记个人账与商店账10月28日代收营业款200.00元，微信收款", {"personal": 1, "shop": 1}, False),
+    ("fix: 更正个人账共3笔餐饮摘要，金额不变", {"personal": 0}, False),
+    ("feat: 补记个人账10月26日至28日基金定投", {"personal": 3}, False),
+])
+def test_登记的提交一本账只能新增一笔(message, added, bad):
+    files = P + (S if "shop" in added else [])
+    msgs = commitmsg.problems(message, files, BOOKS, added)
+    assert any("只提交一笔" in m for m in msgs) is bad
+
+
 def test_钩子命令读文件并按暂存区判断(ledger, tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(commitmsg, "_staged_files", lambda: S)
     good, bad = tmp_path / "good", tmp_path / "bad"

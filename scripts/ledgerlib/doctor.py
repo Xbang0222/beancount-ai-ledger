@@ -250,11 +250,28 @@ def hooks_missing():
     return not (path and os.path.realpath(os.path.join(config.ROOT, path)) == want)
 
 
+def enable_hooks():
+    """账套带了提交检查脚本、又是 Git 仓库却没启用时，为本仓库启用；返回是否做了启用。
+
+    提交检查是推送前唯一的关口，不能依赖记账的人记得执行配置命令：入账、brief、doctor 遇到未启用时直接启用。
+    启用只写本仓库的 .git/config，不影响其他仓库。
+    """
+    if not hooks_missing():
+        return False
+    rc, _ = _run(["git", "config", "core.hooksPath", HOOKS_DIR])
+    return rc == 0 and not hooks_missing()
+
+
+ENABLED_NOTE = f"本仓库原未启用提交前自动检查，已自动启用（core.hooksPath = {HOOKS_DIR}）"
+
+
 def _hooks(r):
-    """仓库带了提交前检查脚本却没启用时提醒：不启用的话，校验全靠记得手动跑。"""
+    """仓库带了提交前检查脚本却没启用时自动启用；启用失败才提醒。"""
     if not os.path.isfile(os.path.join(config.ROOT, HOOKS_DIR, "pre-commit")):
         return
-    if hooks_missing():
+    if enable_hooks():
+        r.ok(ENABLED_NOTE)
+    elif hooks_missing():
         r.warn("提交前自动检查没有启用", f"运行 git config core.hooksPath {HOOKS_DIR} 启用提交前自动检查")
     else:
         r.ok("提交前自动检查已启用（check + fmt --check + 提交信息，改脚本时加跑测试）")

@@ -12,6 +12,7 @@
 - 写法规则本次有六项须手动合并到自己的 `ledger.toml`：`[naming]` 的 `two_way`；`markers` 中的「股东往来」；`[naming.note_labels]`；`note_max`；各段 `[[naming.forbidden]]`，其中 `field = "note"` 的规则检查 `note:` 的写法，带 `tag`、`account` 的规则须改为自己账本的交易对象标签与结算账户；两段 `[[naming.patterns]]`（自有账户之间的划转、负债的借入与偿还），其中 `when`、`with` 的科目须改为自己账本的结算账户与负债科目。合并后执行 `check`，被拦截的既有分录以 `amend` 更正；确属正常写法被误拦的，在对应 `pattern` 的排除字符中补充，不得删除整条规则。
 - 新增的 `rules/import.md`、`rules/reconciliation.md` 须从模板复制；`rules/naming.md` 新增第 4.2、4.3、7 节，第 3 节新增店名不明时的统称对照表，第 5 节改为 `note:` 的原则、分栏格式、固定写法与校验，`rules/daily.md`、`rules/classification.md`、`rules/dictionary.md`、`rules/cases.md`、`rules/credit.md`、`rules/investment.md` 补充了对方与摘要的写法，须对照模板自行合并。
 - 默认科目与大类简称的三项调整只影响新建的账本，已有账本的科目表与 `[naming].prefix` 不被改动，是否跟随由用户决定：`Expenses:Social` 的大类简称由「人情」改为「交际」；`Income:SideJob`「兼职收入-」更名为 `Income:Labor`「劳务收入-」；可退押金由 `Assets:Prepaid:Deposit` 改记 `Assets:Receivable:Other`，`Assets:Prepaid:Deposit` 只用于定金与预付的服务费。跟随时，更名科目须先在 `accounts.beancount` 开立新科目，再以 `amend` 逐笔更正既有分录。
+- 新增的三项写法检查须将模板 `ledger.toml` 中「正餐事项不是餐次」「泛称」「金额写法」三段 `[[naming.forbidden]]` 合并到自己的配置，再执行 `check` 并以 `amend` 更正被拦截的既有分录；`rules/daily.md`「分录范例」一节由 `brief` 输出，须保证其中分录符合自己账本的科目与写法。
 - 养老保险、医保个人账户原标注 `networth: FALSE` 的，改为 `restricted: TRUE` 后计入净资产，并另列可动用净资产；不改动则仍不计入。
 - 已执行过 `git config core.hooksPath scripts/hooks` 的仓库，升级后提交信息检查自动生效。仓库中已有的 `.github/workflows/ci.yml` 不会被删除，可自行决定保留或删除。
 
@@ -48,6 +49,10 @@
 
 ### 变更
 
+- 写法检查新增三项，由 `[[naming.forbidden]]` 配置：记入 `Expenses:Food:Dining` 的摘要事项只能是餐次（早餐、午餐、晚餐、夜宵）或「饭卡充值」，菜品与餐种写入 `note:`，用户未说明餐次时按 `time` 确定；对方不得为「卖家」「店家」「商贩」「摊主」等泛称；`note:` 中的金额须保留两位小数且本位币不带单位。
+- `brief` 的写法范例改为取自 `rules/daily.md`「分录范例」一节，不再列出最近 3 笔分录。最近的分录一旦写错，入账者会照着继续写错；范例改由账套所有者维护，并由文档测试保证符合写法规则。核对重复入账使用 `ledger.py recent`。
+- `brief`、`doctor` 与 `add`、`pair`、`amend`、`void` 发现本仓库未启用提交钩子时自动执行 `git config core.hooksPath scripts/hooks`，不再仅给出提醒。
+- 提交信息检查新增一笔一提交：以「登记」开头的提交，每本账只能新增一笔交易；`commit-msg --range` 对已有提交同样检查。
 - `networth` 新增受限资产口径：`open` 指令下标注 `restricted: TRUE` 的资产（养老保险、医保个人账户）计入总资产与净资产，单列于「受限资产」，并在折合本位币后列示「其中：受限资产」与「可动用净资产」。建账模板的养老保险、医保个人账户改为标注 `restricted: TRUE`；`networth: FALSE` 仅用于不计入净资产的余额。按金额记账的黄金等估算行，标注由「买入成本」改为「现值；左列为买入成本」。
 - `AGENTS.md` 重写为作业规程，只保留作业流程、强制约束、回报要求与文档索引，篇幅由 27KB 减至约 11KB。`doctor` 的引导提示改为指向 `docs/AI-SETUP.md` 的对应章节。
 - 全部文档统一为规范文体：条款化表述、统一术语、章节编号、表格；出处与解释性旁白从规则正文移除。范围包括 `rules/`、`AGENTS.md`、`docs/` 下各文档、`README.md`、`.github/` 下的贡献指南与表单，以及 `ledger.toml`、科目表、建账模板中的注释。核算口径未变。

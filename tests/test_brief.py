@@ -56,7 +56,8 @@ def test_brief_打印日期科目和范例(ledger, capsys):
     assert "===== personal（测试个人账）可用科目 =====" in out and "===== shop（测试商店账）可用科目 =====" in out
     assert "Assets:Alipay" in out and "Expenses:COGS" in out
     assert "【往来，对应 shop Liabilities:OwnerLoan，用 pair 两本账一起录】" in out
-    assert '2026-09-02 * "食堂" "餐饮-午餐"' in out           # 最近几笔当范例
+    assert '2026-09-02 * "食堂" "餐饮-午餐"' not in out       # 最近入账的分录不当范例
+    assert "中没有「分录范例」一节" in out
     assert "python3 scripts/ledger.py pair" in out
     assert "该补的周期分录" not in out                          # 没配 [[recurring]] 就不出这一节
 
@@ -136,3 +137,37 @@ def test_brief_账本有错时不出报告(ledger, capsys):
                  "  Assets:Alipay\n", encoding="utf-8")
     assert cli.main(["brief"]) == 1
     assert "请先运行 check 修复" in capsys.readouterr().out
+
+
+DAILY = """# 日常入账
+
+## 9 标签
+
+- 标签写在首行。
+
+## 10 分录范例
+
+日常消费：
+
+```
+2026-09-26 * "面馆" "餐饮-午餐"
+  Expenses:Food:Dining  18.00 CNY
+  Assets:Wechat
+```
+
+## 11 其他
+
+不属于范例。
+"""
+
+
+def test_brief_范例取自规则文档的分录范例一节(ledger, capsys):
+    (ledger / "rules").mkdir()
+    (ledger / "rules" / "daily.md").write_text(DAILY, encoding="utf-8")
+    assert cli.main(["brief"]) == 0
+    out = capsys.readouterr().out
+    section = out.split("===== 写法范例", 1)[1].split("=====\n", 1)[1].split("=====", 1)[0]
+    assert "rules/daily.md「分录范例」" in out
+    assert '  2026-09-26 * "面馆" "餐饮-午餐"' in section and "日常消费：" in section
+    assert "```" not in section and "不属于范例" not in section and "标签写在首行" not in section
+    assert "ledger.py recent" in section

@@ -284,11 +284,13 @@ def main(argv=None):
 
 
 def _remind_hooks(rc):
-    """改完账顺带提醒：这台设备没启用提交检查的话，排版和提交信息不合规也能提交上去。"""
+    """改完账顺带检查：这台设备没启用提交检查的话直接启用，否则排版和提交信息不合规也能提交上去。"""
     if rc == 0:
-        from .doctor import HOOKS_DIR, hooks_missing
+        from .doctor import ENABLED_NOTE, HOOKS_DIR, enable_hooks, hooks_missing
 
-        if hooks_missing():
+        if enable_hooks():
+            print(f"\n[OK] {ENABLED_NOTE}")
+        elif hooks_missing():
             print(f"\n[WARN] 这台设备没有启用提交前自动检查，提交前先运行一次：git config core.hooksPath {HOOKS_DIR}")
     return rc
 
