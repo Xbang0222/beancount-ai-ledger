@@ -12,17 +12,19 @@ MAX_LISTED = 31   # 一条规则最多列这么多个漏记的日子（只列最
 
 
 def due_dates(rule, today):
-    """从 rule.since 到 today（含）之间按周期应有一笔的日期，升序。"""
+    """从 rule.since 到 today（含）之间按周期应有一笔的日期，升序；rule.skip 列出的日期不算。"""
     out = []
     d = rule.since
     while d <= today:
         if rule.kind == "daily":
             hit = True
+        elif rule.kind == "weekday":
+            hit = d.weekday() < 5
         elif rule.kind == "weekly":
             hit = d.weekday() == rule.day
         else:  # monthly：当月没有这一天（如 31 号）就取月末
             hit = d.day == min(rule.day, calendar.monthrange(d.year, d.month)[1])
-        if hit:
+        if hit and d not in rule.skip:
             out.append(d)
         d += timedelta(days=1)
     return out

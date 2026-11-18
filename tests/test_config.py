@@ -117,6 +117,16 @@ def test_周期事项三种周期都能解析():
     assert parse(BASE).recurring == ()
 
 
+def test_周期事项支持工作日与休市日():
+    from datetime import date
+
+    skip = [date(2026, 10, 1), date(2026, 10, 2)]
+    rule = parse(_with(recurring=[_recurring(every="weekday", skip=skip)])).recurring[0]
+    assert rule.kind == "weekday"
+    assert rule.skip == frozenset({date(2026, 10, 1), date(2026, 10, 2)})
+    assert parse(_with(recurring=[_recurring()])).recurring[0].skip == frozenset()
+
+
 @pytest.mark.parametrize("kw, expect", [
     ({"book": "nope"}, "已声明的账本"),
     ({"every": "everyday"}, "every 写"),
@@ -127,6 +137,8 @@ def test_周期事项三种周期都能解析():
     ({"name": ""}, "缺少 name"),
     ({"confirm": "no"}, "confirm 写"),
     ({"times": 3}, "不认识的键"),
+    ({"skip": "2026-10-01"}, "skip"),
+    ({"skip": ["国庆"]}, "skip"),
 ])
 def test_周期事项写错时报错(kw, expect):
     with pytest.raises(ConfigError, match=expect):

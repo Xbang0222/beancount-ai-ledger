@@ -63,7 +63,10 @@ def _print_accounts(cfg, book, entries):
             note = chart.note(acc)
             if acc in mirrored:
                 note = f"【往来，对应 {mirrored[acc]}，用 pair 两本账一起录】{note}"
-            print(f"  {pad(acc, 38)}{pad(currencies, 10)}{pad(head, 16)}{note}".rstrip())
+            head = pad(head, 16)
+            if not head.endswith(" "):          # 摘要开头超出栏宽时，与说明之间仍留出间隔
+                head += "  "
+            print(f"  {pad(acc, 38)}{pad(currencies, 10)}{head}{note}".rstrip())
 
 
 def example_lines():

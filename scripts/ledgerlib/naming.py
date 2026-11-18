@@ -154,6 +154,15 @@ def problems(book, txn, naming):
     if bad_note:
         out.append(bad_note)
 
+    accounts = [p.account for p in txn.postings]
+    for r in naming.required:
+        if r.book != book or not any(_match(a, w) for a in accounts for w in r.when):
+            continue
+        if r.with_ and not any(_match(a, x) for a in accounts for x in r.with_):
+            continue
+        if not r.regex.search(texts["note"]):
+            out.append(f"note 没有写明{r.name}" + (f"：{r.hint}" if r.hint else ""))
+
     pat = _pattern_of(txn, [p for p in naming.patterns if p.book == book])
     if pat is not None:
         bad_payee = pat.payees and payee not in pat.payees
@@ -261,6 +270,15 @@ def print_patterns(naming, book):
             print(f"    摘要开头：{' / '.join(p.narrations)}")
         if p.hint:
             print(f"    说明：{p.hint}")
+    reqs = [r for r in naming.required if r.book == book]
+    if reqs:
+        print(f"\n----- {book}：note 必须写明 -----")
+    for r in reqs:
+        scope = " / ".join(r.when) + (f"，且涉及 {' / '.join(r.with_)}" if r.with_ else "")
+        print(f"  {r.name}")
+        print(f"    分录涉及：{scope}")
+        if r.hint:
+            print(f"    说明：{r.hint}")
 
 
 def print_general(naming):

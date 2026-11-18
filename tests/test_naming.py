@@ -491,3 +491,63 @@ def test_note_max_配置写错时报错(value):
     with pytest.raises(config.ConfigError) as e:
         config.parse({"books": {"personal": {}}, **raw})
     assert "note_max 应为不小于 0 的整数" in str(e.value)
+
+
+NOTE_REQUIRED = """
+[[naming.required]]
+book = "personal"
+name = "代付或代收的账户"
+when = ["Assets:Receivable:Shop", "Liabilities:Shop"]
+with = ["Expenses", "Income"]
+pattern = '结算：'
+hint = "在「结算」栏写明账户"
+"""
+
+
+@pytest.fixture
+def must(named):
+    with open(named / "ledger.toml", "a", encoding="utf-8") as f:
+        f.write(NOTE_REQUIRED)
+    return named
+
+
+def test_note_必写内容缺失被拒且不落盘(must, capsys):
+    path = must / "personal" / "journal" / "2026-09.beancount"
+    before = path.read_bytes()
+    bare = _txn('2026-09-23 * "餐馆" "餐饮-晚餐"', "Expenses:Food:Dining  30.00 CNY", "Assets:Receivable:Shop")
+    assert _add(bare) == 1
+    out = capsys.readouterr().out
+    assert "note 没有写明代付或代收的账户：在「结算」栏写明账户" in out
+    assert _add(_noted("明细：火鸡面", pay="Assets:Receivable:Shop")) == 1
+    assert path.read_bytes() == before
+
+
+def test_note_必写内容写明即可入账且不涉及的分录不受限(must):
+    assert _add(_noted("结算：经营卡代付", pay="Assets:Receivable:Shop")) == 0
+    assert _add(_txn('2026-09-23 * "餐馆" "餐饮-晚餐"', "Expenses:Food:Dining  30.00 CNY", "Assets:Alipay")) == 0
+    # 只涉及往来科目与资产科目的分录不属于收支，不要求写明
+    assert _add(_txn('2026-09-23 * "商店" "代垫商店采购款（股东往来）"',
+                     "Assets:Receivable:Shop  30.00 CNY", "Assets:Alipay")) == 0
+
+
+def test_note_必写内容写进_rules_对照表(must, capsys):
+    assert cli.main(["rules"]) == 0
+    out = capsys.readouterr().out
+    assert "note 必须写明" in out and "代付或代收的账户" in out
+
+
+@pytest.mark.parametrize("body,expect", [
+    ('required = "结算"\n', "数组表"),
+    ('[[naming.required]]\nbook = "nope"\n', "已声明的账本"),
+    ('[[naming.required]]\nbook = "personal"\n', "缺少 name"),
+    ('[[naming.required]]\nbook = "personal"\nname = "x"\nwhen = ["Assets:Receivable:Shop"]\n', "缺少 pattern"),
+    ('[[naming.required]]\nbook = "personal"\nname = "x"\nwhen = ["Assets:Receivable:Shop"]\npattern = "("\n',
+     "不是合法的正则表达式"),
+    ('[[naming.required]]\nbook = "personal"\nname = "x"\nwhen = ["Assets:Receivable:Shop"]\npattern = "x"\n'
+     'extra = 1\n', "不认识的键"),
+])
+def test_naming_required_配置写错时报错(body, expect):
+    raw = config.tomllib.loads(body if body.startswith("[") else "[naming]\n" + body)
+    with pytest.raises(config.ConfigError) as e:
+        config.parse({"books": {"personal": {}}, **raw})
+    assert expect in str(e.value)

@@ -33,6 +33,7 @@ EPSILON = "0.005"
 KINDS = ("personal", "business")
 
 BOOK_NAME_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
+ACCOUNT_ROOTS = ("Assets", "Liabilities", "Equity", "Income", "Expenses")
 ACCOUNT_RE = re.compile(r"^(Assets|Liabilities|Equity|Income|Expenses)(:[^:\s]+)+$")
 CURRENCY_RE = re.compile(r"^[A-Z][A-Z0-9'._-]{0,22}[A-Z0-9]$")
 
@@ -43,12 +44,13 @@ _PARTNER_KEYS = {"name", "payee", "share", "offset", "owner"}
 _BOOK_KEYS = {"title", "kind", "main", "journal", "consolidate"}
 _MIRROR_KEYS = {"name", "currency", "accounts"}
 _NAMING_KEYS = {"markers", "banned_payees", "vague_items", "refund_suffix", "two_way", "note_required", "fallback",
-                "note_labels", "note_max", "prefix", "patterns", "forbidden"}
+                "note_labels", "note_max", "prefix", "patterns", "forbidden", "required"}
 _PATTERN_KEYS = {"book", "name", "when", "with", "payee", "narration", "hint"}
 _FORBIDDEN_KEYS = {"field", "name", "pattern", "hint", "tag", "account"}
+_REQUIRED_KEYS = {"book", "name", "when", "with", "pattern", "hint"}
 FORBIDDEN_FIELDS = ("narration", "payee", "note")
 NOTE_SOURCE_SUFFIX = "备注"  # note 中「<来源>备注：」起为导入来源的备注原文，照录，不受写法检查
-_RECURRING_KEYS = {"book", "name", "every", "since", "match", "entry", "confirm"}
+_RECURRING_KEYS = {"book", "name", "every", "since", "match", "entry", "confirm", "skip"}
 
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
@@ -123,6 +125,18 @@ class Forbidden:
 
 
 @dataclass(frozen=True)
+class Required:
+    """note 必须写明的内容：分录涉及 when 里的科目、且涉及 with 里的科目时，note 须匹配 pattern。"""
+    book: str
+    name: str          # 须写明的内容叫什么，报错与 rules 对照表里用
+    when: tuple        # 出现其中任一科目（前缀匹配）
+    with_: tuple       # 同时出现其中任一科目（前缀匹配）；空表示不限
+    pattern: str       # 正则原文
+    regex: object      # 编译好的正则
+    hint: str = ""     # 缺少时给出的写法
+
+
+@dataclass(frozen=True)
 class Naming:
     """对方名称、摘要与 note 的写法规则（[naming]）。未配置时不做任何写法检查。"""
     markers: tuple        # 摘要括号里允许出现的固定标记
@@ -137,6 +151,7 @@ class Naming:
     forbidden: tuple = ()  # Forbidden 元组
     note_labels: tuple = ()  # note 的栏目：((栏目名, 说明), ...)，按书写顺序；空表示不查 note 的分栏格式
     note_max: int = 0        # note 的字数上限（不含导入来源的备注原文）；0 表示不限
+    required: tuple = ()     # Required 元组
 
 
 @dataclass(frozen=True)
@@ -144,12 +159,13 @@ class Recurring:
     """到日子就该有一笔的周期事项（每周定投、每月房租）：brief / doctor 列出哪几天还没记。只提醒，不自动入账。"""
     book: str
     name: str
-    kind: str          # daily / weekly / monthly
-    day: int           # weekly：星期几（周一为 0）；monthly：每月几号；daily 不用
+    kind: str          # daily / weekday / weekly / monthly
+    day: int           # weekly：星期几（周一为 0）；monthly：每月几号；daily、weekday 不用
     since: date        # 从哪天起算
     match: str         # 当天已有对方或摘要含这个词的交易，就算记过
     entry: str = ""    # 分录模板，{date} 换成该补的日期；没写就只提醒不给现成分录
     confirm: bool = True   # 补记前要不要先跟用户确认真的发生了；自动扣款这类约定好直接补的写 false
+    skip: frozenset = frozenset()   # 不发生的日期（节假日、休市日），不算漏记
 
 
 @dataclass(frozen=True)
@@ -343,7 +359,8 @@ def _parse_naming(raw, books):
         prefix=prefix, patterns=tuple(patterns),
         forbidden=_parse_forbidden(raw.get("forbidden", [])),
         note_labels=_parse_note_labels(raw.get("note_labels", {})),
-        note_max=_parse_note_max(raw.get("note_max", 0)))
+        note_max=_parse_note_max(raw.get("note_max", 0)),
+        required=_parse_required(raw.get("required", []), books))
 
 
 def _parse_note_max(raw):
@@ -403,6 +420,35 @@ def _parse_forbidden(raw):
     return tuple(out)
 
 
+def _parse_required(raw, books):
+    if not isinstance(raw, list):
+        raise ConfigError("required 要写成 [[naming.required]]（数组表），每项内容一段")
+    out = []
+    for i, r in enumerate(raw, 1):
+        where = f"第 {i} 个 [[naming.required]]"
+        if not isinstance(r, dict):
+            raise ConfigError(f"{where} 应为一个表（table）")
+        _no_unknown(r, _REQUIRED_KEYS, where)
+        if r.get("book") not in books:
+            raise ConfigError(f"{where} book 应为已声明的账本，收到：{r.get('book')!r}")
+        name = r.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ConfigError(f"{where} 缺少 name（须写明的内容，如 \"代付账户\"）")
+        when = tuple(_account_prefix(a, where) for a in _str_list(r.get("when"), f"{where} when", False))
+        with_ = tuple(a if a in ACCOUNT_ROOTS else _account_prefix(a, where)
+                      for a in _str_list(r.get("with", []), f"{where} with"))
+        pattern = r.get("pattern")
+        if not isinstance(pattern, str) or not pattern:
+            raise ConfigError(f"{where} 缺少 pattern（note 须匹配的正则表达式）")
+        try:
+            regex = re.compile(pattern)
+        except re.error as e:
+            raise ConfigError(f"{where} pattern 不是合法的正则表达式：{pattern!r}（{e}）") from None
+        out.append(Required(book=r["book"], name=name.strip(), when=when, with_=with_,
+                            pattern=pattern, regex=regex, hint=str(r.get("hint", ""))))
+    return tuple(out)
+
+
 def _parse_recurring(raw, books):
     if not isinstance(raw, list):
         raise ConfigError("recurring 要写成 [[recurring]]（数组表），每个周期事项一段")
@@ -420,13 +466,15 @@ def _parse_recurring(raw, books):
         every = r.get("every")
         if every == "daily":
             kind, day = "daily", 0
+        elif every == "weekday":
+            kind, day = "weekday", 0
         elif isinstance(every, str) and every.lower() in WEEKDAYS:
             kind, day = "weekly", WEEKDAYS.index(every.lower())
         elif isinstance(every, int) and not isinstance(every, bool) and 1 <= every <= 31:
             kind, day = "monthly", every
         else:
-            raise ConfigError(f"{where}（{name}）every 写 \"daily\"、星期几的英文（如 \"monday\"）"
-                              f"或每月几号（1 到 31 的整数），收到：{every!r}")
+            raise ConfigError(f"{where}（{name}）every 写 \"daily\"、\"weekday\"（周一至周五）、"
+                              f"星期几的英文（如 \"monday\"）或每月几号（1 到 31 的整数），收到：{every!r}")
         since = r.get("since")
         if isinstance(since, str):
             try:
@@ -444,8 +492,12 @@ def _parse_recurring(raw, books):
         confirm = r.get("confirm", True)
         if not isinstance(confirm, bool):
             raise ConfigError(f"{where}（{name}）confirm 写 true（补记前先跟用户确认）或 false（直接补记）")
+        skip = r.get("skip", [])
+        if not isinstance(skip, list) or not all(isinstance(d, date) and not isinstance(d, datetime) for d in skip):
+            raise ConfigError(f"{where}（{name}）skip 写不发生的日期数组，如 [2026-10-01, 2026-10-02]")
         out.append(Recurring(book=r["book"], name=name.strip(), kind=kind, day=day, since=since,
-                             match=match.strip(), entry=entry.strip("\n"), confirm=confirm))
+                             match=match.strip(), entry=entry.strip("\n"), confirm=confirm,
+                             skip=frozenset(skip)))
     return tuple(out)
 
 

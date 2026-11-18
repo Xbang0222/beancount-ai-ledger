@@ -25,6 +25,14 @@ def _rule(**kw):
     return config.Recurring(**base)
 
 
+def test_工作日周期只算周一至周五并跳过休市日():
+    today = date(2026, 9, 11)                                   # 9 月 1 日是周二，5、6 日是周末
+    rule = _rule(kind="weekday", day=0)
+    assert recurring.due_dates(rule, today) == [date(2026, 9, d) for d in (1, 2, 3, 4, 7, 8, 9, 10, 11)]
+    rule = _rule(kind="weekday", day=0, skip=frozenset({date(2026, 9, 3), date(2026, 9, 5)}))
+    assert recurring.due_dates(rule, today) == [date(2026, 9, d) for d in (1, 2, 4, 7, 8, 9, 10, 11)]
+
+
 def test_按周按日按月算出应有的日期():
     today = date(2026, 9, 23)
     assert recurring.due_dates(_rule(), today) == [date(2026, 9, d) for d in (1, 8, 15, 22)]

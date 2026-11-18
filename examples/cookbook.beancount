@@ -104,7 +104,7 @@ option "operating_currency" "CNY"
   Assets:Bank:Main          2300.00 CNY
   Assets:Receivable:Other
 2026-08-31 * "房东" "服务-退租清洁费"
-  note: "支付：自租房押金2500.00中扣除"
+  note: "说明：清洁费自租房押金2500.00中扣抵"
   Expenses:Service:Life      200.00 CNY
   Assets:Receivable:Other
 ; 定金：服务完成后转入费用
@@ -112,7 +112,7 @@ option "operating_currency" "CNY"
   Assets:Prepaid:Deposit     100.00 CNY
   Assets:Wechat
 2026-03-06 * "维修店" "服务-手机维修"
-  note: "明细：维修费合计260.00；关联：定金100.00已于3月3日预付"
+  note: "说明：扣抵3月3日预付定金100.00"
   Expenses:Service:Life      260.00 CNY
   Assets:Prepaid:Deposit    -100.00 CNY
   Assets:Wechat             -160.00 CNY
